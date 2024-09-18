@@ -166,6 +166,10 @@ type GetOrderResponseBody struct {
 	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
 }
 
+// GetUserOrdersResponseBody is the type of the "store" service
+// "getUserOrders\t" endpoint HTTP response body.
+type GetUserOrdersResponseBody []*OrderResponse
+
 // AddToCartResponseBody is the type of the "store" service "addToCart"
 // endpoint HTTP response body.
 type AddToCartResponseBody struct {
@@ -246,6 +250,24 @@ type GetOrderNotFoundResponseBody struct {
 	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
 }
 
+// GetUserOrdersNotFoundResponseBody is the type of the "store" service
+// "getUserOrders\t" endpoint HTTP response body for the "not-found" error.
+type GetUserOrdersNotFoundResponseBody struct {
+	// Name is the name of this class of errors.
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
+	// Is the error temporary?
+	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
+	// Is the error a timeout?
+	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
+	// Is the error a server-side fault?
+	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
+}
+
 // GetCartNotFoundResponseBody is the type of the "store" service "getCart"
 // endpoint HTTP response body for the "not-found" error.
 type GetCartNotFoundResponseBody struct {
@@ -304,6 +326,30 @@ type OrderItemRequestBody struct {
 
 // OrderItemResponseBody is used to define fields on response body types.
 type OrderItemResponseBody struct {
+	// ID of the product
+	ProductID *string `form:"productID,omitempty" json:"productID,omitempty" xml:"productID,omitempty"`
+	// Quantity of the product
+	Quantity *int `form:"quantity,omitempty" json:"quantity,omitempty" xml:"quantity,omitempty"`
+	// Price of the product at the time of order
+	Price *float64 `form:"price,omitempty" json:"price,omitempty" xml:"price,omitempty"`
+}
+
+// OrderResponse is used to define fields on response body types.
+type OrderResponse struct {
+	// Unique order ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// ID of the user who placed the order
+	UserID *string `form:"userID,omitempty" json:"userID,omitempty" xml:"userID,omitempty"`
+	// Items in the order
+	Items []*OrderItemResponse `form:"items,omitempty" json:"items,omitempty" xml:"items,omitempty"`
+	// Total amount of the order
+	TotalAmount *float64 `form:"totalAmount,omitempty" json:"totalAmount,omitempty" xml:"totalAmount,omitempty"`
+	// Order status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+}
+
+// OrderItemResponse is used to define fields on response body types.
+type OrderItemResponse struct {
 	// ID of the product
 	ProductID *string `form:"productID,omitempty" json:"productID,omitempty" xml:"productID,omitempty"`
 	// Quantity of the product
@@ -529,6 +575,32 @@ func NewGetOrderOrderOK(body *GetOrderResponseBody) *store.Order {
 
 // NewGetOrderNotFound builds a store service getOrder endpoint not-found error.
 func NewGetOrderNotFound(body *GetOrderNotFoundResponseBody) *goa.ServiceError {
+	v := &goa.ServiceError{
+		Name:      *body.Name,
+		ID:        *body.ID,
+		Message:   *body.Message,
+		Temporary: *body.Temporary,
+		Timeout:   *body.Timeout,
+		Fault:     *body.Fault,
+	}
+
+	return v
+}
+
+// NewGetUserOrdersOrderOK builds a "store" service "getUserOrders\t" endpoint
+// result from a HTTP "OK" response.
+func NewGetUserOrdersOrderOK(body []*OrderResponse) []*store.Order {
+	v := make([]*store.Order, len(body))
+	for i, val := range body {
+		v[i] = unmarshalOrderResponseToStoreOrder(val)
+	}
+
+	return v
+}
+
+// NewGetUserOrdersNotFound builds a store service getUserOrders	 endpoint
+// not-found error.
+func NewGetUserOrdersNotFound(body *GetUserOrdersNotFoundResponseBody) *goa.ServiceError {
 	v := &goa.ServiceError{
 		Name:      *body.Name,
 		ID:        *body.ID,
@@ -831,6 +903,30 @@ func ValidateGetOrderNotFoundResponseBody(body *GetOrderNotFoundResponseBody) (e
 	return
 }
 
+// ValidateGetUserOrdersNotFoundResponseBody runs the validations defined on
+// getUserOrders	_not-found_response_body
+func ValidateGetUserOrdersNotFoundResponseBody(body *GetUserOrdersNotFoundResponseBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
+	}
+	if body.Temporary == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
+	}
+	if body.Timeout == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
+	}
+	if body.Fault == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
+	}
+	return
+}
+
 // ValidateGetCartNotFoundResponseBody runs the validations defined on
 // getCart_not-found_response_body
 func ValidateGetCartNotFoundResponseBody(body *GetCartNotFoundResponseBody) (err error) {
@@ -889,6 +985,47 @@ func ValidateProductResponse(body *ProductResponse) (err error) {
 // ValidateOrderItemResponseBody runs the validations defined on
 // OrderItemResponseBody
 func ValidateOrderItemResponseBody(body *OrderItemResponseBody) (err error) {
+	if body.ProductID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("productID", "body"))
+	}
+	if body.Quantity == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("quantity", "body"))
+	}
+	if body.Price == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("price", "body"))
+	}
+	return
+}
+
+// ValidateOrderResponse runs the validations defined on OrderResponse
+func ValidateOrderResponse(body *OrderResponse) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.UserID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("userID", "body"))
+	}
+	if body.Items == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("items", "body"))
+	}
+	if body.TotalAmount == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("totalAmount", "body"))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	for _, e := range body.Items {
+		if e != nil {
+			if err2 := ValidateOrderItemResponse(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
+// ValidateOrderItemResponse runs the validations defined on OrderItemResponse
+func ValidateOrderItemResponse(body *OrderItemResponse) (err error) {
 	if body.ProductID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("productID", "body"))
 	}

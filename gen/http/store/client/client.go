@@ -49,6 +49,10 @@ type Client struct {
 	// endpoint.
 	GetOrderDoer goahttp.Doer
 
+	// GetUserOrders Doer is the HTTP client used to make requests to the
+	// getUserOrders	 endpoint.
+	GetUserOrdersDoer goahttp.Doer
+
 	// AddToCart Doer is the HTTP client used to make requests to the addToCart
 	// endpoint.
 	AddToCartDoer goahttp.Doer
@@ -85,6 +89,7 @@ func NewClient(
 		ListProductsDoer:    doer,
 		CreateOrderDoer:     doer,
 		GetOrderDoer:        doer,
+		GetUserOrdersDoer:   doer,
 		AddToCartDoer:       doer,
 		GetCartDoer:         doer,
 		RestoreResponseBody: restoreBody,
@@ -257,6 +262,25 @@ func (c *Client) GetOrder() goa.Endpoint {
 		resp, err := c.GetOrderDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("store", "getOrder", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// GetUserOrders returns an endpoint that makes HTTP requests to the store
+// service getUserOrders	 server.
+func (c *Client) GetUserOrders() goa.Endpoint {
+	var (
+		decodeResponse = DecodeGetUserOrdersResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildGetUserOrdersRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetUserOrdersDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("store", "getUserOrders	", err)
 		}
 		return decodeResponse(resp)
 	}

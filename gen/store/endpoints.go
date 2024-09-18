@@ -23,6 +23,7 @@ type Endpoints struct {
 	ListProducts  goa.Endpoint
 	CreateOrder   goa.Endpoint
 	GetOrder      goa.Endpoint
+	GetUserOrders goa.Endpoint
 	AddToCart     goa.Endpoint
 	GetCart       goa.Endpoint
 }
@@ -38,6 +39,7 @@ func NewEndpoints(s Service) *Endpoints {
 		ListProducts:  NewListProductsEndpoint(s),
 		CreateOrder:   NewCreateOrderEndpoint(s),
 		GetOrder:      NewGetOrderEndpoint(s),
+		GetUserOrders: NewGetUserOrdersEndpoint(s),
 		AddToCart:     NewAddToCartEndpoint(s),
 		GetCart:       NewGetCartEndpoint(s),
 	}
@@ -53,6 +55,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.ListProducts = m(e.ListProducts)
 	e.CreateOrder = m(e.CreateOrder)
 	e.GetOrder = m(e.GetOrder)
+	e.GetUserOrders = m(e.GetUserOrders)
 	e.AddToCart = m(e.AddToCart)
 	e.GetCart = m(e.GetCart)
 }
@@ -124,6 +127,15 @@ func NewGetOrderEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*GetOrderPayload)
 		return s.GetOrder(ctx, p)
+	}
+}
+
+// NewGetUserOrdersEndpoint returns an endpoint function that calls the method
+// "getUserOrders\t" of service "store".
+func NewGetUserOrdersEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*GetUserOrdersPayload)
+		return s.GetUserOrders(ctx, p)
 	}
 }
 

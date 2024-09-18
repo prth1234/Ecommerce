@@ -600,6 +600,94 @@ func DecodeGetOrderResponse(decoder func(*http.Response) goahttp.Decoder, restor
 	}
 }
 
+// BuildGetUserOrdersRequest instantiates a HTTP request object with method and
+// path set to call the "store" service "getUserOrders\t" endpoint
+func (c *Client) BuildGetUserOrdersRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		userID string
+	)
+	{
+		p, ok := v.(*store.GetUserOrdersPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("store", "getUserOrders	", "*store.GetUserOrdersPayload", v)
+		}
+		userID = p.UserID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetUserOrdersStorePath(userID)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("store", "getUserOrders	", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeGetUserOrdersResponse returns a decoder for responses returned by the
+// store getUserOrders	 endpoint. restoreBody controls whether the response
+// body should be restored after having been read.
+// DecodeGetUserOrdersResponse may return the following errors:
+//   - "not-found" (type *goa.ServiceError): http.StatusNotFound
+//   - error: internal error
+func DecodeGetUserOrdersResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body GetUserOrdersResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "getUserOrders	", err)
+			}
+			for _, e := range body {
+				if e != nil {
+					if err2 := ValidateOrderResponse(e); err2 != nil {
+						err = goa.MergeErrors(err, err2)
+					}
+				}
+			}
+			if err != nil {
+				return nil, goahttp.ErrValidationError("store", "getUserOrders	", err)
+			}
+			res := NewGetUserOrdersOrderOK(body)
+			return res, nil
+		case http.StatusNotFound:
+			var (
+				body GetUserOrdersNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "getUserOrders	", err)
+			}
+			err = ValidateGetUserOrdersNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("store", "getUserOrders	", err)
+			}
+			return nil, NewGetUserOrdersNotFound(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("store", "getUserOrders\t", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildAddToCartRequest instantiates a HTTP request object with method and
 // path set to call the "store" service "addToCart" endpoint
 func (c *Client) BuildAddToCartRequest(ctx context.Context, v any) (*http.Request, error) {
@@ -814,6 +902,35 @@ func marshalOrderItemRequestBodyToStoreOrderItem(v *OrderItemRequestBody) *store
 // unmarshalOrderItemResponseBodyToStoreOrderItem builds a value of type
 // *store.OrderItem from a value of type *OrderItemResponseBody.
 func unmarshalOrderItemResponseBodyToStoreOrderItem(v *OrderItemResponseBody) *store.OrderItem {
+	res := &store.OrderItem{
+		ProductID: *v.ProductID,
+		Quantity:  *v.Quantity,
+		Price:     *v.Price,
+	}
+
+	return res
+}
+
+// unmarshalOrderResponseToStoreOrder builds a value of type *store.Order from
+// a value of type *OrderResponse.
+func unmarshalOrderResponseToStoreOrder(v *OrderResponse) *store.Order {
+	res := &store.Order{
+		ID:          *v.ID,
+		UserID:      *v.UserID,
+		TotalAmount: *v.TotalAmount,
+		Status:      *v.Status,
+	}
+	res.Items = make([]*store.OrderItem, len(v.Items))
+	for i, val := range v.Items {
+		res.Items[i] = unmarshalOrderItemResponseToStoreOrderItem(val)
+	}
+
+	return res
+}
+
+// unmarshalOrderItemResponseToStoreOrderItem builds a value of type
+// *store.OrderItem from a value of type *OrderItemResponse.
+func unmarshalOrderItemResponseToStoreOrderItem(v *OrderItemResponse) *store.OrderItem {
 	res := &store.OrderItem{
 		ProductID: *v.ProductID,
 		Quantity:  *v.Quantity,

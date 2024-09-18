@@ -105,6 +105,21 @@ var _ = Service("store", func() {
 		})
 	})
 
+	Method("getUserOrders	", func() {
+		Description("Retrieve all orders for a specific user")
+		Payload(func() {
+			Field(1, "userID", String)
+			Required("userID")
+		})
+		Result(ArrayOf(Order))
+		Error("not-found")
+		HTTP(func() {
+			GET("/users/{userID}/orders")
+			Response(StatusOK)
+			Response("not-found", StatusNotFound)
+		})
+	})
+
 	// Cart endpoints
 	Method("addToCart", func() {
 		Payload(CartItem)

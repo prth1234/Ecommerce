@@ -27,6 +27,7 @@ type Server struct {
 	ListProducts  http.Handler
 	CreateOrder   http.Handler
 	GetOrder      http.Handler
+	GetUserOrders http.Handler
 	AddToCart     http.Handler
 	GetCart       http.Handler
 }
@@ -66,6 +67,7 @@ func New(
 			{"ListProducts", "GET", "/products"},
 			{"CreateOrder", "POST", "/orders"},
 			{"GetOrder", "GET", "/orders/{id}"},
+			{"GetUserOrders", "GET", "/users/{userID}/orders"},
 			{"AddToCart", "POST", "/cart/items"},
 			{"GetCart", "GET", "/cart"},
 		},
@@ -77,6 +79,7 @@ func New(
 		ListProducts:  NewListProductsHandler(e.ListProducts, mux, decoder, encoder, errhandler, formatter),
 		CreateOrder:   NewCreateOrderHandler(e.CreateOrder, mux, decoder, encoder, errhandler, formatter),
 		GetOrder:      NewGetOrderHandler(e.GetOrder, mux, decoder, encoder, errhandler, formatter),
+		GetUserOrders: NewGetUserOrdersHandler(e.GetUserOrders, mux, decoder, encoder, errhandler, formatter),
 		AddToCart:     NewAddToCartHandler(e.AddToCart, mux, decoder, encoder, errhandler, formatter),
 		GetCart:       NewGetCartHandler(e.GetCart, mux, decoder, encoder, errhandler, formatter),
 	}
@@ -95,6 +98,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.ListProducts = m(s.ListProducts)
 	s.CreateOrder = m(s.CreateOrder)
 	s.GetOrder = m(s.GetOrder)
+	s.GetUserOrders = m(s.GetUserOrders)
 	s.AddToCart = m(s.AddToCart)
 	s.GetCart = m(s.GetCart)
 }
@@ -112,6 +116,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountListProductsHandler(mux, h.ListProducts)
 	MountCreateOrderHandler(mux, h.CreateOrder)
 	MountGetOrderHandler(mux, h.GetOrder)
+	MountGetUserOrdersHandler(mux, h.GetUserOrders)
 	MountAddToCartHandler(mux, h.AddToCart)
 	MountGetCartHandler(mux, h.GetCart)
 }
@@ -494,6 +499,57 @@ func NewGetOrderHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "getOrder")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountGetUserOrdersHandler configures the mux to serve the "store" service
+// "getUserOrders\t" endpoint.
+func MountGetUserOrdersHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/users/{userID}/orders", f)
+}
+
+// NewGetUserOrdersHandler creates a HTTP handler which loads the HTTP request
+// and calls the "store" service "getUserOrders\t" endpoint.
+func NewGetUserOrdersHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeGetUserOrdersRequest(mux, decoder)
+		encodeResponse = EncodeGetUserOrdersResponse(encoder)
+		encodeError    = EncodeGetUserOrdersError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "getUserOrders\t")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
 		payload, err := decodeRequest(r)
 		if err != nil {

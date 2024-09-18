@@ -22,17 +22,17 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `store (create-user|get-user|get-user-all|create-product|get-product|list-products|create-order|get-order|add-to-cart|get-cart)
+	return `store (create-user|get-user|get-user-all|create-product|get-product|list-products|create-order|get-order|get-user-orders|add-to-cart|get-cart)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` store create-user --body '{
-      "email": "Molestiae enim nam consequatur.",
-      "firstName": "Provident ducimus iure at accusantium sit velit.",
-      "lastName": "Non ea dolor pariatur autem.",
-      "username": "Sit dolores voluptatem porro quod tenetur."
+      "email": "Provident ducimus iure at accusantium sit velit.",
+      "firstName": "Non ea dolor pariatur autem.",
+      "lastName": "Nam a placeat sapiente.",
+      "username": "Tenetur nobis molestiae enim nam consequatur."
    }'` + "\n" +
 		""
 }
@@ -71,6 +71,9 @@ func ParseEndpoint(
 		storeGetOrderFlags  = flag.NewFlagSet("get-order", flag.ExitOnError)
 		storeGetOrderIDFlag = storeGetOrderFlags.String("id", "REQUIRED", "")
 
+		storeGetUserOrdersFlags      = flag.NewFlagSet("get-user-orders", flag.ExitOnError)
+		storeGetUserOrdersUserIDFlag = storeGetUserOrdersFlags.String("user-id", "REQUIRED", "")
+
 		storeAddToCartFlags    = flag.NewFlagSet("add-to-cart", flag.ExitOnError)
 		storeAddToCartBodyFlag = storeAddToCartFlags.String("body", "REQUIRED", "")
 
@@ -86,6 +89,7 @@ func ParseEndpoint(
 	storeListProductsFlags.Usage = storeListProductsUsage
 	storeCreateOrderFlags.Usage = storeCreateOrderUsage
 	storeGetOrderFlags.Usage = storeGetOrderUsage
+	storeGetUserOrdersFlags.Usage = storeGetUserOrdersUsage
 	storeAddToCartFlags.Usage = storeAddToCartUsage
 	storeGetCartFlags.Usage = storeGetCartUsage
 
@@ -147,6 +151,9 @@ func ParseEndpoint(
 			case "get-order":
 				epf = storeGetOrderFlags
 
+			case "get-user-orders":
+				epf = storeGetUserOrdersFlags
+
 			case "add-to-cart":
 				epf = storeAddToCartFlags
 
@@ -200,6 +207,9 @@ func ParseEndpoint(
 			case "get-order":
 				endpoint = c.GetOrder()
 				data, err = storec.BuildGetOrderPayload(*storeGetOrderIDFlag)
+			case "get-user-orders":
+				endpoint = c.GetUserOrders()
+				data, err = storec.BuildGetUserOrdersPayload(*storeGetUserOrdersUserIDFlag)
 			case "add-to-cart":
 				endpoint = c.AddToCart()
 				data, err = storec.BuildAddToCartPayload(*storeAddToCartBodyFlag)
@@ -231,6 +241,7 @@ COMMAND:
     list-products: ListProducts implements listProducts.
     create-order: CreateOrder implements createOrder.
     get-order: GetOrder implements getOrder.
+    get-user-orders: Retrieve all orders for a specific user
     add-to-cart: AddToCart implements addToCart.
     get-cart: GetCart implements getCart.
 
@@ -246,10 +257,10 @@ CreateUser implements createUser.
 
 Example:
     %[1]s store create-user --body '{
-      "email": "Molestiae enim nam consequatur.",
-      "firstName": "Provident ducimus iure at accusantium sit velit.",
-      "lastName": "Non ea dolor pariatur autem.",
-      "username": "Sit dolores voluptatem porro quod tenetur."
+      "email": "Provident ducimus iure at accusantium sit velit.",
+      "firstName": "Non ea dolor pariatur autem.",
+      "lastName": "Nam a placeat sapiente.",
+      "username": "Tenetur nobis molestiae enim nam consequatur."
    }'
 `, os.Args[0])
 }
@@ -261,7 +272,7 @@ GetUser implements getUser.
     -id STRING: 
 
 Example:
-    %[1]s store get-user --id "Facilis sint."
+    %[1]s store get-user --id "Et minus velit sed alias consequatur dolores."
 `, os.Args[0])
 }
 
@@ -283,10 +294,10 @@ CreateProduct implements createProduct.
 
 Example:
     %[1]s store create-product --body '{
-      "description": "Ratione in aut qui hic voluptas laborum.",
-      "inventory": 7245630784026535703,
-      "name": "Qui voluptas explicabo et esse quis.",
-      "price": 0.5532281796284398
+      "description": "Asperiores repellat quisquam perferendis.",
+      "inventory": 7080323998293430317,
+      "name": "Hic voluptas.",
+      "price": 0.33333071459397057
    }'
 `, os.Args[0])
 }
@@ -298,7 +309,7 @@ GetProduct implements getProduct.
     -id STRING: 
 
 Example:
-    %[1]s store get-product --id "Dolores sed."
+    %[1]s store get-product --id "Consectetur adipisci amet."
 `, os.Args[0])
 }
 
@@ -323,21 +334,26 @@ Example:
       "items": [
          {
             "price": 0.2782759670844699,
-            "productID": "Ut at.",
+            "productID": "Et est doloribus ut at.",
             "quantity": 1281967412391717881
          },
          {
             "price": 0.2782759670844699,
-            "productID": "Ut at.",
+            "productID": "Et est doloribus ut at.",
             "quantity": 1281967412391717881
          },
          {
             "price": 0.2782759670844699,
-            "productID": "Ut at.",
+            "productID": "Et est doloribus ut at.",
+            "quantity": 1281967412391717881
+         },
+         {
+            "price": 0.2782759670844699,
+            "productID": "Et est doloribus ut at.",
             "quantity": 1281967412391717881
          }
       ],
-      "userID": "Ipsum rerum et."
+      "userID": "Ut amet."
    }'
 `, os.Args[0])
 }
@@ -353,6 +369,17 @@ Example:
 `, os.Args[0])
 }
 
+func storeGetUserOrdersUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] store get-user-orders -user-id STRING
+
+Retrieve all orders for a specific user
+    -user-id STRING: 
+
+Example:
+    %[1]s store get-user-orders --user-id "Recusandae quia."
+`, os.Args[0])
+}
+
 func storeAddToCartUsage() {
 	fmt.Fprintf(os.Stderr, `%[1]s [flags] store add-to-cart -body JSON
 
@@ -361,10 +388,10 @@ AddToCart implements addToCart.
 
 Example:
     %[1]s store add-to-cart --body '{
-      "price": 0.09981448305074944,
-      "productID": "Recusandae quia.",
-      "quantity": 5676592030789778431,
-      "userID": "Ut doloribus recusandae quis."
+      "price": 0.19750246691753612,
+      "productID": "Doloremque quia.",
+      "quantity": 8413811540640946695,
+      "userID": "Quia tempore voluptatem."
    }'
 `, os.Args[0])
 }
@@ -377,7 +404,7 @@ GetCart implements getCart.
 
 Example:
     %[1]s store get-cart --body '{
-      "userID": "Minima dolor consequatur quia tempore voluptatem."
+      "userID": "Beatae laudantium eaque eveniet."
    }'
 `, os.Args[0])
 }

@@ -23,12 +23,13 @@ type Client struct {
 	ListProductsEndpoint  goa.Endpoint
 	CreateOrderEndpoint   goa.Endpoint
 	GetOrderEndpoint      goa.Endpoint
+	GetUserOrdersEndpoint goa.Endpoint
 	AddToCartEndpoint     goa.Endpoint
 	GetCartEndpoint       goa.Endpoint
 }
 
 // NewClient initializes a "store" service client given the endpoints.
-func NewClient(createUser, getUser, getUserAll, createProduct, getProduct, listProducts, createOrder, getOrder, addToCart, getCart goa.Endpoint) *Client {
+func NewClient(createUser, getUser, getUserAll, createProduct, getProduct, listProducts, createOrder, getOrder, getUserOrders, addToCart, getCart goa.Endpoint) *Client {
 	return &Client{
 		CreateUserEndpoint:    createUser,
 		GetUserEndpoint:       getUser,
@@ -38,6 +39,7 @@ func NewClient(createUser, getUser, getUserAll, createProduct, getProduct, listP
 		ListProductsEndpoint:  listProducts,
 		CreateOrderEndpoint:   createOrder,
 		GetOrderEndpoint:      getOrder,
+		GetUserOrdersEndpoint: getUserOrders,
 		AddToCartEndpoint:     addToCart,
 		GetCartEndpoint:       getCart,
 	}
@@ -130,6 +132,19 @@ func (c *Client) GetOrder(ctx context.Context, p *GetOrderPayload) (res *Order, 
 		return
 	}
 	return ires.(*Order), nil
+}
+
+// GetUserOrders calls the "getUserOrders\t" endpoint of the "store" service.
+// GetUserOrders may return the following errors:
+//   - "not-found" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) GetUserOrders(ctx context.Context, p *GetUserOrdersPayload) (res []*Order, err error) {
+	var ires any
+	ires, err = c.GetUserOrdersEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.([]*Order), nil
 }
 
 // AddToCart calls the "addToCart" endpoint of the "store" service.

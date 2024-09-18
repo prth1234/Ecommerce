@@ -51,6 +51,11 @@ func GetOrderStorePath(id string) string {
 	return fmt.Sprintf("/orders/%v", id)
 }
 
+// GetUserOrdersStorePath returns the URL path to the store service getUserOrders	 HTTP endpoint.
+func GetUserOrdersStorePath(userID string) string {
+	return fmt.Sprintf("/users/%v/orders", userID)
+}
+
 // AddToCartStorePath returns the URL path to the store service addToCart HTTP endpoint.
 func AddToCartStorePath() string {
 	return "/cart/items"

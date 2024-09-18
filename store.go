@@ -151,6 +151,72 @@ func (s *storesrvc) CreateOrder(ctx context.Context, p *store.NewOrder) (res *st
 	return order, nil
 }
 
+func (s *storesrvc) GetUserOrders(ctx context.Context, p *store.GetUserOrdersPayload) (res []*store.Order, err error) {
+	query := `
+		SELECT o.id, o.user_id, o.total_amount, o.status, 
+			   oi.product_id, oi.quantity, oi.price
+		FROM orders o
+		LEFT JOIN order_items oi ON o.id = oi.order_id
+		WHERE o.user_id = $1
+		ORDER BY o.id`
+
+	rows, err := s.db.QueryContext(ctx, query, p.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user orders: %v", err)
+	}
+	defer rows.Close()
+
+	orders := make(map[string]*store.Order)
+	for rows.Next() {
+		var orderID, userID, productID sql.NullString
+		var totalAmount, price sql.NullFloat64
+		var status sql.NullString
+		var quantity sql.NullInt32
+
+		err = rows.Scan(&orderID, &userID, &totalAmount, &status, &productID, &quantity, &price)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning order: %v", err)
+		}
+
+		order, exists := orders[orderID.String]
+		if !exists {
+			order = &store.Order{
+				ID:          orderID.String,
+				UserID:      userID.String,
+				TotalAmount: totalAmount.Float64,
+				Status:      status.String,
+				Items:       []*store.OrderItem{},
+			}
+			orders[orderID.String] = order
+		}
+
+		if productID.Valid {
+			item := &store.OrderItem{
+				ProductID: productID.String,
+				Quantity:  int(quantity.Int32),
+				Price:     price.Float64,
+			}
+			order.Items = append(order.Items, item)
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %v", err)
+	}
+
+	// Convert map to slice
+	var result []*store.Order
+	for _, order := range orders {
+		result = append(result, order)
+	}
+
+	if len(result) == 0 {
+		return nil, store.MakeNotFound(fmt.Errorf("no orders found for user"))
+	}
+
+	return result, nil
+}
+
 func (s *storesrvc) GetOrder(ctx context.Context, p *store.GetOrderPayload) (res *store.Order, err error) {
 	query := `
 		SELECT o.id, o.user_id, o.total_amount, o.status, 

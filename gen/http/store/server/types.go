@@ -166,6 +166,10 @@ type GetOrderResponseBody struct {
 	Status string `form:"status" json:"status" xml:"status"`
 }
 
+// GetUserOrdersResponseBody is the type of the "store" service
+// "getUserOrders\t" endpoint HTTP response body.
+type GetUserOrdersResponseBody []*OrderResponse
+
 // AddToCartResponseBody is the type of the "store" service "addToCart"
 // endpoint HTTP response body.
 type AddToCartResponseBody struct {
@@ -246,6 +250,24 @@ type GetOrderNotFoundResponseBody struct {
 	Fault bool `form:"fault" json:"fault" xml:"fault"`
 }
 
+// GetUserOrdersNotFoundResponseBody is the type of the "store" service
+// "getUserOrders\t" endpoint HTTP response body for the "not-found" error.
+type GetUserOrdersNotFoundResponseBody struct {
+	// Name is the name of this class of errors.
+	Name string `form:"name" json:"name" xml:"name"`
+	// ID is a unique identifier for this particular occurrence of the problem.
+	ID string `form:"id" json:"id" xml:"id"`
+	// Message is a human-readable explanation specific to this occurrence of the
+	// problem.
+	Message string `form:"message" json:"message" xml:"message"`
+	// Is the error temporary?
+	Temporary bool `form:"temporary" json:"temporary" xml:"temporary"`
+	// Is the error a timeout?
+	Timeout bool `form:"timeout" json:"timeout" xml:"timeout"`
+	// Is the error a server-side fault?
+	Fault bool `form:"fault" json:"fault" xml:"fault"`
+}
+
 // GetCartNotFoundResponseBody is the type of the "store" service "getCart"
 // endpoint HTTP response body for the "not-found" error.
 type GetCartNotFoundResponseBody struct {
@@ -294,6 +316,30 @@ type ProductResponse struct {
 
 // OrderItemResponseBody is used to define fields on response body types.
 type OrderItemResponseBody struct {
+	// ID of the product
+	ProductID string `form:"productID" json:"productID" xml:"productID"`
+	// Quantity of the product
+	Quantity int `form:"quantity" json:"quantity" xml:"quantity"`
+	// Price of the product at the time of order
+	Price float64 `form:"price" json:"price" xml:"price"`
+}
+
+// OrderResponse is used to define fields on response body types.
+type OrderResponse struct {
+	// Unique order ID
+	ID string `form:"id" json:"id" xml:"id"`
+	// ID of the user who placed the order
+	UserID string `form:"userID" json:"userID" xml:"userID"`
+	// Items in the order
+	Items []*OrderItemResponse `form:"items" json:"items" xml:"items"`
+	// Total amount of the order
+	TotalAmount float64 `form:"totalAmount" json:"totalAmount" xml:"totalAmount"`
+	// Order status
+	Status string `form:"status" json:"status" xml:"status"`
+}
+
+// OrderItemResponse is used to define fields on response body types.
+type OrderItemResponse struct {
 	// ID of the product
 	ProductID string `form:"productID" json:"productID" xml:"productID"`
 	// Quantity of the product
@@ -436,6 +482,16 @@ func NewGetOrderResponseBody(res *store.Order) *GetOrderResponseBody {
 	return body
 }
 
+// NewGetUserOrdersResponseBody builds the HTTP response body from the result
+// of the "getUserOrders\t" endpoint of the "store" service.
+func NewGetUserOrdersResponseBody(res []*store.Order) GetUserOrdersResponseBody {
+	body := make([]*OrderResponse, len(res))
+	for i, val := range res {
+		body[i] = marshalStoreOrderToOrderResponse(val)
+	}
+	return body
+}
+
 // NewAddToCartResponseBody builds the HTTP response body from the result of
 // the "addToCart" endpoint of the "store" service.
 func NewAddToCartResponseBody(res *store.Cart) *AddToCartResponseBody {
@@ -506,6 +562,20 @@ func NewGetProductNotFoundResponseBody(res *goa.ServiceError) *GetProductNotFoun
 // result of the "getOrder" endpoint of the "store" service.
 func NewGetOrderNotFoundResponseBody(res *goa.ServiceError) *GetOrderNotFoundResponseBody {
 	body := &GetOrderNotFoundResponseBody{
+		Name:      res.Name,
+		ID:        res.ID,
+		Message:   res.Message,
+		Temporary: res.Temporary,
+		Timeout:   res.Timeout,
+		Fault:     res.Fault,
+	}
+	return body
+}
+
+// NewGetUserOrdersNotFoundResponseBody builds the HTTP response body from the
+// result of the "getUserOrders\t" endpoint of the "store" service.
+func NewGetUserOrdersNotFoundResponseBody(res *goa.ServiceError) *GetUserOrdersNotFoundResponseBody {
+	body := &GetUserOrdersNotFoundResponseBody{
 		Name:      res.Name,
 		ID:        res.ID,
 		Message:   res.Message,
@@ -588,6 +658,15 @@ func NewCreateOrderNewOrder(body *CreateOrderRequestBody) *store.NewOrder {
 func NewGetOrderPayload(id string) *store.GetOrderPayload {
 	v := &store.GetOrderPayload{}
 	v.ID = id
+
+	return v
+}
+
+// NewGetUserOrdersPayload builds a store service getUserOrders	 endpoint
+// payload.
+func NewGetUserOrdersPayload(userID string) *store.GetUserOrdersPayload {
+	v := &store.GetUserOrdersPayload{}
+	v.UserID = userID
 
 	return v
 }
