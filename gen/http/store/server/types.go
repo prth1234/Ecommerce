@@ -53,8 +53,6 @@ type CreateProductRequestBody struct {
 // CreateOrderRequestBody is the type of the "store" service "createOrder"
 // endpoint HTTP request body.
 type CreateOrderRequestBody struct {
-	// ID of the user placing the order
-	UserID *string `form:"userID,omitempty" json:"userID,omitempty" xml:"userID,omitempty"`
 	// Items in the order
 	Items []*OrderItemRequestBody `form:"items,omitempty" json:"items,omitempty" xml:"items,omitempty"`
 }
@@ -689,9 +687,7 @@ func NewGetProductPayload(id string) *store.GetProductPayload {
 
 // NewCreateOrderNewOrder builds a store service createOrder endpoint payload.
 func NewCreateOrderNewOrder(body *CreateOrderRequestBody) *store.NewOrder {
-	v := &store.NewOrder{
-		UserID: *body.UserID,
-	}
+	v := &store.NewOrder{}
 	v.Items = make([]*store.OrderItem, len(body.Items))
 	for i, val := range body.Items {
 		v.Items[i] = unmarshalOrderItemRequestBodyToStoreOrderItem(val)
@@ -789,9 +785,6 @@ func ValidateCreateProductRequestBody(body *CreateProductRequestBody) (err error
 // ValidateCreateOrderRequestBody runs the validations defined on
 // CreateOrderRequestBody
 func ValidateCreateOrderRequestBody(body *CreateOrderRequestBody) (err error) {
-	if body.UserID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("userID", "body"))
-	}
 	if body.Items == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("items", "body"))
 	}

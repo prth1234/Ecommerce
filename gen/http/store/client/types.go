@@ -53,8 +53,6 @@ type CreateProductRequestBody struct {
 // CreateOrderRequestBody is the type of the "store" service "createOrder"
 // endpoint HTTP request body.
 type CreateOrderRequestBody struct {
-	// ID of the user placing the order
-	UserID string `form:"userID" json:"userID" xml:"userID"`
 	// Items in the order
 	Items []*OrderItemRequestBody `form:"items" json:"items" xml:"items"`
 }
@@ -432,9 +430,7 @@ func NewCreateProductRequestBody(p *store.NewProduct) *CreateProductRequestBody 
 // NewCreateOrderRequestBody builds the HTTP request body from the payload of
 // the "createOrder" endpoint of the "store" service.
 func NewCreateOrderRequestBody(p *store.NewOrder) *CreateOrderRequestBody {
-	body := &CreateOrderRequestBody{
-		UserID: p.UserID,
-	}
+	body := &CreateOrderRequestBody{}
 	if p.Items != nil {
 		body.Items = make([]*OrderItemRequestBody, len(p.Items))
 		for i, val := range p.Items {

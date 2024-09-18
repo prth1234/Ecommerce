@@ -124,8 +124,6 @@ type LoginUserResult struct {
 
 // NewOrder is the payload type of the store service createOrder method.
 type NewOrder struct {
-	// ID of the user placing the order
-	UserID string
 	// Items in the order
 	Items []*OrderItem
 }

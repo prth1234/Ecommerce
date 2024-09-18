@@ -44,6 +44,34 @@ func (s *storesrvc) CreateUser(ctx context.Context, p *store.NewUser) (res *stor
 	return user, nil
 }
 
+//// In the LoginUser function
+//func (s *storesrvc) LoginUser(ctx context.Context, p *store.LoginUserPayload) (*store.LoginUserResult, error) {
+//	query := `SELECT id, username, password FROM users WHERE username = $1`
+//	var id, username, hashedPassword string
+//
+//	err := s.db.QueryRowContext(ctx, query, p.Username).Scan(&id, &username, &hashedPassword)
+//	if err != nil {
+//		if err == sql.ErrNoRows {
+//			return nil, fmt.Errorf("invalid username or password")
+//		}
+//		return nil, fmt.Errorf("error querying user: %v", err)
+//	}
+//
+//	// Compare passwords
+//	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(p.Password))
+//	if err != nil {
+//		return nil, fmt.Errorf("invalid username or password")
+//	}
+//
+//	// Generate JWT token
+//	token, err := jwthelper.GenerateJWT(username)
+//	if err != nil {
+//		return nil, fmt.Errorf("error generating token: %v", err)
+//	}
+//
+//	return &store.LoginUserResult{Token: &token}, nil
+//}
+
 func (s *storesrvc) LoginUser(ctx context.Context, p *store.LoginUserPayload) (res *store.LoginUserResult, err error) {
 	// Here you would typically verify the user's credentials against your database
 	// For this example, we'll just check if the username and password are not empty
@@ -146,23 +174,38 @@ func (s *storesrvc) ListProducts(ctx context.Context) (res []*store.Product, err
 
 	return products, nil
 }
-
 func (s *storesrvc) CreateOrder(ctx context.Context, p *store.NewOrder) (res *store.Order, err error) {
+	// Get the username from the context (set by the JWTAuthMiddleware)
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	// Start a database transaction
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error starting transaction: %v", err)
 	}
 	defer tx.Rollback()
 
+	// Get the user ID from the username
+	var userID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user ID: %v", err)
+	}
+
+	// Create a new order
 	id := uuid.New().String()
 	query := `INSERT INTO orders (id, user_id, total_amount, status) VALUES ($1, $2, $3, $4) RETURNING id, user_id, total_amount, status`
 
 	order := &store.Order{Items: p.Items}
-	err = tx.QueryRowContext(ctx, query, id, p.UserID, 0, "pending").Scan(&order.ID, &order.UserID, &order.TotalAmount, &order.Status)
+	err = tx.QueryRowContext(ctx, query, id, userID, 0, "pending").Scan(&order.ID, &order.UserID, &order.TotalAmount, &order.Status)
 	if err != nil {
 		return nil, fmt.Errorf("error creating order: %v", err)
 	}
 
+	// Add order items
 	for _, item := range p.Items {
 		_, err = tx.ExecContext(ctx, `INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)`,
 			order.ID, item.ProductID, item.Quantity, item.Price)
@@ -172,18 +215,19 @@ func (s *storesrvc) CreateOrder(ctx context.Context, p *store.NewOrder) (res *st
 		order.TotalAmount += item.Price * float64(item.Quantity)
 	}
 
+	// Update the order total
 	_, err = tx.ExecContext(ctx, `UPDATE orders SET total_amount = $1 WHERE id = $2`, order.TotalAmount, order.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error updating order total: %v", err)
 	}
 
+	// Commit the transaction
 	if err = tx.Commit(); err != nil {
 		return nil, fmt.Errorf("error committing transaction: %v", err)
 	}
 
 	return order, nil
 }
-
 func (s *storesrvc) GetUserOrders(ctx context.Context, p *store.GetUserOrdersPayload) (res []*store.Order, err error) {
 	query := `
 		SELECT o.id, o.user_id, o.total_amount, o.status, 

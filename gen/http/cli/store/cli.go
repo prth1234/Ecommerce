@@ -29,11 +29,11 @@ func UsageCommands() string {
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` store create-user --body '{
-      "email": "Pariatur autem labore nam.",
-      "firstName": "Placeat sapiente inventore quis omnis facilis.",
-      "lastName": "Nulla eius qui culpa.",
-      "password": "Et repudiandae.",
-      "username": "Sit velit molestias non ea."
+      "email": "Accusantium sit velit molestias non ea dolor.",
+      "firstName": "Autem labore nam.",
+      "lastName": "Placeat sapiente inventore quis omnis facilis.",
+      "password": "Nulla eius qui culpa.",
+      "username": "Ducimus iure."
    }'` + "\n" +
 		""
 }
@@ -269,11 +269,11 @@ CreateUser implements createUser.
 
 Example:
     %[1]s store create-user --body '{
-      "email": "Pariatur autem labore nam.",
-      "firstName": "Placeat sapiente inventore quis omnis facilis.",
-      "lastName": "Nulla eius qui culpa.",
-      "password": "Et repudiandae.",
-      "username": "Sit velit molestias non ea."
+      "email": "Accusantium sit velit molestias non ea dolor.",
+      "firstName": "Autem labore nam.",
+      "lastName": "Placeat sapiente inventore quis omnis facilis.",
+      "password": "Nulla eius qui culpa.",
+      "username": "Ducimus iure."
    }'
 `, os.Args[0])
 }
@@ -286,8 +286,8 @@ Login a user and return a JWT token
 
 Example:
     %[1]s store login-user --body '{
-      "password": "Sed voluptatem aspernatur.",
-      "username": "Praesentium et aut."
+      "password": "Praesentium et aut.",
+      "username": "Quis itaque sed quo saepe."
    }'
 `, os.Args[0])
 }
@@ -299,7 +299,7 @@ GetUser implements getUser.
     -id STRING: 
 
 Example:
-    %[1]s store get-user --id "Ratione aut."
+    %[1]s store get-user --id "Nostrum ea quae sint qui."
 `, os.Args[0])
 }
 
@@ -321,10 +321,10 @@ CreateProduct implements createProduct.
 
 Example:
     %[1]s store create-product --body '{
-      "description": "Aperiam et quia atque illum quis.",
-      "inventory": 2719289908079484285,
-      "name": "Optio fugit facilis harum omnis.",
-      "price": 0.6771694639392373
+      "description": "Dolor itaque quia nam et optio fugit.",
+      "inventory": 6708158487146252491,
+      "name": "Cupiditate assumenda doloribus ea porro laborum.",
+      "price": 0.6889859441205155
    }'
 `, os.Args[0])
 }
@@ -360,22 +360,16 @@ Example:
     %[1]s store create-order --body '{
       "items": [
          {
-            "price": 0.73241831363072,
-            "productID": "Eos libero non soluta.",
-            "quantity": 9175415661056716192
+            "price": 0.2356674159366931,
+            "productID": "Aut distinctio cupiditate quis eos libero.",
+            "quantity": 4210783297621910736
          },
          {
-            "price": 0.73241831363072,
-            "productID": "Eos libero non soluta.",
-            "quantity": 9175415661056716192
-         },
-         {
-            "price": 0.73241831363072,
-            "productID": "Eos libero non soluta.",
-            "quantity": 9175415661056716192
+            "price": 0.2356674159366931,
+            "productID": "Aut distinctio cupiditate quis eos libero.",
+            "quantity": 4210783297621910736
          }
-      ],
-      "userID": "Sunt aut distinctio."
+      ]
    }'
 `, os.Args[0])
 }
@@ -387,7 +381,7 @@ GetOrder implements getOrder.
     -id STRING: 
 
 Example:
-    %[1]s store get-order --id "Debitis ut aut pariatur enim similique."
+    %[1]s store get-order --id "Qui dicta porro."
 `, os.Args[0])
 }
 

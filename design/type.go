@@ -51,9 +51,8 @@ var Order = Type("Order", func() {
 })
 
 var NewOrder = Type("NewOrder", func() {
-	Attribute("userID", String, "ID of the user placing the order")
 	Attribute("items", ArrayOf(OrderItem), "Items in the order")
-	Required("userID", "items")
+	Required("items")
 })
 
 var OrderItem = Type("OrderItem", func() {

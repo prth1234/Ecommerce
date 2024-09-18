@@ -47,3 +47,12 @@ func VerifyJWT(tokenString string) (*Claims, error) {
 
 	return claims, nil
 }
+
+// New function to get username from token
+func GetUsernameFromToken(tokenString string) (string, error) {
+	claims, err := VerifyJWT(tokenString)
+	if err != nil {
+		return "", err
+	}
+	return claims.Username, nil
+}

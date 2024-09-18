@@ -23,7 +23,7 @@ func BuildCreateUserPayload(storeCreateUserBody string) (*store.NewUser, error) 
 	{
 		err = json.Unmarshal([]byte(storeCreateUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Pariatur autem labore nam.\",\n      \"firstName\": \"Placeat sapiente inventore quis omnis facilis.\",\n      \"lastName\": \"Nulla eius qui culpa.\",\n      \"password\": \"Et repudiandae.\",\n      \"username\": \"Sit velit molestias non ea.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Accusantium sit velit molestias non ea dolor.\",\n      \"firstName\": \"Autem labore nam.\",\n      \"lastName\": \"Placeat sapiente inventore quis omnis facilis.\",\n      \"password\": \"Nulla eius qui culpa.\",\n      \"username\": \"Ducimus iure.\"\n   }'")
 		}
 	}
 	v := &store.NewUser{
@@ -45,7 +45,7 @@ func BuildLoginUserPayload(storeLoginUserBody string) (*store.LoginUserPayload, 
 	{
 		err = json.Unmarshal([]byte(storeLoginUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"password\": \"Sed voluptatem aspernatur.\",\n      \"username\": \"Praesentium et aut.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"password\": \"Praesentium et aut.\",\n      \"username\": \"Quis itaque sed quo saepe.\"\n   }'")
 		}
 	}
 	v := &store.LoginUserPayload{
@@ -77,7 +77,7 @@ func BuildCreateProductPayload(storeCreateProductBody string) (*store.NewProduct
 	{
 		err = json.Unmarshal([]byte(storeCreateProductBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"Aperiam et quia atque illum quis.\",\n      \"inventory\": 2719289908079484285,\n      \"name\": \"Optio fugit facilis harum omnis.\",\n      \"price\": 0.6771694639392373\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"Dolor itaque quia nam et optio fugit.\",\n      \"inventory\": 6708158487146252491,\n      \"name\": \"Cupiditate assumenda doloribus ea porro laborum.\",\n      \"price\": 0.6889859441205155\n   }'")
 		}
 	}
 	v := &store.NewProduct{
@@ -111,7 +111,7 @@ func BuildCreateOrderPayload(storeCreateOrderBody string) (*store.NewOrder, erro
 	{
 		err = json.Unmarshal([]byte(storeCreateOrderBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"items\": [\n         {\n            \"price\": 0.73241831363072,\n            \"productID\": \"Eos libero non soluta.\",\n            \"quantity\": 9175415661056716192\n         },\n         {\n            \"price\": 0.73241831363072,\n            \"productID\": \"Eos libero non soluta.\",\n            \"quantity\": 9175415661056716192\n         },\n         {\n            \"price\": 0.73241831363072,\n            \"productID\": \"Eos libero non soluta.\",\n            \"quantity\": 9175415661056716192\n         }\n      ],\n      \"userID\": \"Sunt aut distinctio.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"items\": [\n         {\n            \"price\": 0.2356674159366931,\n            \"productID\": \"Aut distinctio cupiditate quis eos libero.\",\n            \"quantity\": 4210783297621910736\n         },\n         {\n            \"price\": 0.2356674159366931,\n            \"productID\": \"Aut distinctio cupiditate quis eos libero.\",\n            \"quantity\": 4210783297621910736\n         }\n      ]\n   }'")
 		}
 		if body.Items == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("items", "body"))
@@ -120,9 +120,7 @@ func BuildCreateOrderPayload(storeCreateOrderBody string) (*store.NewOrder, erro
 			return nil, err
 		}
 	}
-	v := &store.NewOrder{
-		UserID: body.UserID,
-	}
+	v := &store.NewOrder{}
 	if body.Items != nil {
 		v.Items = make([]*store.OrderItem, len(body.Items))
 		for i, val := range body.Items {

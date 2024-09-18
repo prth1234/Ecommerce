@@ -2,14 +2,11 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strings"
-
 	"store/jwthelper"
+	"strings"
 )
 
-// JWTAuthMiddleware is the middleware that protects routes requiring authentication
 func JWTAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -24,15 +21,14 @@ func JWTAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		token := bearerToken[1]
-		claims, err := jwthelper.VerifyJWT(token)
+		username, err := jwthelper.GetUsernameFromToken(bearerToken[1])
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid token: %v", err), http.StatusUnauthorized)
+			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
 			return
 		}
 
-		// Set the username in the context
-		ctx := context.WithValue(r.Context(), "user", claims.Username)
+		// Add the username to the request context
+		ctx := context.WithValue(r.Context(), "username", username)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
