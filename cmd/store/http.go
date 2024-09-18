@@ -2,33 +2,38 @@ package main
 
 import (
 	"context"
-	//"goa.design/clue/log"
+	"fmt"
 	goahttp "goa.design/goa/v3/http"
 	httpmdlwr "goa.design/goa/v3/http/middleware"
-	"goa.design/goa/v3/middleware"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	storesvr "store/gen/http/store/server"
 	store "store/gen/store"
+	custommiddleware "store/middleware"
 	"sync"
 	"time"
 )
 
+// CustomLogger implements the middleware.Logger interface
+type CustomLogger struct {
+	logger *log.Logger
+}
+
+func (l *CustomLogger) Log(keyvals ...interface{}) error {
+	l.logger.Println(keyvals...)
+	return nil
+}
+
+// Define a custom key type for the request ID
+type requestIDKey struct{}
+
 func handleHTTPServer(ctx context.Context, u *url.URL, endpoints *store.Endpoints, wg *sync.WaitGroup, errc chan error, logger *log.Logger, debug bool) {
-	// Setup goa log adapter.
-	var (
-		adapter middleware.Logger
-	)
-	{
-		adapter = middleware.NewLogger(logger)
-	}
+	// Setup custom logger adapter
+	customLogger := &CustomLogger{logger: logger}
 
 	// Provide the transport specific request decoder and response encoder.
-	// The goa http package has built-in support for JSON, XML and gob.
-	// Other encodings can be used by providing the corresponding functions,
-	// see goa.design/implement/encoding.
 	var (
 		dec = goahttp.RequestDecoder
 		enc = goahttp.ResponseEncoder
@@ -41,10 +46,7 @@ func handleHTTPServer(ctx context.Context, u *url.URL, endpoints *store.Endpoint
 		mux = goahttp.NewMuxer()
 	}
 
-	// Wrap the endpoints with the transport specific layers. The generated
-	// server packages contains code generated from the design which maps
-	// the service input and output data structures to HTTP requests and
-	// responses.
+	// Wrap the endpoints with the transport specific layers.
 	var (
 		storeServer *storesvr.Server
 	)
@@ -61,16 +63,35 @@ func handleHTTPServer(ctx context.Context, u *url.URL, endpoints *store.Endpoint
 	// Configure the mux.
 	storesvr.Mount(mux, storeServer)
 
-	// Wrap the multiplexer with additional middlewares. Middlewares mounted
-	// here apply to all the service endpoints.
+	// Wrap the multiplexer with additional middlewares.
 	var handler http.Handler = mux
 	{
-		handler = httpmdlwr.Log(adapter)(handler)
+		handler = httpmdlwr.Log(customLogger)(handler)
 		handler = httpmdlwr.RequestID()(handler)
+
+		// Add custom middleware to store request ID in context
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			id := r.Header.Get("X-Request-Id")
+			if id == "" {
+				id = "unknown"
+			}
+			ctx = context.WithValue(ctx, requestIDKey{}, id)
+			r = r.WithContext(ctx)
+			handler.ServeHTTP(w, r)
+		})
+
+		// Add JWT middleware to all routes except login and create user
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path != "/login" && r.URL.Path != "/users" {
+				custommiddleware.JWTAuthMiddleware(mux).ServeHTTP(w, r)
+			} else {
+				mux.ServeHTTP(w, r)
+			}
+		})
 	}
 
-	// Start HTTP server using default configuration, you can customize the
-	// server by passing options to the Server constructor.
+	// Start HTTP server using default configuration.
 	server := &http.Server{Addr: u.Host, Handler: handler}
 	for _, m := range storeServer.Mounts {
 		logger.Printf("HTTP %q mounted on %s %s", m.Method, m.Verb, m.Pattern)
@@ -98,12 +119,14 @@ func handleHTTPServer(ctx context.Context, u *url.URL, endpoints *store.Endpoint
 }
 
 // errorHandler returns a function that writes and logs the given error.
-// The function also writes and logs the error unique ID so that it's possible
-// to correlate.
 func errorHandler(logger *log.Logger) func(context.Context, http.ResponseWriter, error) {
 	return func(ctx context.Context, w http.ResponseWriter, err error) {
-		id := ctx.Value(middleware.RequestIDKey).(string)
-		_, _ = w.Write([]byte("[" + id + "] encoding: " + err.Error()))
+		// Retrieve the request ID from the context
+		id, _ := ctx.Value(requestIDKey{}).(string)
+		if id == "" {
+			id = "unknown"
+		}
+		_, _ = w.Write([]byte(fmt.Sprintf("[%s] encoding: %s", id, err.Error())))
 		logger.Printf("[%s] ERROR: %s", id, err.Error())
 	}
 }
