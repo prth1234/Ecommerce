@@ -103,7 +103,7 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/LoginUserPayload'
+                            $ref: '#/components/schemas/LoginUserRequestBody'
                         example:
                             password: Sed voluptatem aspernatur.
                             username: Praesentium et aut.
@@ -122,8 +122,8 @@ paths:
                         application/json:
                             schema:
                                 type: string
-                                example: Sit debitis.
-                            example: Qui reprehenderit ipsam.
+                                example: Omnis ut.
+                            example: Consequatur expedita exercitationem illo.
     /orders:
         post:
             tags:
@@ -179,8 +179,8 @@ paths:
                   required: true
                   schema:
                     type: string
-                    example: Et cum porro est voluptatem.
-                  example: Eaque adipisci aperiam.
+                    example: Assumenda occaecati quia quaerat aut animi.
+                  example: Natus sunt sit dolor qui accusamus et.
             responses:
                 "200":
                     description: OK response.
@@ -240,12 +240,17 @@ paths:
                                       inventory: 1182933383570267918
                                       name: Quidem mollitia odit quos.
                                       price: 0.29768424998508486
-                                    - description: Omnis reprehenderit.
-                                      id: Et culpa quibusdam debitis alias dicta.
-                                      inventory: 1182933383570267918
-                                      name: Quidem mollitia odit quos.
-                                      price: 0.29768424998508486
                             example:
+                                - description: Omnis reprehenderit.
+                                  id: Et culpa quibusdam debitis alias dicta.
+                                  inventory: 1182933383570267918
+                                  name: Quidem mollitia odit quos.
+                                  price: 0.29768424998508486
+                                - description: Omnis reprehenderit.
+                                  id: Et culpa quibusdam debitis alias dicta.
+                                  inventory: 1182933383570267918
+                                  name: Quidem mollitia odit quos.
+                                  price: 0.29768424998508486
                                 - description: Omnis reprehenderit.
                                   id: Et culpa quibusdam debitis alias dicta.
                                   inventory: 1182933383570267918
@@ -297,8 +302,8 @@ paths:
                   required: true
                   schema:
                     type: string
-                    example: Dignissimos sint consequatur expedita.
-                  example: Illo commodi consequuntur.
+                    example: Adipisci aperiam.
+                  example: Aperiam debitis excepturi perferendis doloribus.
             responses:
                 "200":
                     description: OK response.
@@ -346,7 +351,19 @@ paths:
                                       lastName: Quia est aperiam sit cupiditate assumenda.
                                       password: Ea porro laborum nobis dolor.
                                       username: Dolores aperiam iusto in perferendis neque sunt.
+                                    - email: Consequatur voluptatem consectetur adipisci.
+                                      firstName: Cumque dolores sed temporibus sint blanditiis.
+                                      id: Quae quia consequatur nulla dolor.
+                                      lastName: Quia est aperiam sit cupiditate assumenda.
+                                      password: Ea porro laborum nobis dolor.
+                                      username: Dolores aperiam iusto in perferendis neque sunt.
                             example:
+                                - email: Consequatur voluptatem consectetur adipisci.
+                                  firstName: Cumque dolores sed temporibus sint blanditiis.
+                                  id: Quae quia consequatur nulla dolor.
+                                  lastName: Quia est aperiam sit cupiditate assumenda.
+                                  password: Ea porro laborum nobis dolor.
+                                  username: Dolores aperiam iusto in perferendis neque sunt.
                                 - email: Consequatur voluptatem consectetur adipisci.
                                   firstName: Cumque dolores sed temporibus sint blanditiis.
                                   id: Quae quia consequatur nulla dolor.
@@ -408,8 +425,8 @@ paths:
                   required: true
                   schema:
                     type: string
-                    example: Voluptas aspernatur.
-                  example: Ut non facere totam aut est dolorem.
+                    example: Consequuntur corrupti.
+                  example: Et cum porro est voluptatem.
             responses:
                 "200":
                     description: OK response.
@@ -443,8 +460,8 @@ paths:
                   required: true
                   schema:
                     type: string
-                    example: Aperiam debitis excepturi perferendis doloribus.
-                  example: Sed assumenda occaecati quia quaerat.
+                    example: Repellat in est neque omnis.
+                  example: Vel architecto assumenda dolorem omnis sint.
             responses:
                 "200":
                     description: OK response.
@@ -477,40 +494,7 @@ paths:
                                       status: Doloribus amet tenetur est nobis.
                                       totalAmount: 0.8579501462812025
                                       userID: Recusandae doloribus.
-                                    - id: Ut aut sunt quam expedita fugit.
-                                      items:
-                                        - price: 0.3823852716922111
-                                          productID: Officia beatae laudantium.
-                                          quantity: 6492112474321122596
-                                        - price: 0.3823852716922111
-                                          productID: Officia beatae laudantium.
-                                          quantity: 6492112474321122596
-                                      status: Doloribus amet tenetur est nobis.
-                                      totalAmount: 0.8579501462812025
-                                      userID: Recusandae doloribus.
                             example:
-                                - id: Ut aut sunt quam expedita fugit.
-                                  items:
-                                    - price: 0.3823852716922111
-                                      productID: Officia beatae laudantium.
-                                      quantity: 6492112474321122596
-                                    - price: 0.3823852716922111
-                                      productID: Officia beatae laudantium.
-                                      quantity: 6492112474321122596
-                                  status: Doloribus amet tenetur est nobis.
-                                  totalAmount: 0.8579501462812025
-                                  userID: Recusandae doloribus.
-                                - id: Ut aut sunt quam expedita fugit.
-                                  items:
-                                    - price: 0.3823852716922111
-                                      productID: Officia beatae laudantium.
-                                      quantity: 6492112474321122596
-                                    - price: 0.3823852716922111
-                                      productID: Officia beatae laudantium.
-                                      quantity: 6492112474321122596
-                                  status: Doloribus amet tenetur est nobis.
-                                  totalAmount: 0.8579501462812025
-                                  userID: Recusandae doloribus.
                                 - id: Ut aut sunt quam expedita fugit.
                                   items:
                                     - price: 0.3823852716922111
@@ -645,13 +629,13 @@ components:
                 timeout:
                     type: boolean
                     description: Is the error a timeout?
-                    example: true
+                    example: false
             example:
                 fault: true
                 id: 123abc
                 message: parameter 'p' must be an integer
                 name: bad_request
-                temporary: true
+                temporary: false
                 timeout: false
             required:
                 - name
@@ -671,20 +655,20 @@ components:
                 userID: Officiis eos omnis inventore quis totam.
             required:
                 - userID
-        LoginUserPayload:
+        LoginUserRequestBody:
             type: object
             properties:
                 password:
                     type: string
-                    description: Password
-                    example: supersecretpassword
+                    description: Password for login
+                    example: Possimus veniam sed laborum.
                 username:
                     type: string
-                    description: Username
-                    example: john_doe
+                    description: Username for login
+                    example: Laboriosam quia exercitationem quis excepturi doloremque ad.
             example:
-                password: supersecretpassword
-                username: john_doe
+                password: Voluptatem a distinctio eos error doloribus.
+                username: Sit debitis.
             required:
                 - username
                 - password
@@ -694,9 +678,9 @@ components:
                 token:
                     type: string
                     description: JWT token for the authenticated user
-                    example: Laboriosam quia exercitationem quis excepturi doloremque ad.
+                    example: Qui veniam qui reprehenderit.
             example:
-                token: Possimus veniam sed laborum.
+                token: Cum voluptas.
         NewOrder:
             type: object
             properties:

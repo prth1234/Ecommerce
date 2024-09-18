@@ -22,6 +22,29 @@ type LoginUserResult struct {
 	Token *string `json:"token"` // Change this to *string
 }
 
+// In the CreateUser function
+func (s *storesrvc) CreateUser(ctx context.Context, p *store.NewUser) (res *store.User, err error) {
+	id := uuid.New().String()
+
+	// Hash the password before storing
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("error hashing password: %v", err)
+	}
+
+	query := `INSERT INTO users (id, username, email, first_name, last_name, password) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, email, first_name, last_name`
+
+	user := &store.User{}
+	err = s.db.QueryRowContext(ctx, query, id, p.Username, p.Email, p.FirstName, p.LastName, string(hashedPassword)).Scan(&user.ID, &user.Username, &user.Email, &user.FirstName, &user.LastName)
+	if err != nil {
+		return nil, fmt.Errorf("error creating user: %v", err)
+	}
+
+	// Don't return the hashed password
+	return user, nil
+}
+
+// In the LoginUser function
 func (s *storesrvc) LoginUser(ctx context.Context, p *store.LoginUserPayload) (*store.LoginUserResult, error) {
 	query := `SELECT id, username, password FROM users WHERE username = $1`
 	var id, username, hashedPassword string
@@ -46,21 +69,7 @@ func (s *storesrvc) LoginUser(ctx context.Context, p *store.LoginUserPayload) (*
 		return nil, fmt.Errorf("error generating token: %v", err)
 	}
 
-	// Return the result as *store.LoginUserResult
 	return &store.LoginUserResult{Token: &token}, nil
-}
-
-func (s *storesrvc) CreateUser(ctx context.Context, p *store.NewUser) (res *store.User, err error) {
-	id := uuid.New().String()
-	query := `INSERT INTO users (id, username, email, first_name, last_name, password) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, email, first_name, last_name, password`
-
-	user := &store.User{}
-	err = s.db.QueryRowContext(ctx, query, id, p.Username, p.Email, p.FirstName, p.LastName, p.Password).Scan(&user.ID, &user.Username, &user.Email, &user.FirstName, &user.LastName, &user.Password)
-	if err != nil {
-		return nil, fmt.Errorf("error creating user: %v", err)
-	}
-
-	return user, nil
 }
 
 func (s *storesrvc) GetUser(ctx context.Context, p *store.GetUserPayload) (res *store.User, err error) {
