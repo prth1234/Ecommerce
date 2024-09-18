@@ -90,6 +90,86 @@ func DecodeCreateUserResponse(decoder func(*http.Response) goahttp.Decoder, rest
 	}
 }
 
+// BuildLoginUserRequest instantiates a HTTP request object with method and
+// path set to call the "store" service "loginUser" endpoint
+func (c *Client) BuildLoginUserRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: LoginUserStorePath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("store", "loginUser", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeLoginUserRequest returns an encoder for requests sent to the store
+// loginUser server.
+func EncodeLoginUserRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*store.LoginUserPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("store", "loginUser", "*store.LoginUserPayload", v)
+		}
+		body := NewLoginUserRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("store", "loginUser", err)
+		}
+		return nil
+	}
+}
+
+// DecodeLoginUserResponse returns a decoder for responses returned by the
+// store loginUser endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+// DecodeLoginUserResponse may return the following errors:
+//   - "unauthorized" (type store.Unauthorized): http.StatusUnauthorized
+//   - error: internal error
+func DecodeLoginUserResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body LoginUserResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "loginUser", err)
+			}
+			res := NewLoginUserResultOK(&body)
+			return res, nil
+		case http.StatusUnauthorized:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "loginUser", err)
+			}
+			return nil, NewLoginUserUnauthorized(body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("store", "loginUser", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildGetUserRequest instantiates a HTTP request object with method and path
 // set to call the "store" service "getUser" endpoint
 func (c *Client) BuildGetUserRequest(ctx context.Context, v any) (*http.Request, error) {
@@ -601,7 +681,7 @@ func DecodeGetOrderResponse(decoder func(*http.Response) goahttp.Decoder, restor
 }
 
 // BuildGetUserOrdersRequest instantiates a HTTP request object with method and
-// path set to call the "store" service "getUserOrders\t" endpoint
+// path set to call the "store" service "getUserOrders" endpoint
 func (c *Client) BuildGetUserOrdersRequest(ctx context.Context, v any) (*http.Request, error) {
 	var (
 		userID string
@@ -609,14 +689,14 @@ func (c *Client) BuildGetUserOrdersRequest(ctx context.Context, v any) (*http.Re
 	{
 		p, ok := v.(*store.GetUserOrdersPayload)
 		if !ok {
-			return nil, goahttp.ErrInvalidType("store", "getUserOrders	", "*store.GetUserOrdersPayload", v)
+			return nil, goahttp.ErrInvalidType("store", "getUserOrders", "*store.GetUserOrdersPayload", v)
 		}
 		userID = p.UserID
 	}
 	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetUserOrdersStorePath(userID)}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return nil, goahttp.ErrInvalidURL("store", "getUserOrders	", u.String(), err)
+		return nil, goahttp.ErrInvalidURL("store", "getUserOrders", u.String(), err)
 	}
 	if ctx != nil {
 		req = req.WithContext(ctx)
@@ -626,8 +706,8 @@ func (c *Client) BuildGetUserOrdersRequest(ctx context.Context, v any) (*http.Re
 }
 
 // DecodeGetUserOrdersResponse returns a decoder for responses returned by the
-// store getUserOrders	 endpoint. restoreBody controls whether the response
-// body should be restored after having been read.
+// store getUserOrders endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
 // DecodeGetUserOrdersResponse may return the following errors:
 //   - "not-found" (type *goa.ServiceError): http.StatusNotFound
 //   - error: internal error
@@ -653,7 +733,7 @@ func DecodeGetUserOrdersResponse(decoder func(*http.Response) goahttp.Decoder, r
 			)
 			err = decoder(resp).Decode(&body)
 			if err != nil {
-				return nil, goahttp.ErrDecodingError("store", "getUserOrders	", err)
+				return nil, goahttp.ErrDecodingError("store", "getUserOrders", err)
 			}
 			for _, e := range body {
 				if e != nil {
@@ -663,7 +743,7 @@ func DecodeGetUserOrdersResponse(decoder func(*http.Response) goahttp.Decoder, r
 				}
 			}
 			if err != nil {
-				return nil, goahttp.ErrValidationError("store", "getUserOrders	", err)
+				return nil, goahttp.ErrValidationError("store", "getUserOrders", err)
 			}
 			res := NewGetUserOrdersOrderOK(body)
 			return res, nil
@@ -674,16 +754,16 @@ func DecodeGetUserOrdersResponse(decoder func(*http.Response) goahttp.Decoder, r
 			)
 			err = decoder(resp).Decode(&body)
 			if err != nil {
-				return nil, goahttp.ErrDecodingError("store", "getUserOrders	", err)
+				return nil, goahttp.ErrDecodingError("store", "getUserOrders", err)
 			}
 			err = ValidateGetUserOrdersNotFoundResponseBody(&body)
 			if err != nil {
-				return nil, goahttp.ErrValidationError("store", "getUserOrders	", err)
+				return nil, goahttp.ErrValidationError("store", "getUserOrders", err)
 			}
 			return nil, NewGetUserOrdersNotFound(&body)
 		default:
 			body, _ := io.ReadAll(resp.Body)
-			return nil, goahttp.ErrInvalidResponse("store", "getUserOrders\t", resp.StatusCode, string(body))
+			return nil, goahttp.ErrInvalidResponse("store", "getUserOrders", resp.StatusCode, string(body))
 		}
 	}
 }
@@ -856,6 +936,7 @@ func unmarshalUserResponseToStoreUser(v *UserResponse) *store.User {
 		Email:     *v.Email,
 		FirstName: v.FirstName,
 		LastName:  v.LastName,
+		Password:  v.Password,
 	}
 
 	return res

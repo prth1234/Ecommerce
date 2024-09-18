@@ -24,6 +24,17 @@ type CreateUserRequestBody struct {
 	FirstName *string `form:"firstName,omitempty" json:"firstName,omitempty" xml:"firstName,omitempty"`
 	// User's last name
 	LastName *string `form:"lastName,omitempty" json:"lastName,omitempty" xml:"lastName,omitempty"`
+	// User's password
+	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
+}
+
+// LoginUserRequestBody is the type of the "store" service "loginUser" endpoint
+// HTTP request body.
+type LoginUserRequestBody struct {
+	// Username for login
+	Username *string `form:"username,omitempty" json:"username,omitempty" xml:"username,omitempty"`
+	// Password for login
+	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
 }
 
 // CreateProductRequestBody is the type of the "store" service "createProduct"
@@ -81,6 +92,15 @@ type CreateUserResponseBody struct {
 	FirstName *string `form:"firstName,omitempty" json:"firstName,omitempty" xml:"firstName,omitempty"`
 	// User's last name
 	LastName *string `form:"lastName,omitempty" json:"lastName,omitempty" xml:"lastName,omitempty"`
+	// User's password
+	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
+}
+
+// LoginUserResponseBody is the type of the "store" service "loginUser"
+// endpoint HTTP response body.
+type LoginUserResponseBody struct {
+	// JWT token for the authenticated user
+	Token *string `form:"token,omitempty" json:"token,omitempty" xml:"token,omitempty"`
 }
 
 // GetUserResponseBody is the type of the "store" service "getUser" endpoint
@@ -96,6 +116,8 @@ type GetUserResponseBody struct {
 	FirstName *string `form:"firstName,omitempty" json:"firstName,omitempty" xml:"firstName,omitempty"`
 	// User's last name
 	LastName *string `form:"lastName,omitempty" json:"lastName,omitempty" xml:"lastName,omitempty"`
+	// User's password
+	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
 }
 
 // GetUserAllResponseBody is the type of the "store" service "getUserAll"
@@ -166,8 +188,8 @@ type GetOrderResponseBody struct {
 	Status string `form:"status" json:"status" xml:"status"`
 }
 
-// GetUserOrdersResponseBody is the type of the "store" service
-// "getUserOrders\t" endpoint HTTP response body.
+// GetUserOrdersResponseBody is the type of the "store" service "getUserOrders"
+// endpoint HTTP response body.
 type GetUserOrdersResponseBody []*OrderResponse
 
 // AddToCartResponseBody is the type of the "store" service "addToCart"
@@ -251,7 +273,7 @@ type GetOrderNotFoundResponseBody struct {
 }
 
 // GetUserOrdersNotFoundResponseBody is the type of the "store" service
-// "getUserOrders\t" endpoint HTTP response body for the "not-found" error.
+// "getUserOrders" endpoint HTTP response body for the "not-found" error.
 type GetUserOrdersNotFoundResponseBody struct {
 	// Name is the name of this class of errors.
 	Name string `form:"name" json:"name" xml:"name"`
@@ -298,6 +320,8 @@ type UserResponse struct {
 	FirstName *string `form:"firstName,omitempty" json:"firstName,omitempty" xml:"firstName,omitempty"`
 	// User's last name
 	LastName *string `form:"lastName,omitempty" json:"lastName,omitempty" xml:"lastName,omitempty"`
+	// User's password
+	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
 }
 
 // ProductResponse is used to define fields on response body types.
@@ -379,6 +403,16 @@ func NewCreateUserResponseBody(res *store.User) *CreateUserResponseBody {
 		Email:     res.Email,
 		FirstName: res.FirstName,
 		LastName:  res.LastName,
+		Password:  res.Password,
+	}
+	return body
+}
+
+// NewLoginUserResponseBody builds the HTTP response body from the result of
+// the "loginUser" endpoint of the "store" service.
+func NewLoginUserResponseBody(res *store.LoginUserResult) *LoginUserResponseBody {
+	body := &LoginUserResponseBody{
+		Token: res.Token,
 	}
 	return body
 }
@@ -392,6 +426,7 @@ func NewGetUserResponseBody(res *store.User) *GetUserResponseBody {
 		Email:     res.Email,
 		FirstName: res.FirstName,
 		LastName:  res.LastName,
+		Password:  res.Password,
 	}
 	return body
 }
@@ -483,7 +518,7 @@ func NewGetOrderResponseBody(res *store.Order) *GetOrderResponseBody {
 }
 
 // NewGetUserOrdersResponseBody builds the HTTP response body from the result
-// of the "getUserOrders\t" endpoint of the "store" service.
+// of the "getUserOrders" endpoint of the "store" service.
 func NewGetUserOrdersResponseBody(res []*store.Order) GetUserOrdersResponseBody {
 	body := make([]*OrderResponse, len(res))
 	for i, val := range res {
@@ -573,7 +608,7 @@ func NewGetOrderNotFoundResponseBody(res *goa.ServiceError) *GetOrderNotFoundRes
 }
 
 // NewGetUserOrdersNotFoundResponseBody builds the HTTP response body from the
-// result of the "getUserOrders\t" endpoint of the "store" service.
+// result of the "getUserOrders" endpoint of the "store" service.
 func NewGetUserOrdersNotFoundResponseBody(res *goa.ServiceError) *GetUserOrdersNotFoundResponseBody {
 	body := &GetUserOrdersNotFoundResponseBody{
 		Name:      res.Name,
@@ -605,8 +640,19 @@ func NewCreateUserNewUser(body *CreateUserRequestBody) *store.NewUser {
 	v := &store.NewUser{
 		Username:  *body.Username,
 		Email:     *body.Email,
-		FirstName: body.FirstName,
-		LastName:  body.LastName,
+		FirstName: *body.FirstName,
+		LastName:  *body.LastName,
+		Password:  *body.Password,
+	}
+
+	return v
+}
+
+// NewLoginUserPayload builds a store service loginUser endpoint payload.
+func NewLoginUserPayload(body *LoginUserRequestBody) *store.LoginUserPayload {
+	v := &store.LoginUserPayload{
+		Username: *body.Username,
+		Password: *body.Password,
 	}
 
 	return v
@@ -662,7 +708,7 @@ func NewGetOrderPayload(id string) *store.GetOrderPayload {
 	return v
 }
 
-// NewGetUserOrdersPayload builds a store service getUserOrders	 endpoint
+// NewGetUserOrdersPayload builds a store service getUserOrders endpoint
 // payload.
 func NewGetUserOrdersPayload(userID string) *store.GetUserOrdersPayload {
 	v := &store.GetUserOrdersPayload{}
@@ -700,6 +746,27 @@ func ValidateCreateUserRequestBody(body *CreateUserRequestBody) (err error) {
 	}
 	if body.Email == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("email", "body"))
+	}
+	if body.FirstName == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("firstName", "body"))
+	}
+	if body.LastName == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("lastName", "body"))
+	}
+	if body.Password == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("password", "body"))
+	}
+	return
+}
+
+// ValidateLoginUserRequestBody runs the validations defined on
+// LoginUserRequestBody
+func ValidateLoginUserRequestBody(body *LoginUserRequestBody) (err error) {
+	if body.Username == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("username", "body"))
+	}
+	if body.Password == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("password", "body"))
 	}
 	return
 }

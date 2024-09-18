@@ -19,7 +19,7 @@ paths:
                         schema:
                             $ref: '#/components/schemas/GetCartPayload'
                         example:
-                            userID: Beatae laudantium eaque eveniet.
+                            userID: In aut reprehenderit sint.
             responses:
                 "200":
                     description: OK response.
@@ -28,18 +28,18 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Cart'
                             example:
-                                id: Id doloribus amet.
+                                id: Dolores ratione ut maiores.
                                 items:
-                                    - price: 0.22032443407957475
-                                      productID: Ut minima.
-                                      quantity: 9041534554655855612
-                                      userID: Cumque dolores facere ipsa earum in.
-                                    - price: 0.22032443407957475
-                                      productID: Ut minima.
-                                      quantity: 9041534554655855612
-                                      userID: Cumque dolores facere ipsa earum in.
-                                totalAmount: 0.05138783024998076
-                                userID: Est nobis.
+                                    - price: 0.6308142298527998
+                                      productID: Harum et nisi vero in impedit vel.
+                                      quantity: 6392137604509977408
+                                      userID: Perspiciatis sint perspiciatis laboriosam non consectetur eos.
+                                    - price: 0.6308142298527998
+                                      productID: Harum et nisi vero in impedit vel.
+                                      quantity: 6392137604509977408
+                                      userID: Perspiciatis sint perspiciatis laboriosam non consectetur eos.
+                                totalAmount: 0.43360434443520735
+                                userID: Culpa esse et quia doloremque voluptates praesentium.
                 "404":
                     description: 'not-found: Not Found response.'
                     content:
@@ -59,10 +59,10 @@ paths:
                         schema:
                             $ref: '#/components/schemas/CartItem'
                         example:
-                            price: 0.19750246691753612
-                            productID: Doloremque quia.
-                            quantity: 8413811540640946695
-                            userID: Quia tempore voluptatem.
+                            price: 0.962613919416865
+                            productID: Alias maxime itaque beatae dicta reprehenderit.
+                            quantity: 6061566538106627186
+                            userID: Harum illum molestiae.
             responses:
                 "200":
                     description: OK response.
@@ -71,18 +71,59 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Cart'
                             example:
-                                id: Ut aut sunt quam expedita fugit.
+                                id: Placeat accusamus.
                                 items:
-                                    - price: 0.22032443407957475
-                                      productID: Ut minima.
-                                      quantity: 9041534554655855612
-                                      userID: Cumque dolores facere ipsa earum in.
-                                    - price: 0.22032443407957475
-                                      productID: Ut minima.
-                                      quantity: 9041534554655855612
-                                      userID: Cumque dolores facere ipsa earum in.
-                                totalAmount: 0.8006514362168438
-                                userID: Recusandae doloribus.
+                                    - price: 0.6308142298527998
+                                      productID: Harum et nisi vero in impedit vel.
+                                      quantity: 6392137604509977408
+                                      userID: Perspiciatis sint perspiciatis laboriosam non consectetur eos.
+                                    - price: 0.6308142298527998
+                                      productID: Harum et nisi vero in impedit vel.
+                                      quantity: 6392137604509977408
+                                      userID: Perspiciatis sint perspiciatis laboriosam non consectetur eos.
+                                    - price: 0.6308142298527998
+                                      productID: Harum et nisi vero in impedit vel.
+                                      quantity: 6392137604509977408
+                                      userID: Perspiciatis sint perspiciatis laboriosam non consectetur eos.
+                                    - price: 0.6308142298527998
+                                      productID: Harum et nisi vero in impedit vel.
+                                      quantity: 6392137604509977408
+                                      userID: Perspiciatis sint perspiciatis laboriosam non consectetur eos.
+                                totalAmount: 0.2030059976111711
+                                userID: Et explicabo ullam omnis reiciendis ut.
+    /login:
+        post:
+            tags:
+                - store
+            summary: loginUser store
+            description: Login a user and return a JWT token
+            operationId: store#loginUser
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LoginUserPayload'
+                        example:
+                            password: Sed voluptatem aspernatur.
+                            username: Praesentium et aut.
+            responses:
+                "200":
+                    description: OK response.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LoginUserResponseBody'
+                            example:
+                                token: Et aperiam non esse non consectetur omnis.
+                "401":
+                    description: 'unauthorized: Unauthorized response.'
+                    content:
+                        application/json:
+                            schema:
+                                type: string
+                                example: Sit debitis.
+                            example: Qui reprehenderit ipsam.
     /orders:
         post:
             tags:
@@ -97,19 +138,16 @@ paths:
                             $ref: '#/components/schemas/NewOrder'
                         example:
                             items:
-                                - price: 0.2782759670844699
-                                  productID: Et est doloribus ut at.
-                                  quantity: 1281967412391717881
-                                - price: 0.2782759670844699
-                                  productID: Et est doloribus ut at.
-                                  quantity: 1281967412391717881
-                                - price: 0.2782759670844699
-                                  productID: Et est doloribus ut at.
-                                  quantity: 1281967412391717881
-                                - price: 0.2782759670844699
-                                  productID: Et est doloribus ut at.
-                                  quantity: 1281967412391717881
-                            userID: Ut amet.
+                                - price: 0.73241831363072
+                                  productID: Eos libero non soluta.
+                                  quantity: 9175415661056716192
+                                - price: 0.73241831363072
+                                  productID: Eos libero non soluta.
+                                  quantity: 9175415661056716192
+                                - price: 0.73241831363072
+                                  productID: Eos libero non soluta.
+                                  quantity: 9175415661056716192
+                            userID: Sunt aut distinctio.
             responses:
                 "201":
                     description: Created response.
@@ -118,23 +156,17 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Order'
                             example:
-                                id: Ab occaecati pariatur recusandae eum esse dignissimos.
+                                id: Aliquam eos ipsum distinctio voluptas doloremque.
                                 items:
-                                    - price: 0.7615839668081023
-                                      productID: Nesciunt odio quis et in.
-                                      quantity: 4486002618916453051
-                                    - price: 0.7615839668081023
-                                      productID: Nesciunt odio quis et in.
-                                      quantity: 4486002618916453051
-                                    - price: 0.7615839668081023
-                                      productID: Nesciunt odio quis et in.
-                                      quantity: 4486002618916453051
-                                    - price: 0.7615839668081023
-                                      productID: Nesciunt odio quis et in.
-                                      quantity: 4486002618916453051
-                                status: Voluptas tempore voluptatibus velit.
-                                totalAmount: 0.9274450736922397
-                                userID: Iste optio fugit eos.
+                                    - price: 0.6063468272223981
+                                      productID: Doloribus recusandae quis occaecati.
+                                      quantity: 4020129801430572961
+                                    - price: 0.6063468272223981
+                                      productID: Doloribus recusandae quis occaecati.
+                                      quantity: 4020129801430572961
+                                status: In rerum.
+                                totalAmount: 0.7439633357157797
+                                userID: Odit et sint quia.
     /orders/{id}:
         get:
             tags:
@@ -147,8 +179,8 @@ paths:
                   required: true
                   schema:
                     type: string
-                    example: Delectus aperiam.
-                  example: Cum ut quos quod quo quibusdam fugit.
+                    example: Et cum porro est voluptatem.
+                  example: Eaque adipisci aperiam.
             responses:
                 "200":
                     description: OK response.
@@ -157,23 +189,20 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Order'
                             example:
-                                id: Omnis reprehenderit.
+                                id: Eius laudantium minima dolor.
                                 items:
-                                    - price: 0.7615839668081023
-                                      productID: Nesciunt odio quis et in.
-                                      quantity: 4486002618916453051
-                                    - price: 0.7615839668081023
-                                      productID: Nesciunt odio quis et in.
-                                      quantity: 4486002618916453051
-                                    - price: 0.7615839668081023
-                                      productID: Nesciunt odio quis et in.
-                                      quantity: 4486002618916453051
-                                    - price: 0.7615839668081023
-                                      productID: Nesciunt odio quis et in.
-                                      quantity: 4486002618916453051
-                                status: Aut distinctio cupiditate quis eos libero.
-                                totalAmount: 0.2756862749493085
-                                userID: Aperiam autem earum.
+                                    - price: 0.6063468272223981
+                                      productID: Doloribus recusandae quis occaecati.
+                                      quantity: 4020129801430572961
+                                    - price: 0.6063468272223981
+                                      productID: Doloribus recusandae quis occaecati.
+                                      quantity: 4020129801430572961
+                                    - price: 0.6063468272223981
+                                      productID: Doloribus recusandae quis occaecati.
+                                      quantity: 4020129801430572961
+                                status: Qui distinctio porro cumque dolores.
+                                totalAmount: 0.3109653982360916
+                                userID: Quia tempore voluptatem.
                 "404":
                     description: 'not-found: Not Found response.'
                     content:
@@ -196,32 +225,37 @@ paths:
                                 items:
                                     $ref: '#/components/schemas/Product'
                                 example:
-                                    - description: Et eaque earum ducimus et architecto.
-                                      id: Optio fugit facilis harum omnis.
-                                      inventory: 2201255980875021240
-                                      name: Aperiam et quia atque illum quis.
-                                      price: 0.5011672389573196
-                                    - description: Et eaque earum ducimus et architecto.
-                                      id: Optio fugit facilis harum omnis.
-                                      inventory: 2201255980875021240
-                                      name: Aperiam et quia atque illum quis.
-                                      price: 0.5011672389573196
-                                    - description: Et eaque earum ducimus et architecto.
-                                      id: Optio fugit facilis harum omnis.
-                                      inventory: 2201255980875021240
-                                      name: Aperiam et quia atque illum quis.
-                                      price: 0.5011672389573196
+                                    - description: Omnis reprehenderit.
+                                      id: Et culpa quibusdam debitis alias dicta.
+                                      inventory: 1182933383570267918
+                                      name: Quidem mollitia odit quos.
+                                      price: 0.29768424998508486
+                                    - description: Omnis reprehenderit.
+                                      id: Et culpa quibusdam debitis alias dicta.
+                                      inventory: 1182933383570267918
+                                      name: Quidem mollitia odit quos.
+                                      price: 0.29768424998508486
+                                    - description: Omnis reprehenderit.
+                                      id: Et culpa quibusdam debitis alias dicta.
+                                      inventory: 1182933383570267918
+                                      name: Quidem mollitia odit quos.
+                                      price: 0.29768424998508486
+                                    - description: Omnis reprehenderit.
+                                      id: Et culpa quibusdam debitis alias dicta.
+                                      inventory: 1182933383570267918
+                                      name: Quidem mollitia odit quos.
+                                      price: 0.29768424998508486
                             example:
-                                - description: Et eaque earum ducimus et architecto.
-                                  id: Optio fugit facilis harum omnis.
-                                  inventory: 2201255980875021240
-                                  name: Aperiam et quia atque illum quis.
-                                  price: 0.5011672389573196
-                                - description: Et eaque earum ducimus et architecto.
-                                  id: Optio fugit facilis harum omnis.
-                                  inventory: 2201255980875021240
-                                  name: Aperiam et quia atque illum quis.
-                                  price: 0.5011672389573196
+                                - description: Omnis reprehenderit.
+                                  id: Et culpa quibusdam debitis alias dicta.
+                                  inventory: 1182933383570267918
+                                  name: Quidem mollitia odit quos.
+                                  price: 0.29768424998508486
+                                - description: Omnis reprehenderit.
+                                  id: Et culpa quibusdam debitis alias dicta.
+                                  inventory: 1182933383570267918
+                                  name: Quidem mollitia odit quos.
+                                  price: 0.29768424998508486
         post:
             tags:
                 - store
@@ -234,10 +268,10 @@ paths:
                         schema:
                             $ref: '#/components/schemas/NewProduct'
                         example:
-                            description: Asperiores repellat quisquam perferendis.
-                            inventory: 7080323998293430317
-                            name: Hic voluptas.
-                            price: 0.33333071459397057
+                            description: Aperiam et quia atque illum quis.
+                            inventory: 2719289908079484285
+                            name: Optio fugit facilis harum omnis.
+                            price: 0.6771694639392373
             responses:
                 "201":
                     description: Created response.
@@ -246,11 +280,11 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Product'
                             example:
-                                description: Aperiam iusto.
-                                id: Optio iure saepe perspiciatis quae quia consequatur.
-                                inventory: 4342990548000780451
-                                name: Dolor qui.
-                                price: 0.007246204557471945
+                                description: Voluptatem a molestias ut amet.
+                                id: Earum ducimus.
+                                inventory: 2209189139446886941
+                                name: Architecto recusandae quidem.
+                                price: 0.6783797416053341
     /products/{id}:
         get:
             tags:
@@ -263,8 +297,8 @@ paths:
                   required: true
                   schema:
                     type: string
-                    example: Numquam quisquam.
-                  example: Doloremque rerum et rerum.
+                    example: Dignissimos sint consequatur expedita.
+                  example: Illo commodi consequuntur.
             responses:
                 "200":
                     description: OK response.
@@ -273,11 +307,11 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/Product'
                             example:
-                                description: Cupiditate assumenda doloribus ea porro laborum.
-                                id: Dolores sed.
-                                inventory: 2835641312746476892
-                                name: Sint blanditiis sunt quia est aperiam.
-                                price: 0.1855034191575773
+                                description: Fugit eos illum enim.
+                                id: Vel quam ab occaecati pariatur recusandae eum.
+                                inventory: 5634084277005097005
+                                name: Dignissimos omnis iste.
+                                price: 0.49438547627723384
                 "404":
                     description: 'not-found: Not Found response.'
                     content:
@@ -300,42 +334,37 @@ paths:
                                 items:
                                     $ref: '#/components/schemas/User'
                                 example:
-                                    - email: Qui et sint nihil ut eos.
-                                      firstName: Eos modi molestiae qui voluptas.
-                                      id: Sint qui quia ratione.
-                                      lastName: Et esse quis voluptatem.
-                                      username: Eos suscipit rem ipsum.
-                                    - email: Qui et sint nihil ut eos.
-                                      firstName: Eos modi molestiae qui voluptas.
-                                      id: Sint qui quia ratione.
-                                      lastName: Et esse quis voluptatem.
-                                      username: Eos suscipit rem ipsum.
-                                    - email: Qui et sint nihil ut eos.
-                                      firstName: Eos modi molestiae qui voluptas.
-                                      id: Sint qui quia ratione.
-                                      lastName: Et esse quis voluptatem.
-                                      username: Eos suscipit rem ipsum.
+                                    - email: Consequatur voluptatem consectetur adipisci.
+                                      firstName: Cumque dolores sed temporibus sint blanditiis.
+                                      id: Quae quia consequatur nulla dolor.
+                                      lastName: Quia est aperiam sit cupiditate assumenda.
+                                      password: Ea porro laborum nobis dolor.
+                                      username: Dolores aperiam iusto in perferendis neque sunt.
+                                    - email: Consequatur voluptatem consectetur adipisci.
+                                      firstName: Cumque dolores sed temporibus sint blanditiis.
+                                      id: Quae quia consequatur nulla dolor.
+                                      lastName: Quia est aperiam sit cupiditate assumenda.
+                                      password: Ea porro laborum nobis dolor.
+                                      username: Dolores aperiam iusto in perferendis neque sunt.
                             example:
-                                - email: Qui et sint nihil ut eos.
-                                  firstName: Eos modi molestiae qui voluptas.
-                                  id: Sint qui quia ratione.
-                                  lastName: Et esse quis voluptatem.
-                                  username: Eos suscipit rem ipsum.
-                                - email: Qui et sint nihil ut eos.
-                                  firstName: Eos modi molestiae qui voluptas.
-                                  id: Sint qui quia ratione.
-                                  lastName: Et esse quis voluptatem.
-                                  username: Eos suscipit rem ipsum.
-                                - email: Qui et sint nihil ut eos.
-                                  firstName: Eos modi molestiae qui voluptas.
-                                  id: Sint qui quia ratione.
-                                  lastName: Et esse quis voluptatem.
-                                  username: Eos suscipit rem ipsum.
-                                - email: Qui et sint nihil ut eos.
-                                  firstName: Eos modi molestiae qui voluptas.
-                                  id: Sint qui quia ratione.
-                                  lastName: Et esse quis voluptatem.
-                                  username: Eos suscipit rem ipsum.
+                                - email: Consequatur voluptatem consectetur adipisci.
+                                  firstName: Cumque dolores sed temporibus sint blanditiis.
+                                  id: Quae quia consequatur nulla dolor.
+                                  lastName: Quia est aperiam sit cupiditate assumenda.
+                                  password: Ea porro laborum nobis dolor.
+                                  username: Dolores aperiam iusto in perferendis neque sunt.
+                                - email: Consequatur voluptatem consectetur adipisci.
+                                  firstName: Cumque dolores sed temporibus sint blanditiis.
+                                  id: Quae quia consequatur nulla dolor.
+                                  lastName: Quia est aperiam sit cupiditate assumenda.
+                                  password: Ea porro laborum nobis dolor.
+                                  username: Dolores aperiam iusto in perferendis neque sunt.
+                                - email: Consequatur voluptatem consectetur adipisci.
+                                  firstName: Cumque dolores sed temporibus sint blanditiis.
+                                  id: Quae quia consequatur nulla dolor.
+                                  lastName: Quia est aperiam sit cupiditate assumenda.
+                                  password: Ea porro laborum nobis dolor.
+                                  username: Dolores aperiam iusto in perferendis neque sunt.
         post:
             tags:
                 - store
@@ -348,10 +377,11 @@ paths:
                         schema:
                             $ref: '#/components/schemas/NewUser'
                         example:
-                            email: Provident ducimus iure at accusantium sit velit.
-                            firstName: Non ea dolor pariatur autem.
-                            lastName: Nam a placeat sapiente.
-                            username: Tenetur nobis molestiae enim nam consequatur.
+                            email: Pariatur autem labore nam.
+                            firstName: Placeat sapiente inventore quis omnis facilis.
+                            lastName: Nulla eius qui culpa.
+                            password: Et repudiandae.
+                            username: Sit velit molestias non ea.
             responses:
                 "201":
                     description: Created response.
@@ -360,11 +390,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/User'
                             example:
-                                email: Animi deleniti sint debitis reprehenderit dicta non.
-                                firstName: Est quibusdam necessitatibus impedit.
-                                id: Quis omnis facilis sed nulla eius qui.
-                                lastName: Aut doloremque possimus esse temporibus porro.
-                                username: Ab et.
+                                email: Doloremque possimus esse temporibus.
+                                firstName: Repellendus facilis sint.
+                                id: Deleniti sint debitis reprehenderit dicta non odit.
+                                lastName: Et minus velit sed alias consequatur dolores.
+                                password: Quis itaque sed quo saepe.
+                                username: Quibusdam necessitatibus impedit nihil.
     /users/{id}:
         get:
             tags:
@@ -377,8 +408,8 @@ paths:
                   required: true
                   schema:
                     type: string
-                    example: Et non necessitatibus est molestias.
-                  example: Enim culpa odio.
+                    example: Voluptas aspernatur.
+                  example: Ut non facere totam aut est dolorem.
             responses:
                 "200":
                     description: OK response.
@@ -387,11 +418,12 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/User'
                             example:
-                                email: Sed voluptatem aspernatur.
-                                firstName: Et aperiam non esse non consectetur omnis.
-                                id: Quis itaque sed quo saepe.
-                                lastName: Excepturi doloremque eum ut debitis.
-                                username: Praesentium et aut.
+                                email: Eos modi molestiae qui voluptas.
+                                firstName: Et esse quis voluptatem.
+                                id: Suscipit rem ipsum.
+                                lastName: In aut qui hic voluptas.
+                                password: Asperiores repellat quisquam perferendis.
+                                username: Qui et sint nihil ut eos.
                 "404":
                     description: 'not-found: Not Found response.'
                     content:
@@ -402,17 +434,17 @@ paths:
         get:
             tags:
                 - store
-            summary: "getUserOrders\t store"
+            summary: getUserOrders store
             description: Retrieve all orders for a specific user
-            operationId: "store#getUserOrders\t"
+            operationId: store#getUserOrders
             parameters:
                 - name: userID
                   in: path
                   required: true
                   schema:
                     type: string
-                    example: Et eum enim ut voluptas officiis.
-                  example: Et repellat minima.
+                    example: Aperiam debitis excepturi perferendis doloribus.
+                  example: Sed assumenda occaecati quia quaerat.
             responses:
                 "200":
                     description: OK response.
@@ -423,51 +455,84 @@ paths:
                                 items:
                                     $ref: '#/components/schemas/Order'
                                 example:
-                                    - id: Aliquam eos ipsum distinctio voluptas doloremque.
+                                    - id: Ut aut sunt quam expedita fugit.
                                       items:
-                                        - price: 0.484602413391271
-                                          productID: Laboriosam in rerum quia qui qui.
-                                          quantity: 3334345030349510422
-                                        - price: 0.484602413391271
-                                          productID: Laboriosam in rerum quia qui qui.
-                                          quantity: 3334345030349510422
-                                      status: Aut pariatur enim.
-                                      totalAmount: 0.4195533970842372
-                                      userID: Odit et sint quia.
-                                    - id: Aliquam eos ipsum distinctio voluptas doloremque.
+                                        - price: 0.3823852716922111
+                                          productID: Officia beatae laudantium.
+                                          quantity: 6492112474321122596
+                                        - price: 0.3823852716922111
+                                          productID: Officia beatae laudantium.
+                                          quantity: 6492112474321122596
+                                      status: Doloribus amet tenetur est nobis.
+                                      totalAmount: 0.8579501462812025
+                                      userID: Recusandae doloribus.
+                                    - id: Ut aut sunt quam expedita fugit.
                                       items:
-                                        - price: 0.484602413391271
-                                          productID: Laboriosam in rerum quia qui qui.
-                                          quantity: 3334345030349510422
-                                        - price: 0.484602413391271
-                                          productID: Laboriosam in rerum quia qui qui.
-                                          quantity: 3334345030349510422
-                                      status: Aut pariatur enim.
-                                      totalAmount: 0.4195533970842372
-                                      userID: Odit et sint quia.
+                                        - price: 0.3823852716922111
+                                          productID: Officia beatae laudantium.
+                                          quantity: 6492112474321122596
+                                        - price: 0.3823852716922111
+                                          productID: Officia beatae laudantium.
+                                          quantity: 6492112474321122596
+                                      status: Doloribus amet tenetur est nobis.
+                                      totalAmount: 0.8579501462812025
+                                      userID: Recusandae doloribus.
+                                    - id: Ut aut sunt quam expedita fugit.
+                                      items:
+                                        - price: 0.3823852716922111
+                                          productID: Officia beatae laudantium.
+                                          quantity: 6492112474321122596
+                                        - price: 0.3823852716922111
+                                          productID: Officia beatae laudantium.
+                                          quantity: 6492112474321122596
+                                      status: Doloribus amet tenetur est nobis.
+                                      totalAmount: 0.8579501462812025
+                                      userID: Recusandae doloribus.
                             example:
-                                - id: Aliquam eos ipsum distinctio voluptas doloremque.
+                                - id: Ut aut sunt quam expedita fugit.
                                   items:
-                                    - price: 0.484602413391271
-                                      productID: Laboriosam in rerum quia qui qui.
-                                      quantity: 3334345030349510422
-                                    - price: 0.484602413391271
-                                      productID: Laboriosam in rerum quia qui qui.
-                                      quantity: 3334345030349510422
-                                  status: Aut pariatur enim.
-                                  totalAmount: 0.4195533970842372
-                                  userID: Odit et sint quia.
-                                - id: Aliquam eos ipsum distinctio voluptas doloremque.
+                                    - price: 0.3823852716922111
+                                      productID: Officia beatae laudantium.
+                                      quantity: 6492112474321122596
+                                    - price: 0.3823852716922111
+                                      productID: Officia beatae laudantium.
+                                      quantity: 6492112474321122596
+                                  status: Doloribus amet tenetur est nobis.
+                                  totalAmount: 0.8579501462812025
+                                  userID: Recusandae doloribus.
+                                - id: Ut aut sunt quam expedita fugit.
                                   items:
-                                    - price: 0.484602413391271
-                                      productID: Laboriosam in rerum quia qui qui.
-                                      quantity: 3334345030349510422
-                                    - price: 0.484602413391271
-                                      productID: Laboriosam in rerum quia qui qui.
-                                      quantity: 3334345030349510422
-                                  status: Aut pariatur enim.
-                                  totalAmount: 0.4195533970842372
-                                  userID: Odit et sint quia.
+                                    - price: 0.3823852716922111
+                                      productID: Officia beatae laudantium.
+                                      quantity: 6492112474321122596
+                                    - price: 0.3823852716922111
+                                      productID: Officia beatae laudantium.
+                                      quantity: 6492112474321122596
+                                  status: Doloribus amet tenetur est nobis.
+                                  totalAmount: 0.8579501462812025
+                                  userID: Recusandae doloribus.
+                                - id: Ut aut sunt quam expedita fugit.
+                                  items:
+                                    - price: 0.3823852716922111
+                                      productID: Officia beatae laudantium.
+                                      quantity: 6492112474321122596
+                                    - price: 0.3823852716922111
+                                      productID: Officia beatae laudantium.
+                                      quantity: 6492112474321122596
+                                  status: Doloribus amet tenetur est nobis.
+                                  totalAmount: 0.8579501462812025
+                                  userID: Recusandae doloribus.
+                                - id: Ut aut sunt quam expedita fugit.
+                                  items:
+                                    - price: 0.3823852716922111
+                                      productID: Officia beatae laudantium.
+                                      quantity: 6492112474321122596
+                                    - price: 0.3823852716922111
+                                      productID: Officia beatae laudantium.
+                                      quantity: 6492112474321122596
+                                  status: Doloribus amet tenetur est nobis.
+                                  totalAmount: 0.8579501462812025
+                                  userID: Recusandae doloribus.
                 "404":
                     description: 'not-found: Not Found response.'
                     content:
@@ -482,51 +547,43 @@ components:
                 id:
                     type: string
                     description: Unique cart ID
-                    example: Autem ducimus temporibus.
+                    example: Tempora voluptatem laudantium.
                 items:
                     type: array
                     items:
                         $ref: '#/components/schemas/CartItem'
                     description: Items in the cart
                     example:
-                        - price: 0.3334594618289659
-                          productID: A in illum nisi beatae repellat.
-                          quantity: 1626306486575316035
-                          userID: Quam nobis similique quia omnis sequi maiores.
-                        - price: 0.3334594618289659
-                          productID: A in illum nisi beatae repellat.
-                          quantity: 1626306486575316035
-                          userID: Quam nobis similique quia omnis sequi maiores.
-                        - price: 0.3334594618289659
-                          productID: A in illum nisi beatae repellat.
-                          quantity: 1626306486575316035
-                          userID: Quam nobis similique quia omnis sequi maiores.
+                        - price: 0.7701504045867262
+                          productID: Aut aut deleniti veniam et eum.
+                          quantity: 6962311238877116266
+                          userID: Dolorem perferendis ut.
+                        - price: 0.7701504045867262
+                          productID: Aut aut deleniti veniam et eum.
+                          quantity: 6962311238877116266
+                          userID: Dolorem perferendis ut.
                 totalAmount:
                     type: number
                     description: Total amount of items in the cart
-                    example: 0.1328795835557268
+                    example: 0.7159656354251188
                     format: double
                 userID:
                     type: string
                     description: ID of the user who owns the cart
-                    example: Dicta est unde aliquid totam adipisci.
+                    example: Laudantium numquam excepturi nemo repellat culpa.
             example:
-                id: Ratione culpa nisi aut ut et itaque.
+                id: Et eum sit sed aliquam iusto.
                 items:
-                    - price: 0.3334594618289659
-                      productID: A in illum nisi beatae repellat.
-                      quantity: 1626306486575316035
-                      userID: Quam nobis similique quia omnis sequi maiores.
-                    - price: 0.3334594618289659
-                      productID: A in illum nisi beatae repellat.
-                      quantity: 1626306486575316035
-                      userID: Quam nobis similique quia omnis sequi maiores.
-                    - price: 0.3334594618289659
-                      productID: A in illum nisi beatae repellat.
-                      quantity: 1626306486575316035
-                      userID: Quam nobis similique quia omnis sequi maiores.
-                totalAmount: 0.6497343843145383
-                userID: Commodi dolor fugiat pariatur iure sit beatae.
+                    - price: 0.7701504045867262
+                      productID: Aut aut deleniti veniam et eum.
+                      quantity: 6962311238877116266
+                      userID: Dolorem perferendis ut.
+                    - price: 0.7701504045867262
+                      productID: Aut aut deleniti veniam et eum.
+                      quantity: 6962311238877116266
+                      userID: Dolorem perferendis ut.
+                totalAmount: 0.7410383189175417
+                userID: Ratione sapiente nostrum quis nisi tempora ipsum.
             required:
                 - id
                 - userID
@@ -538,26 +595,26 @@ components:
                 price:
                     type: number
                     description: Price of the product
-                    example: 0.3981839819504586
+                    example: 0.43568136469805924
                     format: double
                 productID:
                     type: string
                     description: ID of the product
-                    example: Labore voluptatem ut repellendus aut in.
+                    example: Dolorem sit veritatis deserunt vero.
                 quantity:
                     type: integer
                     description: Quantity of the product
-                    example: 2052978451222800638
+                    example: 1668315244657303256
                     format: int64
                 userID:
                     type: string
                     description: ID of the user who owns the cart
-                    example: Iste cumque sit quod in facilis est.
+                    example: Molestias nam quam illo excepturi.
             example:
-                price: 0.9802135538706094
-                productID: Quibusdam maxime qui omnis voluptatem adipisci.
-                quantity: 8853160802886208156
-                userID: Exercitationem illum accusamus libero eaque et voluptatem.
+                price: 0.5389371928345135
+                productID: Veniam ut.
+                quantity: 6006246124082235775
+                userID: Quia et dolores.
             required:
                 - userID
                 - productID
@@ -584,17 +641,17 @@ components:
                 temporary:
                     type: boolean
                     description: Is the error temporary?
-                    example: false
+                    example: true
                 timeout:
                     type: boolean
                     description: Is the error a timeout?
-                    example: false
+                    example: true
             example:
-                fault: false
+                fault: true
                 id: 123abc
                 message: parameter 'p' must be an integer
                 name: bad_request
-                temporary: false
+                temporary: true
                 timeout: false
             required:
                 - name
@@ -609,11 +666,37 @@ components:
                 userID:
                     type: string
                     description: ID of the user whose cart to retrieve
-                    example: Qui neque placeat unde qui.
+                    example: Sunt fuga sequi modi voluptates maiores nisi.
             example:
-                userID: Eaque distinctio suscipit sed.
+                userID: Officiis eos omnis inventore quis totam.
             required:
                 - userID
+        LoginUserPayload:
+            type: object
+            properties:
+                password:
+                    type: string
+                    description: Password
+                    example: supersecretpassword
+                username:
+                    type: string
+                    description: Username
+                    example: john_doe
+            example:
+                password: supersecretpassword
+                username: john_doe
+            required:
+                - username
+                - password
+        LoginUserResponseBody:
+            type: object
+            properties:
+                token:
+                    type: string
+                    description: JWT token for the authenticated user
+                    example: Laboriosam quia exercitationem quis excepturi doloremque ad.
+            example:
+                token: Possimus veniam sed laborum.
         NewOrder:
             type: object
             properties:
@@ -623,25 +706,28 @@ components:
                         $ref: '#/components/schemas/OrderItem'
                     description: Items in the order
                     example:
-                        - price: 0.013352482669533367
-                          productID: Molestias est sit.
-                          quantity: 8704328918205676847
-                        - price: 0.013352482669533367
-                          productID: Molestias est sit.
-                          quantity: 8704328918205676847
+                        - price: 0.446564689541944
+                          productID: Sapiente et non et cumque.
+                          quantity: 2715548353023666591
+                        - price: 0.446564689541944
+                          productID: Sapiente et non et cumque.
+                          quantity: 2715548353023666591
                 userID:
                     type: string
                     description: ID of the user placing the order
-                    example: Iste cupiditate ducimus quis ipsum ab.
+                    example: Ea ex totam dolor ducimus.
             example:
                 items:
-                    - price: 0.013352482669533367
-                      productID: Molestias est sit.
-                      quantity: 8704328918205676847
-                    - price: 0.013352482669533367
-                      productID: Molestias est sit.
-                      quantity: 8704328918205676847
-                userID: Facere incidunt aut omnis.
+                    - price: 0.446564689541944
+                      productID: Sapiente et non et cumque.
+                      quantity: 2715548353023666591
+                    - price: 0.446564689541944
+                      productID: Sapiente et non et cumque.
+                      quantity: 2715548353023666591
+                    - price: 0.446564689541944
+                      productID: Sapiente et non et cumque.
+                      quantity: 2715548353023666591
+                userID: Eligendi autem molestiae et fuga molestiae voluptatum.
             required:
                 - userID
                 - items
@@ -651,26 +737,26 @@ components:
                 description:
                     type: string
                     description: Product description
-                    example: Ea consequatur consectetur minima eos.
+                    example: Eaque distinctio suscipit sed.
                 inventory:
                     type: integer
                     description: Available inventory
-                    example: 8624747826453321603
+                    example: 6450909803363962499
                     format: int64
                 name:
                     type: string
                     description: Product name
-                    example: Omnis ullam voluptates dolore similique.
+                    example: Qui neque placeat unde qui.
                 price:
                     type: number
                     description: Product price
-                    example: 0.4763848578166555
+                    example: 0.6560544657380192
                     format: double
             example:
-                description: Magnam aperiam animi.
-                inventory: 3850778803483259709
-                name: Earum totam corporis.
-                price: 0.25344742613260285
+                description: Excepturi ab et non.
+                inventory: 5220637107794820273
+                name: Occaecati laboriosam harum quas.
+                price: 0.7244389723087159
             required:
                 - name
                 - price
@@ -681,77 +767,88 @@ components:
                 email:
                     type: string
                     description: User's email address
-                    example: Ab et libero provident.
+                    example: Dignissimos aut voluptatem nesciunt illo.
                 firstName:
                     type: string
                     description: User's first name
-                    example: Et aliquid velit similique dolorum fugit.
+                    example: Voluptatibus magni quasi reiciendis ab.
                 lastName:
                     type: string
                     description: User's last name
-                    example: Porro sit facilis.
+                    example: Sed odit officiis aut.
+                password:
+                    type: string
+                    description: User's password
+                    example: Iste cupiditate ducimus quis ipsum ab.
                 username:
                     type: string
                     description: User's username
-                    example: Qui nisi sunt ut repudiandae.
+                    example: Voluptatem voluptas soluta repudiandae qui.
             example:
-                email: Voluptatem rem suscipit placeat numquam.
-                firstName: Aut excepturi.
-                lastName: Tenetur officiis aliquid ex unde.
-                username: Eligendi beatae et velit eos rerum veniam.
+                email: Cumque sit quod in facilis.
+                firstName: Cupiditate labore voluptatem ut repellendus.
+                lastName: In fugiat aut quam exercitationem illum accusamus.
+                password: Eaque et voluptatem.
+                username: Magnam facere incidunt aut omnis sint repudiandae.
             required:
                 - username
                 - email
+                - firstName
+                - lastName
+                - password
         Order:
             type: object
             properties:
                 id:
                     type: string
                     description: Unique order ID
-                    example: Similique eaque pariatur.
+                    example: Delectus aperiam.
                 items:
                     type: array
                     items:
                         $ref: '#/components/schemas/OrderItem'
                     description: Items in the order
                     example:
-                        - price: 0.013352482669533367
-                          productID: Molestias est sit.
-                          quantity: 8704328918205676847
-                        - price: 0.013352482669533367
-                          productID: Molestias est sit.
-                          quantity: 8704328918205676847
-                        - price: 0.013352482669533367
-                          productID: Molestias est sit.
-                          quantity: 8704328918205676847
-                        - price: 0.013352482669533367
-                          productID: Molestias est sit.
-                          quantity: 8704328918205676847
+                        - price: 0.446564689541944
+                          productID: Sapiente et non et cumque.
+                          quantity: 2715548353023666591
+                        - price: 0.446564689541944
+                          productID: Sapiente et non et cumque.
+                          quantity: 2715548353023666591
+                        - price: 0.446564689541944
+                          productID: Sapiente et non et cumque.
+                          quantity: 2715548353023666591
                 status:
                     type: string
                     description: Order status
-                    example: Culpa id consequatur nostrum voluptatem voluptas.
+                    example: Enim ut voluptas officiis recusandae et repellat.
                 totalAmount:
                     type: number
                     description: Total amount of the order
-                    example: 0.32038702052894813
+                    example: 0.4004476320235883
                     format: double
                 userID:
                     type: string
                     description: ID of the user who placed the order
-                    example: Ullam sed.
+                    example: Cum ut quos quod quo quibusdam fugit.
             example:
-                id: Repudiandae qui autem dignissimos aut voluptatem.
+                id: Iste veniam omnis ut natus.
                 items:
-                    - price: 0.013352482669533367
-                      productID: Molestias est sit.
-                      quantity: 8704328918205676847
-                    - price: 0.013352482669533367
-                      productID: Molestias est sit.
-                      quantity: 8704328918205676847
-                status: Sed odit officiis aut.
-                totalAmount: 0.6719913653443954
-                userID: Illo incidunt voluptatibus magni quasi.
+                    - price: 0.446564689541944
+                      productID: Sapiente et non et cumque.
+                      quantity: 2715548353023666591
+                    - price: 0.446564689541944
+                      productID: Sapiente et non et cumque.
+                      quantity: 2715548353023666591
+                    - price: 0.446564689541944
+                      productID: Sapiente et non et cumque.
+                      quantity: 2715548353023666591
+                    - price: 0.446564689541944
+                      productID: Sapiente et non et cumque.
+                      quantity: 2715548353023666591
+                status: Ut ut qui itaque ea.
+                totalAmount: 0.6764958416526735
+                userID: Similique assumenda molestiae pariatur ipsum officiis.
             required:
                 - id
                 - userID
@@ -764,21 +861,21 @@ components:
                 price:
                     type: number
                     description: Price of the product at the time of order
-                    example: 0.26177591166911623
+                    example: 0.6057102680613606
                     format: double
                 productID:
                     type: string
                     description: ID of the product
-                    example: Repudiandae dolor aperiam sed cupiditate necessitatibus.
+                    example: Sunt enim culpa odio corporis.
                 quantity:
                     type: integer
                     description: Quantity of the product
-                    example: 5933940631898307852
+                    example: 1399006519394634790
                     format: int64
             example:
-                price: 0.646437490659893
-                productID: Libero quos iste fuga ratione voluptas.
-                quantity: 2251191143092081260
+                price: 0.5478169797927871
+                productID: Officia doloremque rerum et.
+                quantity: 489280434319205594
             required:
                 - productID
                 - quantity
@@ -789,31 +886,31 @@ components:
                 description:
                     type: string
                     description: Product description
-                    example: Qui ut exercitationem atque esse et velit.
+                    example: Est unde.
                 id:
                     type: string
                     description: Unique product ID
-                    example: Maxime ab.
+                    example: Quibusdam maxime qui omnis voluptatem adipisci.
                 inventory:
                     type: integer
                     description: Available inventory
-                    example: 8090604964599368388
+                    example: 2641309652881479937
                     format: int64
                 name:
                     type: string
                     description: Product name
-                    example: Accusantium nisi.
+                    example: Blanditiis quia autem ducimus temporibus rerum.
                 price:
                     type: number
                     description: Product price
-                    example: 0.7250493492653385
+                    example: 0.5461469436042018
                     format: double
             example:
-                description: Vel laborum amet dolor eius vel quia.
-                id: Beatae soluta id ab adipisci in.
-                inventory: 8504592746422895308
-                name: Veniam in quo.
-                price: 0.8908519482000986
+                description: Commodi dolor fugiat pariatur iure sit beatae.
+                id: Dolorem aut.
+                inventory: 5992741951669767568
+                name: Ratione culpa nisi aut ut et itaque.
+                price: 0.9801299487152751
             required:
                 - id
                 - name
@@ -825,29 +922,34 @@ components:
                 email:
                     type: string
                     description: User's email address
-                    example: Sed aut et perspiciatis sit dolorem.
+                    example: Ea consequatur consectetur minima eos.
                 firstName:
                     type: string
                     description: User's first name
-                    example: Totam totam reprehenderit quidem et veritatis non.
+                    example: Architecto ut.
                 id:
                     type: string
                     description: Unique user ID
-                    example: Cumque natus quas.
+                    example: Dolor eius vel quia suscipit non.
                 lastName:
                     type: string
                     description: User's last name
-                    example: Rerum ut voluptatum exercitationem quae.
+                    example: Totam corporis ut magnam aperiam.
+                password:
+                    type: string
+                    description: User's password
+                    example: Quia aut et repudiandae.
                 username:
                     type: string
                     description: User's username
-                    example: Dolorem distinctio.
+                    example: Omnis ullam voluptates dolore similique.
             example:
-                email: Nostrum autem in voluptas atque iste sit.
-                firstName: Vel quis.
-                id: Odio enim esse autem delectus.
-                lastName: Porro exercitationem.
-                username: Odio veniam voluptas fuga.
+                email: Voluptas voluptatem.
+                firstName: Voluptatum similique.
+                id: Aperiam sed cupiditate necessitatibus exercitationem harum sunt.
+                lastName: Pariatur et.
+                password: Sed vel quia velit culpa id consequatur.
+                username: Quos iste fuga.
             required:
                 - id
                 - username

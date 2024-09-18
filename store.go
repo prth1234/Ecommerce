@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	store "store/gen/store"
+	"store/jwthelper"
 )
 
 type storesrvc struct {
@@ -16,12 +18,44 @@ func NewStore(db *sql.DB) store.Service {
 	return &storesrvc{db: db}
 }
 
+type LoginUserResult struct {
+	Token *string `json:"token"` // Change this to *string
+}
+
+func (s *storesrvc) LoginUser(ctx context.Context, p *store.LoginUserPayload) (*store.LoginUserResult, error) {
+	query := `SELECT id, username, password FROM users WHERE username = $1`
+	var id, username, hashedPassword string
+
+	err := s.db.QueryRowContext(ctx, query, p.Username).Scan(&id, &username, &hashedPassword)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("invalid username or password")
+		}
+		return nil, fmt.Errorf("error querying user: %v", err)
+	}
+
+	// Compare passwords
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(p.Password))
+	if err != nil {
+		return nil, fmt.Errorf("invalid username or password")
+	}
+
+	// Generate JWT token
+	token, err := jwthelper.GenerateJWT(username)
+	if err != nil {
+		return nil, fmt.Errorf("error generating token: %v", err)
+	}
+
+	// Return the result as *store.LoginUserResult
+	return &store.LoginUserResult{Token: &token}, nil
+}
+
 func (s *storesrvc) CreateUser(ctx context.Context, p *store.NewUser) (res *store.User, err error) {
 	id := uuid.New().String()
-	query := `INSERT INTO users (id, username, email, first_name, last_name) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, first_name, last_name`
+	query := `INSERT INTO users (id, username, email, first_name, last_name, password) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, email, first_name, last_name, password`
 
 	user := &store.User{}
-	err = s.db.QueryRowContext(ctx, query, id, p.Username, p.Email, p.FirstName, p.LastName).Scan(&user.ID, &user.Username, &user.Email, &user.FirstName, &user.LastName)
+	err = s.db.QueryRowContext(ctx, query, id, p.Username, p.Email, p.FirstName, p.LastName, p.Password).Scan(&user.ID, &user.Username, &user.Email, &user.FirstName, &user.LastName, &user.Password)
 	if err != nil {
 		return nil, fmt.Errorf("error creating user: %v", err)
 	}

@@ -23,7 +23,7 @@ func BuildCreateUserPayload(storeCreateUserBody string) (*store.NewUser, error) 
 	{
 		err = json.Unmarshal([]byte(storeCreateUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Provident ducimus iure at accusantium sit velit.\",\n      \"firstName\": \"Non ea dolor pariatur autem.\",\n      \"lastName\": \"Nam a placeat sapiente.\",\n      \"username\": \"Tenetur nobis molestiae enim nam consequatur.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Pariatur autem labore nam.\",\n      \"firstName\": \"Placeat sapiente inventore quis omnis facilis.\",\n      \"lastName\": \"Nulla eius qui culpa.\",\n      \"password\": \"Et repudiandae.\",\n      \"username\": \"Sit velit molestias non ea.\"\n   }'")
 		}
 	}
 	v := &store.NewUser{
@@ -31,6 +31,26 @@ func BuildCreateUserPayload(storeCreateUserBody string) (*store.NewUser, error) 
 		Email:     body.Email,
 		FirstName: body.FirstName,
 		LastName:  body.LastName,
+		Password:  body.Password,
+	}
+
+	return v, nil
+}
+
+// BuildLoginUserPayload builds the payload for the store loginUser endpoint
+// from CLI flags.
+func BuildLoginUserPayload(storeLoginUserBody string) (*store.LoginUserPayload, error) {
+	var err error
+	var body LoginUserRequestBody
+	{
+		err = json.Unmarshal([]byte(storeLoginUserBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"password\": \"Sed voluptatem aspernatur.\",\n      \"username\": \"Praesentium et aut.\"\n   }'")
+		}
+	}
+	v := &store.LoginUserPayload{
+		Username: body.Username,
+		Password: body.Password,
 	}
 
 	return v, nil
@@ -57,7 +77,7 @@ func BuildCreateProductPayload(storeCreateProductBody string) (*store.NewProduct
 	{
 		err = json.Unmarshal([]byte(storeCreateProductBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"Asperiores repellat quisquam perferendis.\",\n      \"inventory\": 7080323998293430317,\n      \"name\": \"Hic voluptas.\",\n      \"price\": 0.33333071459397057\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"Aperiam et quia atque illum quis.\",\n      \"inventory\": 2719289908079484285,\n      \"name\": \"Optio fugit facilis harum omnis.\",\n      \"price\": 0.6771694639392373\n   }'")
 		}
 	}
 	v := &store.NewProduct{
@@ -91,7 +111,7 @@ func BuildCreateOrderPayload(storeCreateOrderBody string) (*store.NewOrder, erro
 	{
 		err = json.Unmarshal([]byte(storeCreateOrderBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"items\": [\n         {\n            \"price\": 0.2782759670844699,\n            \"productID\": \"Et est doloribus ut at.\",\n            \"quantity\": 1281967412391717881\n         },\n         {\n            \"price\": 0.2782759670844699,\n            \"productID\": \"Et est doloribus ut at.\",\n            \"quantity\": 1281967412391717881\n         },\n         {\n            \"price\": 0.2782759670844699,\n            \"productID\": \"Et est doloribus ut at.\",\n            \"quantity\": 1281967412391717881\n         },\n         {\n            \"price\": 0.2782759670844699,\n            \"productID\": \"Et est doloribus ut at.\",\n            \"quantity\": 1281967412391717881\n         }\n      ],\n      \"userID\": \"Ut amet.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"items\": [\n         {\n            \"price\": 0.73241831363072,\n            \"productID\": \"Eos libero non soluta.\",\n            \"quantity\": 9175415661056716192\n         },\n         {\n            \"price\": 0.73241831363072,\n            \"productID\": \"Eos libero non soluta.\",\n            \"quantity\": 9175415661056716192\n         },\n         {\n            \"price\": 0.73241831363072,\n            \"productID\": \"Eos libero non soluta.\",\n            \"quantity\": 9175415661056716192\n         }\n      ],\n      \"userID\": \"Sunt aut distinctio.\"\n   }'")
 		}
 		if body.Items == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("items", "body"))
@@ -149,7 +169,7 @@ func BuildAddToCartPayload(storeAddToCartBody string) (*store.CartItem, error) {
 	{
 		err = json.Unmarshal([]byte(storeAddToCartBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"price\": 0.19750246691753612,\n      \"productID\": \"Doloremque quia.\",\n      \"quantity\": 8413811540640946695,\n      \"userID\": \"Quia tempore voluptatem.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"price\": 0.962613919416865,\n      \"productID\": \"Alias maxime itaque beatae dicta reprehenderit.\",\n      \"quantity\": 6061566538106627186,\n      \"userID\": \"Harum illum molestiae.\"\n   }'")
 		}
 	}
 	v := &store.CartItem{
@@ -170,7 +190,7 @@ func BuildGetCartPayload(storeGetCartBody string) (*store.GetCartPayload, error)
 	{
 		err = json.Unmarshal([]byte(storeGetCartBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"userID\": \"Beatae laudantium eaque eveniet.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"userID\": \"In aut reprehenderit sint.\"\n   }'")
 		}
 	}
 	v := &store.GetCartPayload{

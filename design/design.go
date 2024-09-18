@@ -27,6 +27,25 @@ var _ = Service("store", func() {
 		})
 	})
 
+	// Login endpoint
+	Method("loginUser", func() {
+		Description("Login a user and return a JWT token")
+		Payload(func() {
+			Field(1, "username", String, "Username for login")
+			Field(2, "password", String, "Password for login")
+			Required("username", "password")
+		})
+		Result(func() {
+			Field(1, "token", String, "JWT token for the authenticated user")
+		})
+		Error("unauthorized", String, "Invalid username or password")
+		HTTP(func() {
+			POST("/login")
+			Response(StatusOK)
+			Response("unauthorized", StatusUnauthorized)
+		})
+	})
+
 	Method("getUser", func() {
 		Payload(func() {
 			Field(1, "id", String)
@@ -105,7 +124,7 @@ var _ = Service("store", func() {
 		})
 	})
 
-	Method("getUserOrders	", func() {
+	Method("getUserOrders", func() {
 		Description("Retrieve all orders for a specific user")
 		Payload(func() {
 			Field(1, "userID", String)

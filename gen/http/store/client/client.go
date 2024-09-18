@@ -21,6 +21,10 @@ type Client struct {
 	// endpoint.
 	CreateUserDoer goahttp.Doer
 
+	// LoginUser Doer is the HTTP client used to make requests to the loginUser
+	// endpoint.
+	LoginUserDoer goahttp.Doer
+
 	// GetUser Doer is the HTTP client used to make requests to the getUser
 	// endpoint.
 	GetUserDoer goahttp.Doer
@@ -50,7 +54,7 @@ type Client struct {
 	GetOrderDoer goahttp.Doer
 
 	// GetUserOrders Doer is the HTTP client used to make requests to the
-	// getUserOrders	 endpoint.
+	// getUserOrders endpoint.
 	GetUserOrdersDoer goahttp.Doer
 
 	// AddToCart Doer is the HTTP client used to make requests to the addToCart
@@ -82,6 +86,7 @@ func NewClient(
 ) *Client {
 	return &Client{
 		CreateUserDoer:      doer,
+		LoginUserDoer:       doer,
 		GetUserDoer:         doer,
 		GetUserAllDoer:      doer,
 		CreateProductDoer:   doer,
@@ -119,6 +124,30 @@ func (c *Client) CreateUser() goa.Endpoint {
 		resp, err := c.CreateUserDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("store", "createUser", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// LoginUser returns an endpoint that makes HTTP requests to the store service
+// loginUser server.
+func (c *Client) LoginUser() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeLoginUserRequest(c.encoder)
+		decodeResponse = DecodeLoginUserResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildLoginUserRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.LoginUserDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("store", "loginUser", err)
 		}
 		return decodeResponse(resp)
 	}
@@ -268,7 +297,7 @@ func (c *Client) GetOrder() goa.Endpoint {
 }
 
 // GetUserOrders returns an endpoint that makes HTTP requests to the store
-// service getUserOrders	 server.
+// service getUserOrders server.
 func (c *Client) GetUserOrders() goa.Endpoint {
 	var (
 		decodeResponse = DecodeGetUserOrdersResponse(c.decoder, c.RestoreResponseBody)
@@ -280,7 +309,7 @@ func (c *Client) GetUserOrders() goa.Endpoint {
 		}
 		resp, err := c.GetUserOrdersDoer.Do(req)
 		if err != nil {
-			return nil, goahttp.ErrRequestError("store", "getUserOrders	", err)
+			return nil, goahttp.ErrRequestError("store", "getUserOrders", err)
 		}
 		return decodeResponse(resp)
 	}

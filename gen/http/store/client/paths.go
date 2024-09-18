@@ -16,6 +16,11 @@ func CreateUserStorePath() string {
 	return "/users"
 }
 
+// LoginUserStorePath returns the URL path to the store service loginUser HTTP endpoint.
+func LoginUserStorePath() string {
+	return "/login"
+}
+
 // GetUserStorePath returns the URL path to the store service getUser HTTP endpoint.
 func GetUserStorePath(id string) string {
 	return fmt.Sprintf("/users/%v", id)
@@ -51,7 +56,7 @@ func GetOrderStorePath(id string) string {
 	return fmt.Sprintf("/orders/%v", id)
 }
 
-// GetUserOrdersStorePath returns the URL path to the store service getUserOrders	 HTTP endpoint.
+// GetUserOrdersStorePath returns the URL path to the store service getUserOrders HTTP endpoint.
 func GetUserOrdersStorePath(userID string) string {
 	return fmt.Sprintf("/users/%v/orders", userID)
 }

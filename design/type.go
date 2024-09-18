@@ -10,6 +10,7 @@ var User = Type("User", func() {
 	Attribute("email", String, "User's email address")
 	Attribute("firstName", String, "User's first name")
 	Attribute("lastName", String, "User's last name")
+	Attribute("password", String, "User's password")
 	Required("id", "username", "email")
 })
 
@@ -18,7 +19,9 @@ var NewUser = Type("NewUser", func() {
 	Attribute("email", String, "User's email address")
 	Attribute("firstName", String, "User's first name")
 	Attribute("lastName", String, "User's last name")
-	Required("username", "email")
+	Attribute("password", String, "User's password")
+	Required("username", "email", "firstName", "lastName", "password")
+
 })
 
 var Product = Type("Product", func() {

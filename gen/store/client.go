@@ -16,6 +16,7 @@ import (
 // Client is the "store" service client.
 type Client struct {
 	CreateUserEndpoint    goa.Endpoint
+	LoginUserEndpoint     goa.Endpoint
 	GetUserEndpoint       goa.Endpoint
 	GetUserAllEndpoint    goa.Endpoint
 	CreateProductEndpoint goa.Endpoint
@@ -29,9 +30,10 @@ type Client struct {
 }
 
 // NewClient initializes a "store" service client given the endpoints.
-func NewClient(createUser, getUser, getUserAll, createProduct, getProduct, listProducts, createOrder, getOrder, getUserOrders, addToCart, getCart goa.Endpoint) *Client {
+func NewClient(createUser, loginUser, getUser, getUserAll, createProduct, getProduct, listProducts, createOrder, getOrder, getUserOrders, addToCart, getCart goa.Endpoint) *Client {
 	return &Client{
 		CreateUserEndpoint:    createUser,
+		LoginUserEndpoint:     loginUser,
 		GetUserEndpoint:       getUser,
 		GetUserAllEndpoint:    getUserAll,
 		CreateProductEndpoint: createProduct,
@@ -53,6 +55,19 @@ func (c *Client) CreateUser(ctx context.Context, p *NewUser) (res *User, err err
 		return
 	}
 	return ires.(*User), nil
+}
+
+// LoginUser calls the "loginUser" endpoint of the "store" service.
+// LoginUser may return the following errors:
+//   - "unauthorized" (type Unauthorized)
+//   - error: internal error
+func (c *Client) LoginUser(ctx context.Context, p *LoginUserPayload) (res *LoginUserResult, err error) {
+	var ires any
+	ires, err = c.LoginUserEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*LoginUserResult), nil
 }
 
 // GetUser calls the "getUser" endpoint of the "store" service.
@@ -134,7 +149,7 @@ func (c *Client) GetOrder(ctx context.Context, p *GetOrderPayload) (res *Order, 
 	return ires.(*Order), nil
 }
 
-// GetUserOrders calls the "getUserOrders\t" endpoint of the "store" service.
+// GetUserOrders calls the "getUserOrders" endpoint of the "store" service.
 // GetUserOrders may return the following errors:
 //   - "not-found" (type *goa.ServiceError)
 //   - error: internal error

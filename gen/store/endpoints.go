@@ -16,6 +16,7 @@ import (
 // Endpoints wraps the "store" service endpoints.
 type Endpoints struct {
 	CreateUser    goa.Endpoint
+	LoginUser     goa.Endpoint
 	GetUser       goa.Endpoint
 	GetUserAll    goa.Endpoint
 	CreateProduct goa.Endpoint
@@ -32,6 +33,7 @@ type Endpoints struct {
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
 		CreateUser:    NewCreateUserEndpoint(s),
+		LoginUser:     NewLoginUserEndpoint(s),
 		GetUser:       NewGetUserEndpoint(s),
 		GetUserAll:    NewGetUserAllEndpoint(s),
 		CreateProduct: NewCreateProductEndpoint(s),
@@ -48,6 +50,7 @@ func NewEndpoints(s Service) *Endpoints {
 // Use applies the given middleware to all the "store" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.CreateUser = m(e.CreateUser)
+	e.LoginUser = m(e.LoginUser)
 	e.GetUser = m(e.GetUser)
 	e.GetUserAll = m(e.GetUserAll)
 	e.CreateProduct = m(e.CreateProduct)
@@ -66,6 +69,15 @@ func NewCreateUserEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*NewUser)
 		return s.CreateUser(ctx, p)
+	}
+}
+
+// NewLoginUserEndpoint returns an endpoint function that calls the method
+// "loginUser" of service "store".
+func NewLoginUserEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*LoginUserPayload)
+		return s.LoginUser(ctx, p)
 	}
 }
 
@@ -131,7 +143,7 @@ func NewGetOrderEndpoint(s Service) goa.Endpoint {
 }
 
 // NewGetUserOrdersEndpoint returns an endpoint function that calls the method
-// "getUserOrders\t" of service "store".
+// "getUserOrders" of service "store".
 func NewGetUserOrdersEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*GetUserOrdersPayload)

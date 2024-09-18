@@ -17,6 +17,8 @@ import (
 type Service interface {
 	// CreateUser implements createUser.
 	CreateUser(context.Context, *NewUser) (res *User, err error)
+	// Login a user and return a JWT token
+	LoginUser(context.Context, *LoginUserPayload) (res *LoginUserResult, err error)
 	// GetUser implements getUser.
 	GetUser(context.Context, *GetUserPayload) (res *User, err error)
 	// GetUserAll implements getUserAll.
@@ -53,7 +55,7 @@ const ServiceName = "store"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [11]string{"createUser", "getUser", "getUserAll", "createProduct", "getProduct", "listProducts", "createOrder", "getOrder", "getUserOrders\t", "addToCart", "getCart"}
+var MethodNames = [12]string{"createUser", "loginUser", "getUser", "getUserAll", "createProduct", "getProduct", "listProducts", "createOrder", "getOrder", "getUserOrders", "addToCart", "getCart"}
 
 // Cart is the result type of the store service addToCart method.
 type Cart struct {
@@ -106,6 +108,20 @@ type GetUserPayload struct {
 	ID string
 }
 
+// LoginUserPayload is the payload type of the store service loginUser method.
+type LoginUserPayload struct {
+	// Username for login
+	Username string
+	// Password for login
+	Password string
+}
+
+// LoginUserResult is the result type of the store service loginUser method.
+type LoginUserResult struct {
+	// JWT token for the authenticated user
+	Token *string
+}
+
 // NewOrder is the payload type of the store service createOrder method.
 type NewOrder struct {
 	// ID of the user placing the order
@@ -133,9 +149,11 @@ type NewUser struct {
 	// User's email address
 	Email string
 	// User's first name
-	FirstName *string
+	FirstName string
 	// User's last name
-	LastName *string
+	LastName string
+	// User's password
+	Password string
 }
 
 // Order is the result type of the store service createOrder method.
@@ -187,6 +205,28 @@ type User struct {
 	FirstName *string
 	// User's last name
 	LastName *string
+	// User's password
+	Password *string
+}
+
+// Invalid username or password
+type Unauthorized string
+
+// Error returns an error description.
+func (e Unauthorized) Error() string {
+	return "Invalid username or password"
+}
+
+// ErrorName returns "unauthorized".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e Unauthorized) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "unauthorized".
+func (e Unauthorized) GoaErrorName() string {
+	return "unauthorized"
 }
 
 // MakeNotFound builds a goa.ServiceError from an error.

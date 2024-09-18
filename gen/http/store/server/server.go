@@ -20,6 +20,7 @@ import (
 type Server struct {
 	Mounts        []*MountPoint
 	CreateUser    http.Handler
+	LoginUser     http.Handler
 	GetUser       http.Handler
 	GetUserAll    http.Handler
 	CreateProduct http.Handler
@@ -60,6 +61,7 @@ func New(
 	return &Server{
 		Mounts: []*MountPoint{
 			{"CreateUser", "POST", "/users"},
+			{"LoginUser", "POST", "/login"},
 			{"GetUser", "GET", "/users/{id}"},
 			{"GetUserAll", "GET", "/users"},
 			{"CreateProduct", "POST", "/products"},
@@ -72,6 +74,7 @@ func New(
 			{"GetCart", "GET", "/cart"},
 		},
 		CreateUser:    NewCreateUserHandler(e.CreateUser, mux, decoder, encoder, errhandler, formatter),
+		LoginUser:     NewLoginUserHandler(e.LoginUser, mux, decoder, encoder, errhandler, formatter),
 		GetUser:       NewGetUserHandler(e.GetUser, mux, decoder, encoder, errhandler, formatter),
 		GetUserAll:    NewGetUserAllHandler(e.GetUserAll, mux, decoder, encoder, errhandler, formatter),
 		CreateProduct: NewCreateProductHandler(e.CreateProduct, mux, decoder, encoder, errhandler, formatter),
@@ -91,6 +94,7 @@ func (s *Server) Service() string { return "store" }
 // Use wraps the server handlers with the given middleware.
 func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.CreateUser = m(s.CreateUser)
+	s.LoginUser = m(s.LoginUser)
 	s.GetUser = m(s.GetUser)
 	s.GetUserAll = m(s.GetUserAll)
 	s.CreateProduct = m(s.CreateProduct)
@@ -109,6 +113,7 @@ func (s *Server) MethodNames() []string { return store.MethodNames[:] }
 // Mount configures the mux to serve the store endpoints.
 func Mount(mux goahttp.Muxer, h *Server) {
 	MountCreateUserHandler(mux, h.CreateUser)
+	MountLoginUserHandler(mux, h.LoginUser)
 	MountGetUserHandler(mux, h.GetUser)
 	MountGetUserAllHandler(mux, h.GetUserAll)
 	MountCreateProductHandler(mux, h.CreateProduct)
@@ -156,6 +161,57 @@ func NewCreateUserHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "createUser")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountLoginUserHandler configures the mux to serve the "store" service
+// "loginUser" endpoint.
+func MountLoginUserHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/login", f)
+}
+
+// NewLoginUserHandler creates a HTTP handler which loads the HTTP request and
+// calls the "store" service "loginUser" endpoint.
+func NewLoginUserHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeLoginUserRequest(mux, decoder)
+		encodeResponse = EncodeLoginUserResponse(encoder)
+		encodeError    = EncodeLoginUserError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "loginUser")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
 		payload, err := decodeRequest(r)
 		if err != nil {
@@ -521,7 +577,7 @@ func NewGetOrderHandler(
 }
 
 // MountGetUserOrdersHandler configures the mux to serve the "store" service
-// "getUserOrders\t" endpoint.
+// "getUserOrders" endpoint.
 func MountGetUserOrdersHandler(mux goahttp.Muxer, h http.Handler) {
 	f, ok := h.(http.HandlerFunc)
 	if !ok {
@@ -533,7 +589,7 @@ func MountGetUserOrdersHandler(mux goahttp.Muxer, h http.Handler) {
 }
 
 // NewGetUserOrdersHandler creates a HTTP handler which loads the HTTP request
-// and calls the "store" service "getUserOrders\t" endpoint.
+// and calls the "store" service "getUserOrders" endpoint.
 func NewGetUserOrdersHandler(
 	endpoint goa.Endpoint,
 	mux goahttp.Muxer,
@@ -549,7 +605,7 @@ func NewGetUserOrdersHandler(
 	)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
-		ctx = context.WithValue(ctx, goa.MethodKey, "getUserOrders\t")
+		ctx = context.WithValue(ctx, goa.MethodKey, "getUserOrders")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
 		payload, err := decodeRequest(r)
 		if err != nil {

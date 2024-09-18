@@ -22,17 +22,18 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `store (create-user|get-user|get-user-all|create-product|get-product|list-products|create-order|get-order|get-user-orders|add-to-cart|get-cart)
+	return `store (create-user|login-user|get-user|get-user-all|create-product|get-product|list-products|create-order|get-order|get-user-orders|add-to-cart|get-cart)
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` store create-user --body '{
-      "email": "Provident ducimus iure at accusantium sit velit.",
-      "firstName": "Non ea dolor pariatur autem.",
-      "lastName": "Nam a placeat sapiente.",
-      "username": "Tenetur nobis molestiae enim nam consequatur."
+      "email": "Pariatur autem labore nam.",
+      "firstName": "Placeat sapiente inventore quis omnis facilis.",
+      "lastName": "Nulla eius qui culpa.",
+      "password": "Et repudiandae.",
+      "username": "Sit velit molestias non ea."
    }'` + "\n" +
 		""
 }
@@ -51,6 +52,9 @@ func ParseEndpoint(
 
 		storeCreateUserFlags    = flag.NewFlagSet("create-user", flag.ExitOnError)
 		storeCreateUserBodyFlag = storeCreateUserFlags.String("body", "REQUIRED", "")
+
+		storeLoginUserFlags    = flag.NewFlagSet("login-user", flag.ExitOnError)
+		storeLoginUserBodyFlag = storeLoginUserFlags.String("body", "REQUIRED", "")
 
 		storeGetUserFlags  = flag.NewFlagSet("get-user", flag.ExitOnError)
 		storeGetUserIDFlag = storeGetUserFlags.String("id", "REQUIRED", "")
@@ -82,6 +86,7 @@ func ParseEndpoint(
 	)
 	storeFlags.Usage = storeUsage
 	storeCreateUserFlags.Usage = storeCreateUserUsage
+	storeLoginUserFlags.Usage = storeLoginUserUsage
 	storeGetUserFlags.Usage = storeGetUserUsage
 	storeGetUserAllFlags.Usage = storeGetUserAllUsage
 	storeCreateProductFlags.Usage = storeCreateProductUsage
@@ -129,6 +134,9 @@ func ParseEndpoint(
 			switch epn {
 			case "create-user":
 				epf = storeCreateUserFlags
+
+			case "login-user":
+				epf = storeLoginUserFlags
 
 			case "get-user":
 				epf = storeGetUserFlags
@@ -188,6 +196,9 @@ func ParseEndpoint(
 			case "create-user":
 				endpoint = c.CreateUser()
 				data, err = storec.BuildCreateUserPayload(*storeCreateUserBodyFlag)
+			case "login-user":
+				endpoint = c.LoginUser()
+				data, err = storec.BuildLoginUserPayload(*storeLoginUserBodyFlag)
 			case "get-user":
 				endpoint = c.GetUser()
 				data, err = storec.BuildGetUserPayload(*storeGetUserIDFlag)
@@ -234,6 +245,7 @@ Usage:
 
 COMMAND:
     create-user: CreateUser implements createUser.
+    login-user: Login a user and return a JWT token
     get-user: GetUser implements getUser.
     get-user-all: GetUserAll implements getUserAll.
     create-product: CreateProduct implements createProduct.
@@ -257,10 +269,25 @@ CreateUser implements createUser.
 
 Example:
     %[1]s store create-user --body '{
-      "email": "Provident ducimus iure at accusantium sit velit.",
-      "firstName": "Non ea dolor pariatur autem.",
-      "lastName": "Nam a placeat sapiente.",
-      "username": "Tenetur nobis molestiae enim nam consequatur."
+      "email": "Pariatur autem labore nam.",
+      "firstName": "Placeat sapiente inventore quis omnis facilis.",
+      "lastName": "Nulla eius qui culpa.",
+      "password": "Et repudiandae.",
+      "username": "Sit velit molestias non ea."
+   }'
+`, os.Args[0])
+}
+
+func storeLoginUserUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] store login-user -body JSON
+
+Login a user and return a JWT token
+    -body JSON: 
+
+Example:
+    %[1]s store login-user --body '{
+      "password": "Sed voluptatem aspernatur.",
+      "username": "Praesentium et aut."
    }'
 `, os.Args[0])
 }
@@ -272,7 +299,7 @@ GetUser implements getUser.
     -id STRING: 
 
 Example:
-    %[1]s store get-user --id "Et minus velit sed alias consequatur dolores."
+    %[1]s store get-user --id "Ratione aut."
 `, os.Args[0])
 }
 
@@ -294,10 +321,10 @@ CreateProduct implements createProduct.
 
 Example:
     %[1]s store create-product --body '{
-      "description": "Asperiores repellat quisquam perferendis.",
-      "inventory": 7080323998293430317,
-      "name": "Hic voluptas.",
-      "price": 0.33333071459397057
+      "description": "Aperiam et quia atque illum quis.",
+      "inventory": 2719289908079484285,
+      "name": "Optio fugit facilis harum omnis.",
+      "price": 0.6771694639392373
    }'
 `, os.Args[0])
 }
@@ -309,7 +336,7 @@ GetProduct implements getProduct.
     -id STRING: 
 
 Example:
-    %[1]s store get-product --id "Consectetur adipisci amet."
+    %[1]s store get-product --id "Et nihil nesciunt odio quis et in."
 `, os.Args[0])
 }
 
@@ -333,27 +360,22 @@ Example:
     %[1]s store create-order --body '{
       "items": [
          {
-            "price": 0.2782759670844699,
-            "productID": "Et est doloribus ut at.",
-            "quantity": 1281967412391717881
+            "price": 0.73241831363072,
+            "productID": "Eos libero non soluta.",
+            "quantity": 9175415661056716192
          },
          {
-            "price": 0.2782759670844699,
-            "productID": "Et est doloribus ut at.",
-            "quantity": 1281967412391717881
+            "price": 0.73241831363072,
+            "productID": "Eos libero non soluta.",
+            "quantity": 9175415661056716192
          },
          {
-            "price": 0.2782759670844699,
-            "productID": "Et est doloribus ut at.",
-            "quantity": 1281967412391717881
-         },
-         {
-            "price": 0.2782759670844699,
-            "productID": "Et est doloribus ut at.",
-            "quantity": 1281967412391717881
+            "price": 0.73241831363072,
+            "productID": "Eos libero non soluta.",
+            "quantity": 9175415661056716192
          }
       ],
-      "userID": "Ut amet."
+      "userID": "Sunt aut distinctio."
    }'
 `, os.Args[0])
 }
@@ -365,7 +387,7 @@ GetOrder implements getOrder.
     -id STRING: 
 
 Example:
-    %[1]s store get-order --id "Quidem mollitia odit quos."
+    %[1]s store get-order --id "Debitis ut aut pariatur enim similique."
 `, os.Args[0])
 }
 
@@ -376,7 +398,7 @@ Retrieve all orders for a specific user
     -user-id STRING: 
 
 Example:
-    %[1]s store get-user-orders --user-id "Recusandae quia."
+    %[1]s store get-user-orders --user-id "Pariatur ipsum."
 `, os.Args[0])
 }
 
@@ -388,10 +410,10 @@ AddToCart implements addToCart.
 
 Example:
     %[1]s store add-to-cart --body '{
-      "price": 0.19750246691753612,
-      "productID": "Doloremque quia.",
-      "quantity": 8413811540640946695,
-      "userID": "Quia tempore voluptatem."
+      "price": 0.962613919416865,
+      "productID": "Alias maxime itaque beatae dicta reprehenderit.",
+      "quantity": 6061566538106627186,
+      "userID": "Harum illum molestiae."
    }'
 `, os.Args[0])
 }
@@ -404,7 +426,7 @@ GetCart implements getCart.
 
 Example:
     %[1]s store get-cart --body '{
-      "userID": "Beatae laudantium eaque eveniet."
+      "userID": "In aut reprehenderit sint."
    }'
 `, os.Args[0])
 }

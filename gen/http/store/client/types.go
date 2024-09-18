@@ -21,9 +21,20 @@ type CreateUserRequestBody struct {
 	// User's email address
 	Email string `form:"email" json:"email" xml:"email"`
 	// User's first name
-	FirstName *string `form:"firstName,omitempty" json:"firstName,omitempty" xml:"firstName,omitempty"`
+	FirstName string `form:"firstName" json:"firstName" xml:"firstName"`
 	// User's last name
-	LastName *string `form:"lastName,omitempty" json:"lastName,omitempty" xml:"lastName,omitempty"`
+	LastName string `form:"lastName" json:"lastName" xml:"lastName"`
+	// User's password
+	Password string `form:"password" json:"password" xml:"password"`
+}
+
+// LoginUserRequestBody is the type of the "store" service "loginUser" endpoint
+// HTTP request body.
+type LoginUserRequestBody struct {
+	// Username for login
+	Username string `form:"username" json:"username" xml:"username"`
+	// Password for login
+	Password string `form:"password" json:"password" xml:"password"`
 }
 
 // CreateProductRequestBody is the type of the "store" service "createProduct"
@@ -81,6 +92,15 @@ type CreateUserResponseBody struct {
 	FirstName *string `form:"firstName,omitempty" json:"firstName,omitempty" xml:"firstName,omitempty"`
 	// User's last name
 	LastName *string `form:"lastName,omitempty" json:"lastName,omitempty" xml:"lastName,omitempty"`
+	// User's password
+	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
+}
+
+// LoginUserResponseBody is the type of the "store" service "loginUser"
+// endpoint HTTP response body.
+type LoginUserResponseBody struct {
+	// JWT token for the authenticated user
+	Token *string `form:"token,omitempty" json:"token,omitempty" xml:"token,omitempty"`
 }
 
 // GetUserResponseBody is the type of the "store" service "getUser" endpoint
@@ -96,6 +116,8 @@ type GetUserResponseBody struct {
 	FirstName *string `form:"firstName,omitempty" json:"firstName,omitempty" xml:"firstName,omitempty"`
 	// User's last name
 	LastName *string `form:"lastName,omitempty" json:"lastName,omitempty" xml:"lastName,omitempty"`
+	// User's password
+	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
 }
 
 // GetUserAllResponseBody is the type of the "store" service "getUserAll"
@@ -166,8 +188,8 @@ type GetOrderResponseBody struct {
 	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
 }
 
-// GetUserOrdersResponseBody is the type of the "store" service
-// "getUserOrders\t" endpoint HTTP response body.
+// GetUserOrdersResponseBody is the type of the "store" service "getUserOrders"
+// endpoint HTTP response body.
 type GetUserOrdersResponseBody []*OrderResponse
 
 // AddToCartResponseBody is the type of the "store" service "addToCart"
@@ -251,7 +273,7 @@ type GetOrderNotFoundResponseBody struct {
 }
 
 // GetUserOrdersNotFoundResponseBody is the type of the "store" service
-// "getUserOrders\t" endpoint HTTP response body for the "not-found" error.
+// "getUserOrders" endpoint HTTP response body for the "not-found" error.
 type GetUserOrdersNotFoundResponseBody struct {
 	// Name is the name of this class of errors.
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
@@ -298,6 +320,8 @@ type UserResponse struct {
 	FirstName *string `form:"firstName,omitempty" json:"firstName,omitempty" xml:"firstName,omitempty"`
 	// User's last name
 	LastName *string `form:"lastName,omitempty" json:"lastName,omitempty" xml:"lastName,omitempty"`
+	// User's password
+	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
 }
 
 // ProductResponse is used to define fields on response body types.
@@ -378,6 +402,17 @@ func NewCreateUserRequestBody(p *store.NewUser) *CreateUserRequestBody {
 		Email:     p.Email,
 		FirstName: p.FirstName,
 		LastName:  p.LastName,
+		Password:  p.Password,
+	}
+	return body
+}
+
+// NewLoginUserRequestBody builds the HTTP request body from the payload of the
+// "loginUser" endpoint of the "store" service.
+func NewLoginUserRequestBody(p *store.LoginUserPayload) *LoginUserRequestBody {
+	body := &LoginUserRequestBody{
+		Username: p.Username,
+		Password: p.Password,
 	}
 	return body
 }
@@ -441,7 +476,26 @@ func NewCreateUserUserCreated(body *CreateUserResponseBody) *store.User {
 		Email:     *body.Email,
 		FirstName: body.FirstName,
 		LastName:  body.LastName,
+		Password:  body.Password,
 	}
+
+	return v
+}
+
+// NewLoginUserResultOK builds a "store" service "loginUser" endpoint result
+// from a HTTP "OK" response.
+func NewLoginUserResultOK(body *LoginUserResponseBody) *store.LoginUserResult {
+	v := &store.LoginUserResult{
+		Token: body.Token,
+	}
+
+	return v
+}
+
+// NewLoginUserUnauthorized builds a store service loginUser endpoint
+// unauthorized error.
+func NewLoginUserUnauthorized(body string) store.Unauthorized {
+	v := store.Unauthorized(body)
 
 	return v
 }
@@ -455,6 +509,7 @@ func NewGetUserUserOK(body *GetUserResponseBody) *store.User {
 		Email:     *body.Email,
 		FirstName: body.FirstName,
 		LastName:  body.LastName,
+		Password:  body.Password,
 	}
 
 	return v
@@ -587,7 +642,7 @@ func NewGetOrderNotFound(body *GetOrderNotFoundResponseBody) *goa.ServiceError {
 	return v
 }
 
-// NewGetUserOrdersOrderOK builds a "store" service "getUserOrders\t" endpoint
+// NewGetUserOrdersOrderOK builds a "store" service "getUserOrders" endpoint
 // result from a HTTP "OK" response.
 func NewGetUserOrdersOrderOK(body []*OrderResponse) []*store.Order {
 	v := make([]*store.Order, len(body))
@@ -598,7 +653,7 @@ func NewGetUserOrdersOrderOK(body []*OrderResponse) []*store.Order {
 	return v
 }
 
-// NewGetUserOrdersNotFound builds a store service getUserOrders	 endpoint
+// NewGetUserOrdersNotFound builds a store service getUserOrders endpoint
 // not-found error.
 func NewGetUserOrdersNotFound(body *GetUserOrdersNotFoundResponseBody) *goa.ServiceError {
 	v := &goa.ServiceError{
@@ -904,7 +959,7 @@ func ValidateGetOrderNotFoundResponseBody(body *GetOrderNotFoundResponseBody) (e
 }
 
 // ValidateGetUserOrdersNotFoundResponseBody runs the validations defined on
-// getUserOrders	_not-found_response_body
+// getUserOrders_not-found_response_body
 func ValidateGetUserOrdersNotFoundResponseBody(body *GetUserOrdersNotFoundResponseBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))

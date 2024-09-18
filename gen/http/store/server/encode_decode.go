@@ -59,6 +59,71 @@ func DecodeCreateUserRequest(mux goahttp.Muxer, decoder func(*http.Request) goah
 	}
 }
 
+// EncodeLoginUserResponse returns an encoder for responses returned by the
+// store loginUser endpoint.
+func EncodeLoginUserResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*store.LoginUserResult)
+		enc := encoder(ctx, w)
+		body := NewLoginUserResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeLoginUserRequest returns a decoder for requests sent to the store
+// loginUser endpoint.
+func DecodeLoginUserRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			body LoginUserRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if err == io.EOF {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateLoginUserRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+		payload := NewLoginUserPayload(&body)
+
+		return payload, nil
+	}
+}
+
+// EncodeLoginUserError returns an encoder for errors returned by the loginUser
+// store endpoint.
+func EncodeLoginUserError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		var en goa.GoaErrorNamer
+		if !errors.As(v, &en) {
+			return encodeError(ctx, w, v)
+		}
+		switch en.GoaErrorName() {
+		case "unauthorized":
+			var res store.Unauthorized
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			body := res
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusUnauthorized)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
 // EncodeGetUserResponse returns an encoder for responses returned by the store
 // getUser endpoint.
 func EncodeGetUserResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
@@ -337,7 +402,7 @@ func EncodeGetOrderError(encoder func(context.Context, http.ResponseWriter) goah
 }
 
 // EncodeGetUserOrdersResponse returns an encoder for responses returned by the
-// store getUserOrders	 endpoint.
+// store getUserOrders endpoint.
 func EncodeGetUserOrdersResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
 		res, _ := v.([]*store.Order)
@@ -349,7 +414,7 @@ func EncodeGetUserOrdersResponse(encoder func(context.Context, http.ResponseWrit
 }
 
 // DecodeGetUserOrdersRequest returns a decoder for requests sent to the store
-// getUserOrders	 endpoint.
+// getUserOrders endpoint.
 func DecodeGetUserOrdersRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
 	return func(r *http.Request) (any, error) {
 		var (
@@ -365,7 +430,7 @@ func DecodeGetUserOrdersRequest(mux goahttp.Muxer, decoder func(*http.Request) g
 }
 
 // EncodeGetUserOrdersError returns an encoder for errors returned by the
-// getUserOrders	 store endpoint.
+// getUserOrders store endpoint.
 func EncodeGetUserOrdersError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
 	encodeError := goahttp.ErrorEncoder(encoder, formatter)
 	return func(ctx context.Context, w http.ResponseWriter, v error) error {
@@ -513,6 +578,7 @@ func marshalStoreUserToUserResponse(v *store.User) *UserResponse {
 		Email:     v.Email,
 		FirstName: v.FirstName,
 		LastName:  v.LastName,
+		Password:  v.Password,
 	}
 
 	return res
