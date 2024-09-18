@@ -42,9 +42,7 @@ var _ = Service("store", func() {
 	})
 
 	Method("getUserAll", func() {
-
 		Result(ArrayOf(User))
-		Error("not-found")
 		HTTP(func() {
 			GET("/users")
 			Response(StatusOK)
@@ -118,10 +116,13 @@ var _ = Service("store", func() {
 	})
 
 	Method("getCart", func() {
+		Payload(GetCartPayload)
 		Result(Cart)
+		Error("not-found")
 		HTTP(func() {
 			GET("/cart")
 			Response(StatusOK)
+			Response("not-found", StatusNotFound)
 		})
 	})
 })
@@ -183,14 +184,22 @@ var OrderItem = Type("OrderItem", func() {
 })
 
 var Cart = Type("Cart", func() {
+	Attribute("id", String, "Unique cart ID")
 	Attribute("userID", String, "ID of the user who owns the cart")
 	Attribute("items", ArrayOf(CartItem), "Items in the cart")
 	Attribute("totalAmount", Float64, "Total amount of items in the cart")
-	Required("userID", "items", "totalAmount")
+	Required("id", "userID", "items", "totalAmount")
 })
 
 var CartItem = Type("CartItem", func() {
+	Attribute("userID", String, "ID of the user who owns the cart")
 	Attribute("productID", String, "ID of the product")
 	Attribute("quantity", Int, "Quantity of the product")
-	Required("productID", "quantity")
+	Attribute("price", Float64, "Price of the product")
+	Required("userID", "productID", "quantity")
+})
+
+var GetCartPayload = Type("GetCartPayload", func() {
+	Attribute("userID", String, "ID of the user whose cart to retrieve")
+	Required("userID")
 })

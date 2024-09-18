@@ -29,10 +29,10 @@ func UsageCommands() string {
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` store create-user --body '{
-      "email": "Repellat quod natus dolorem perferendis ut.",
-      "firstName": "Aut aut deleniti veniam et eum.",
-      "lastName": "Ipsa sit dolores voluptatem porro.",
-      "username": "Illum nisi."
+      "email": "Molestiae enim nam consequatur.",
+      "firstName": "Provident ducimus iure at accusantium sit velit.",
+      "lastName": "Non ea dolor pariatur autem.",
+      "username": "Sit dolores voluptatem porro quod tenetur."
    }'` + "\n" +
 		""
 }
@@ -74,7 +74,8 @@ func ParseEndpoint(
 		storeAddToCartFlags    = flag.NewFlagSet("add-to-cart", flag.ExitOnError)
 		storeAddToCartBodyFlag = storeAddToCartFlags.String("body", "REQUIRED", "")
 
-		storeGetCartFlags = flag.NewFlagSet("get-cart", flag.ExitOnError)
+		storeGetCartFlags    = flag.NewFlagSet("get-cart", flag.ExitOnError)
+		storeGetCartBodyFlag = storeGetCartFlags.String("body", "REQUIRED", "")
 	)
 	storeFlags.Usage = storeUsage
 	storeCreateUserFlags.Usage = storeCreateUserUsage
@@ -204,6 +205,7 @@ func ParseEndpoint(
 				data, err = storec.BuildAddToCartPayload(*storeAddToCartBodyFlag)
 			case "get-cart":
 				endpoint = c.GetCart()
+				data, err = storec.BuildGetCartPayload(*storeGetCartBodyFlag)
 			}
 		}
 	}
@@ -244,10 +246,10 @@ CreateUser implements createUser.
 
 Example:
     %[1]s store create-user --body '{
-      "email": "Repellat quod natus dolorem perferendis ut.",
-      "firstName": "Aut aut deleniti veniam et eum.",
-      "lastName": "Ipsa sit dolores voluptatem porro.",
-      "username": "Illum nisi."
+      "email": "Molestiae enim nam consequatur.",
+      "firstName": "Provident ducimus iure at accusantium sit velit.",
+      "lastName": "Non ea dolor pariatur autem.",
+      "username": "Sit dolores voluptatem porro quod tenetur."
    }'
 `, os.Args[0])
 }
@@ -259,7 +261,7 @@ GetUser implements getUser.
     -id STRING: 
 
 Example:
-    %[1]s store get-user --id "Animi deleniti sint debitis reprehenderit dicta non."
+    %[1]s store get-user --id "Facilis sint."
 `, os.Args[0])
 }
 
@@ -281,10 +283,10 @@ CreateProduct implements createProduct.
 
 Example:
     %[1]s store create-product --body '{
-      "description": "Sint nihil.",
-      "inventory": 7104625439371326197,
-      "name": "Rem ipsum natus qui.",
-      "price": 0.4769792471245887
+      "description": "Ratione in aut qui hic voluptas laborum.",
+      "inventory": 7245630784026535703,
+      "name": "Qui voluptas explicabo et esse quis.",
+      "price": 0.5532281796284398
    }'
 `, os.Args[0])
 }
@@ -296,7 +298,7 @@ GetProduct implements getProduct.
     -id STRING: 
 
 Example:
-    %[1]s store get-product --id "Perspiciatis quae quia consequatur nulla."
+    %[1]s store get-product --id "Dolores sed."
 `, os.Args[0])
 }
 
@@ -320,27 +322,22 @@ Example:
     %[1]s store create-order --body '{
       "items": [
          {
-            "price": 0.2386606516661408,
-            "productID": "Eaque earum ducimus et architecto.",
-            "quantity": 4622451897586657234
+            "price": 0.2782759670844699,
+            "productID": "Ut at.",
+            "quantity": 1281967412391717881
          },
          {
-            "price": 0.2386606516661408,
-            "productID": "Eaque earum ducimus et architecto.",
-            "quantity": 4622451897586657234
+            "price": 0.2782759670844699,
+            "productID": "Ut at.",
+            "quantity": 1281967412391717881
          },
          {
-            "price": 0.2386606516661408,
-            "productID": "Eaque earum ducimus et architecto.",
-            "quantity": 4622451897586657234
-         },
-         {
-            "price": 0.2386606516661408,
-            "productID": "Eaque earum ducimus et architecto.",
-            "quantity": 4622451897586657234
+            "price": 0.2782759670844699,
+            "productID": "Ut at.",
+            "quantity": 1281967412391717881
          }
       ],
-      "userID": "Illum quis."
+      "userID": "Ipsum rerum et."
    }'
 `, os.Args[0])
 }
@@ -352,7 +349,7 @@ GetOrder implements getOrder.
     -id STRING: 
 
 Example:
-    %[1]s store get-order --id "Enim vitae voluptas tempore."
+    %[1]s store get-order --id "Quidem mollitia odit quos."
 `, os.Args[0])
 }
 
@@ -364,18 +361,23 @@ AddToCart implements addToCart.
 
 Example:
     %[1]s store add-to-cart --body '{
-      "productID": "Aperiam autem earum.",
-      "quantity": 1137703197238179332
+      "price": 0.09981448305074944,
+      "productID": "Recusandae quia.",
+      "quantity": 5676592030789778431,
+      "userID": "Ut doloribus recusandae quis."
    }'
 `, os.Args[0])
 }
 
 func storeGetCartUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] store get-cart
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] store get-cart -body JSON
 
 GetCart implements getCart.
+    -body JSON: 
 
 Example:
-    %[1]s store get-cart
+    %[1]s store get-cart --body '{
+      "userID": "Minima dolor consequatur quia tempore voluptatem."
+   }'
 `, os.Args[0])
 }

@@ -67,9 +67,6 @@ func (c *Client) GetUser(ctx context.Context, p *GetUserPayload) (res *User, err
 }
 
 // GetUserAll calls the "getUserAll" endpoint of the "store" service.
-// GetUserAll may return the following errors:
-//   - "not-found" (type *goa.ServiceError)
-//   - error: internal error
 func (c *Client) GetUserAll(ctx context.Context) (res []*User, err error) {
 	var ires any
 	ires, err = c.GetUserAllEndpoint(ctx, nil)
@@ -146,9 +143,12 @@ func (c *Client) AddToCart(ctx context.Context, p *CartItem) (res *Cart, err err
 }
 
 // GetCart calls the "getCart" endpoint of the "store" service.
-func (c *Client) GetCart(ctx context.Context) (res *Cart, err error) {
+// GetCart may return the following errors:
+//   - "not-found" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) GetCart(ctx context.Context, p *GetCartPayload) (res *Cart, err error) {
 	var ires any
-	ires, err = c.GetCartEndpoint(ctx, nil)
+	ires, err = c.GetCartEndpoint(ctx, p)
 	if err != nil {
 		return
 	}

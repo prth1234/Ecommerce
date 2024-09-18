@@ -389,6 +389,64 @@ func EncodeGetCartResponse(encoder func(context.Context, http.ResponseWriter) go
 	}
 }
 
+// DecodeGetCartRequest returns a decoder for requests sent to the store
+// getCart endpoint.
+func DecodeGetCartRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			body GetCartRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if err == io.EOF {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateGetCartRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+		payload := NewGetCartPayload(&body)
+
+		return payload, nil
+	}
+}
+
+// EncodeGetCartError returns an encoder for errors returned by the getCart
+// store endpoint.
+func EncodeGetCartError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		var en goa.GoaErrorNamer
+		if !errors.As(v, &en) {
+			return encodeError(ctx, w, v)
+		}
+		switch en.GoaErrorName() {
+		case "not-found":
+			var res *goa.ServiceError
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewGetCartNotFoundResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusNotFound)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
 // marshalStoreUserToUserResponse builds a value of type *UserResponse from a
 // value of type *store.User.
 func marshalStoreUserToUserResponse(v *store.User) *UserResponse {
@@ -445,8 +503,10 @@ func marshalStoreOrderItemToOrderItemResponseBody(v *store.OrderItem) *OrderItem
 // *CartItemResponseBody from a value of type *store.CartItem.
 func marshalStoreCartItemToCartItemResponseBody(v *store.CartItem) *CartItemResponseBody {
 	res := &CartItemResponseBody{
+		UserID:    v.UserID,
 		ProductID: v.ProductID,
 		Quantity:  v.Quantity,
+		Price:     v.Price,
 	}
 
 	return res

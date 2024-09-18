@@ -290,10 +290,15 @@ func (c *Client) AddToCart() goa.Endpoint {
 // getCart server.
 func (c *Client) GetCart() goa.Endpoint {
 	var (
+		encodeRequest  = EncodeGetCartRequest(c.encoder)
 		decodeResponse = DecodeGetCartResponse(c.decoder, c.RestoreResponseBody)
 	)
 	return func(ctx context.Context, v any) (any, error) {
 		req, err := c.BuildGetCartRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
 		if err != nil {
 			return nil, err
 		}

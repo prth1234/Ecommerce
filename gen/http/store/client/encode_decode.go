@@ -686,9 +686,28 @@ func (c *Client) BuildGetCartRequest(ctx context.Context, v any) (*http.Request,
 	return req, nil
 }
 
+// EncodeGetCartRequest returns an encoder for requests sent to the store
+// getCart server.
+func EncodeGetCartRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*store.GetCartPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("store", "getCart", "*store.GetCartPayload", v)
+		}
+		body := NewGetCartRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("store", "getCart", err)
+		}
+		return nil
+	}
+}
+
 // DecodeGetCartResponse returns a decoder for responses returned by the store
 // getCart endpoint. restoreBody controls whether the response body should be
 // restored after having been read.
+// DecodeGetCartResponse may return the following errors:
+//   - "not-found" (type *goa.ServiceError): http.StatusNotFound
+//   - error: internal error
 func DecodeGetCartResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
 	return func(resp *http.Response) (any, error) {
 		if restoreBody {
@@ -719,6 +738,20 @@ func DecodeGetCartResponse(decoder func(*http.Response) goahttp.Decoder, restore
 			}
 			res := NewGetCartCartOK(&body)
 			return res, nil
+		case http.StatusNotFound:
+			var (
+				body GetCartNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "getCart", err)
+			}
+			err = ValidateGetCartNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("store", "getCart", err)
+			}
+			return nil, NewGetCartNotFound(&body)
 		default:
 			body, _ := io.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("store", "getCart", resp.StatusCode, string(body))
@@ -794,8 +827,10 @@ func unmarshalOrderItemResponseBodyToStoreOrderItem(v *OrderItemResponseBody) *s
 // *store.CartItem from a value of type *CartItemResponseBody.
 func unmarshalCartItemResponseBodyToStoreCartItem(v *CartItemResponseBody) *store.CartItem {
 	res := &store.CartItem{
+		UserID:    *v.UserID,
 		ProductID: *v.ProductID,
 		Quantity:  *v.Quantity,
+		Price:     v.Price,
 	}
 
 	return res

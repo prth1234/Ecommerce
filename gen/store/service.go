@@ -34,7 +34,7 @@ type Service interface {
 	// AddToCart implements addToCart.
 	AddToCart(context.Context, *CartItem) (res *Cart, err error)
 	// GetCart implements getCart.
-	GetCart(context.Context) (res *Cart, err error)
+	GetCart(context.Context, *GetCartPayload) (res *Cart, err error)
 }
 
 // APIName is the name of the API as defined in the design.
@@ -55,6 +55,8 @@ var MethodNames = [10]string{"createUser", "getUser", "getUserAll", "createProdu
 
 // Cart is the result type of the store service addToCart method.
 type Cart struct {
+	// Unique cart ID
+	ID string
 	// ID of the user who owns the cart
 	UserID string
 	// Items in the cart
@@ -65,10 +67,20 @@ type Cart struct {
 
 // CartItem is the payload type of the store service addToCart method.
 type CartItem struct {
+	// ID of the user who owns the cart
+	UserID string
 	// ID of the product
 	ProductID string
 	// Quantity of the product
 	Quantity int
+	// Price of the product
+	Price *float64
+}
+
+// GetCartPayload is the payload type of the store service getCart method.
+type GetCartPayload struct {
+	// ID of the user whose cart to retrieve
+	UserID string
 }
 
 // GetOrderPayload is the payload type of the store service getOrder method.

@@ -140,6 +140,7 @@ func NewAddToCartEndpoint(s Service) goa.Endpoint {
 // "getCart" of service "store".
 func NewGetCartEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		return s.GetCart(ctx)
+		p := req.(*GetCartPayload)
+		return s.GetCart(ctx, p)
 	}
 }

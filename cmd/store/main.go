@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
@@ -13,6 +14,8 @@ import (
 	"store/gen/store"
 	"sync"
 	"syscall"
+
+	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
 func main() {
@@ -23,6 +26,7 @@ func main() {
 		httpPortF = flag.String("http-port", "8000", "HTTP port (overrides host HTTP port specified in service design)")
 		secureF   = flag.Bool("secure", false, "Use secure scheme (https or grpcs)")
 		dbgF      = flag.Bool("debug", false, "Log request and response bodies")
+		dbURLF    = flag.String("db-url", "postgres://postgres:kundan@localhost:5432/EcommerceDemo?sslmode=disable", "PostgreSQL connection URL")
 	)
 	flag.Parse()
 
@@ -39,7 +43,13 @@ func main() {
 		storeSvc store.Service
 	)
 	{
-		storeSvc = storeapi.NewStore()
+		db, err := sql.Open("postgres", *dbURLF)
+		if err != nil {
+			logger.Fatalf("Failed to connect to database: %v", err)
+		}
+		defer db.Close()
+
+		storeSvc = storeapi.NewStore(db)
 	}
 
 	// Wrap the services in endpoints that can be invoked from other services
@@ -106,6 +116,3 @@ func main() {
 	wg.Wait()
 	logger.Printf("exited")
 }
-
-// handleHTTPServer starts configures and starts a HTTP server on the given
-// URL. It shuts down the server if any error is received in the error channel.
