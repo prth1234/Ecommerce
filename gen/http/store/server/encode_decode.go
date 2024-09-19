@@ -234,6 +234,15 @@ func DecodeUpdateUserRequest(mux goahttp.Muxer, decoder func(*http.Request) goah
 	}
 }
 
+// EncodeDeleteUserResponse returns an encoder for responses returned by the
+// store deleteUser endpoint.
+func EncodeDeleteUserResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+}
+
 // EncodeCreateProductResponse returns an encoder for responses returned by the
 // store createProduct endpoint.
 func EncodeCreateProductResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {

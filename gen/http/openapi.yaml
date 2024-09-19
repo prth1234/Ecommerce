@@ -316,6 +316,17 @@ paths:
                         $ref: '#/definitions/StoreGetUserOrdersNotFoundResponseBody'
             schemes:
                 - http
+    /users/delete:
+        post:
+            tags:
+                - store
+            summary: deleteUser store
+            operationId: store#deleteUser
+            responses:
+                "200":
+                    description: OK response.
+            schemes:
+                - http
     /users/update:
         post:
             tags:

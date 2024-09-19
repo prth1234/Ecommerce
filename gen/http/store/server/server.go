@@ -24,6 +24,7 @@ type Server struct {
 	GetUser       http.Handler
 	GetUserAll    http.Handler
 	UpdateUser    http.Handler
+	DeleteUser    http.Handler
 	CreateProduct http.Handler
 	GetProduct    http.Handler
 	ListProducts  http.Handler
@@ -66,6 +67,7 @@ func New(
 			{"GetUser", "GET", "/users/{id}"},
 			{"GetUserAll", "GET", "/users"},
 			{"UpdateUser", "POST", "/users/update"},
+			{"DeleteUser", "POST", "/users/delete"},
 			{"CreateProduct", "POST", "/products"},
 			{"GetProduct", "GET", "/products/{id}"},
 			{"ListProducts", "GET", "/products"},
@@ -80,6 +82,7 @@ func New(
 		GetUser:       NewGetUserHandler(e.GetUser, mux, decoder, encoder, errhandler, formatter),
 		GetUserAll:    NewGetUserAllHandler(e.GetUserAll, mux, decoder, encoder, errhandler, formatter),
 		UpdateUser:    NewUpdateUserHandler(e.UpdateUser, mux, decoder, encoder, errhandler, formatter),
+		DeleteUser:    NewDeleteUserHandler(e.DeleteUser, mux, decoder, encoder, errhandler, formatter),
 		CreateProduct: NewCreateProductHandler(e.CreateProduct, mux, decoder, encoder, errhandler, formatter),
 		GetProduct:    NewGetProductHandler(e.GetProduct, mux, decoder, encoder, errhandler, formatter),
 		ListProducts:  NewListProductsHandler(e.ListProducts, mux, decoder, encoder, errhandler, formatter),
@@ -101,6 +104,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.GetUser = m(s.GetUser)
 	s.GetUserAll = m(s.GetUserAll)
 	s.UpdateUser = m(s.UpdateUser)
+	s.DeleteUser = m(s.DeleteUser)
 	s.CreateProduct = m(s.CreateProduct)
 	s.GetProduct = m(s.GetProduct)
 	s.ListProducts = m(s.ListProducts)
@@ -121,6 +125,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountGetUserHandler(mux, h.GetUser)
 	MountGetUserAllHandler(mux, h.GetUserAll)
 	MountUpdateUserHandler(mux, h.UpdateUser)
+	MountDeleteUserHandler(mux, h.DeleteUser)
 	MountCreateProductHandler(mux, h.CreateProduct)
 	MountGetProductHandler(mux, h.GetProduct)
 	MountListProductsHandler(mux, h.ListProducts)
@@ -372,6 +377,50 @@ func NewUpdateUserHandler(
 			return
 		}
 		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountDeleteUserHandler configures the mux to serve the "store" service
+// "deleteUser" endpoint.
+func MountDeleteUserHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/users/delete", f)
+}
+
+// NewDeleteUserHandler creates a HTTP handler which loads the HTTP request and
+// calls the "store" service "deleteUser" endpoint.
+func NewDeleteUserHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		encodeResponse = EncodeDeleteUserResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "deleteUser")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
+		var err error
+		res, err := endpoint(ctx, nil)
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil {
 				errhandler(ctx, w, err)

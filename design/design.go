@@ -76,6 +76,12 @@ var _ = Service("store", func() {
 			Response(StatusOK)
 		})
 	})
+	Method("deleteUser", func() {
+		HTTP(func() {
+			POST("/users/delete")
+			Response(StatusOK)
+		})
+	})
 
 	// Product endpoints
 	Method("createProduct", func() {

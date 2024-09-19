@@ -20,6 +20,7 @@ type Client struct {
 	GetUserEndpoint       goa.Endpoint
 	GetUserAllEndpoint    goa.Endpoint
 	UpdateUserEndpoint    goa.Endpoint
+	DeleteUserEndpoint    goa.Endpoint
 	CreateProductEndpoint goa.Endpoint
 	GetProductEndpoint    goa.Endpoint
 	ListProductsEndpoint  goa.Endpoint
@@ -31,13 +32,14 @@ type Client struct {
 }
 
 // NewClient initializes a "store" service client given the endpoints.
-func NewClient(createUser, loginUser, getUser, getUserAll, updateUser, createProduct, getProduct, listProducts, createOrder, getOrder, getUserOrders, addToCart, getCart goa.Endpoint) *Client {
+func NewClient(createUser, loginUser, getUser, getUserAll, updateUser, deleteUser, createProduct, getProduct, listProducts, createOrder, getOrder, getUserOrders, addToCart, getCart goa.Endpoint) *Client {
 	return &Client{
 		CreateUserEndpoint:    createUser,
 		LoginUserEndpoint:     loginUser,
 		GetUserEndpoint:       getUser,
 		GetUserAllEndpoint:    getUserAll,
 		UpdateUserEndpoint:    updateUser,
+		DeleteUserEndpoint:    deleteUser,
 		CreateProductEndpoint: createProduct,
 		GetProductEndpoint:    getProduct,
 		ListProductsEndpoint:  listProducts,
@@ -103,6 +105,12 @@ func (c *Client) UpdateUser(ctx context.Context, p *UserUpdatePayload) (res *Use
 		return
 	}
 	return ires.(*User), nil
+}
+
+// DeleteUser calls the "deleteUser" endpoint of the "store" service.
+func (c *Client) DeleteUser(ctx context.Context) (err error) {
+	_, err = c.DeleteUserEndpoint(ctx, nil)
+	return
 }
 
 // CreateProduct calls the "createProduct" endpoint of the "store" service.

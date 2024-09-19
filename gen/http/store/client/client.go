@@ -37,6 +37,10 @@ type Client struct {
 	// endpoint.
 	UpdateUserDoer goahttp.Doer
 
+	// DeleteUser Doer is the HTTP client used to make requests to the deleteUser
+	// endpoint.
+	DeleteUserDoer goahttp.Doer
+
 	// CreateProduct Doer is the HTTP client used to make requests to the
 	// createProduct endpoint.
 	CreateProductDoer goahttp.Doer
@@ -94,6 +98,7 @@ func NewClient(
 		GetUserDoer:         doer,
 		GetUserAllDoer:      doer,
 		UpdateUserDoer:      doer,
+		DeleteUserDoer:      doer,
 		CreateProductDoer:   doer,
 		GetProductDoer:      doer,
 		ListProductsDoer:    doer,
@@ -215,6 +220,25 @@ func (c *Client) UpdateUser() goa.Endpoint {
 		resp, err := c.UpdateUserDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("store", "updateUser", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// DeleteUser returns an endpoint that makes HTTP requests to the store service
+// deleteUser server.
+func (c *Client) DeleteUser() goa.Endpoint {
+	var (
+		decodeResponse = DecodeDeleteUserResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildDeleteUserRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.DeleteUserDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("store", "deleteUser", err)
 		}
 		return decodeResponse(resp)
 	}

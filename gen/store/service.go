@@ -25,6 +25,8 @@ type Service interface {
 	GetUserAll(context.Context) (res []*User, err error)
 	// UpdateUser implements updateUser.
 	UpdateUser(context.Context, *UserUpdatePayload) (res *User, err error)
+	// DeleteUser implements deleteUser.
+	DeleteUser(context.Context) (err error)
 	// CreateProduct implements createProduct.
 	CreateProduct(context.Context, *NewProduct) (res *Product, err error)
 	// GetProduct implements getProduct.
@@ -57,7 +59,7 @@ const ServiceName = "store"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [13]string{"createUser", "loginUser", "getUser", "getUserAll", "updateUser", "createProduct", "getProduct", "listProducts", "createOrder", "getOrder", "getUserOrders", "addToCart", "getCart"}
+var MethodNames = [14]string{"createUser", "loginUser", "getUser", "getUserAll", "updateUser", "deleteUser", "createProduct", "getProduct", "listProducts", "createOrder", "getOrder", "getUserOrders", "addToCart", "getCart"}
 
 // Cart is the result type of the store service addToCart method.
 type Cart struct {

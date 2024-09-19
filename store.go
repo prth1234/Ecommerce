@@ -22,8 +22,37 @@ type LoginUserResult struct {
 	Token *string `json:"token"` // Change this to *string
 }
 
+func (s *storesrvc) DeleteUser(ctx context.Context) (err error) {
+	userName, ok := ctx.Value("username").(string)
+	fmt.Println(userName)
+	if !ok {
+		return fmt.Errorf("unauthorized: missing username in context")
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	var userId string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", userName).Scan(&userId)
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, "DELETE FROM users WHERE id = $1", userId)
+	if err != nil {
+		return fmt.Errorf("error deleting user: %v", err)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("error committing transaction: %v", err)
+	}
+	return nil
+}
+
 func (s *storesrvc) UpdateUser(ctx context.Context, p *store.UserUpdatePayload) (res *store.User, err error) {
 	username, ok := ctx.Value("username").(string)
+	fmt.Println(username)
+
 	if !ok {
 		return nil, fmt.Errorf("unauthorized: missing username in context")
 	}
@@ -51,16 +80,6 @@ func (s *storesrvc) UpdateUser(ctx context.Context, p *store.UserUpdatePayload) 
 			id = $4
 		RETURNING id, username, email, first_name, last_name;
 	`
-	//	query := `
-	//	UPDATE users
-	//	SET
-	//		email = COALESCE($1, email),
-	//		first_name = COALESCE($2, first_name),
-	//		last_name = COALESCE($3, last_name)
-	//	WHERE
-	//		id = $4
-	//	RETURNING id, username, email, first_name, last_name;
-	//`
 
 	row := tx.QueryRowContext(ctx, query, p.Email, p.FirstName, p.LastName, userID)
 	updatedUser := &store.User{}
@@ -125,12 +144,31 @@ func (s *storesrvc) CreateUser(ctx context.Context, p *store.NewUser) (res *stor
 //}
 
 func (s *storesrvc) LoginUser(ctx context.Context, p *store.LoginUserPayload) (res *store.LoginUserResult, err error) {
-	// Here you would typically verify the user's credentials against your database
-	// For this example, we'll just check if the username and password are not empty
 	if p.Username == "" || p.Password == "" {
-		return nil, fmt.Errorf("invalid username or password")
+		return nil, fmt.Errorf("username and password are required")
 	}
 
+	// Query the database to get the hashed password for the given username
+	var hashedPassword string
+	err = s.db.QueryRowContext(ctx, "SELECT password FROM users WHERE username = $1", p.Username).Scan(&hashedPassword)
+	if hashedPassword == "" {
+		return nil, fmt.Errorf("user does not exist")
+	}
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("invalid username or password")
+		}
+		return nil, fmt.Errorf("database error: %v", err)
+	}
+
+	// Compare the provided password with the hashed password from the database
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(p.Password))
+	if err != nil {
+		// If the passwords don't match, bcrypt.CompareHashAndPassword will return an error
+		return nil, fmt.Errorf("wrong username or password")
+	}
+
+	// If we've made it this far, the username and password are correct
 	// Generate JWT token
 	token, err := jwthelper.GenerateJWT(p.Username)
 	if err != nil {

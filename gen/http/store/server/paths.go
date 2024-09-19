@@ -36,6 +36,11 @@ func UpdateUserStorePath() string {
 	return "/users/update"
 }
 
+// DeleteUserStorePath returns the URL path to the store service deleteUser HTTP endpoint.
+func DeleteUserStorePath() string {
+	return "/users/delete"
+}
+
 // CreateProductStorePath returns the URL path to the store service createProduct HTTP endpoint.
 func CreateProductStorePath() string {
 	return "/products"

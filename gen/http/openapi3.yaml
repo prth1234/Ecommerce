@@ -576,6 +576,15 @@ paths:
                         application/vnd.goa.error:
                             schema:
                                 $ref: '#/components/schemas/Error'
+    /users/delete:
+        post:
+            tags:
+                - store
+            summary: deleteUser store
+            operationId: store#deleteUser
+            responses:
+                "200":
+                    description: OK response.
     /users/update:
         post:
             tags:

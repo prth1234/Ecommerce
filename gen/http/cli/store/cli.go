@@ -22,7 +22,7 @@ import (
 //
 //	command (subcommand1|subcommand2|...)
 func UsageCommands() string {
-	return `store (create-user|login-user|get-user|get-user-all|update-user|create-product|get-product|list-products|create-order|get-order|get-user-orders|add-to-cart|get-cart)
+	return `store (create-user|login-user|get-user|get-user-all|update-user|delete-user|create-product|get-product|list-products|create-order|get-order|get-user-orders|add-to-cart|get-cart)
 `
 }
 
@@ -64,6 +64,8 @@ func ParseEndpoint(
 		storeUpdateUserFlags    = flag.NewFlagSet("update-user", flag.ExitOnError)
 		storeUpdateUserBodyFlag = storeUpdateUserFlags.String("body", "REQUIRED", "")
 
+		storeDeleteUserFlags = flag.NewFlagSet("delete-user", flag.ExitOnError)
+
 		storeCreateProductFlags    = flag.NewFlagSet("create-product", flag.ExitOnError)
 		storeCreateProductBodyFlag = storeCreateProductFlags.String("body", "REQUIRED", "")
 
@@ -93,6 +95,7 @@ func ParseEndpoint(
 	storeGetUserFlags.Usage = storeGetUserUsage
 	storeGetUserAllFlags.Usage = storeGetUserAllUsage
 	storeUpdateUserFlags.Usage = storeUpdateUserUsage
+	storeDeleteUserFlags.Usage = storeDeleteUserUsage
 	storeCreateProductFlags.Usage = storeCreateProductUsage
 	storeGetProductFlags.Usage = storeGetProductUsage
 	storeListProductsFlags.Usage = storeListProductsUsage
@@ -150,6 +153,9 @@ func ParseEndpoint(
 
 			case "update-user":
 				epf = storeUpdateUserFlags
+
+			case "delete-user":
+				epf = storeDeleteUserFlags
 
 			case "create-product":
 				epf = storeCreateProductFlags
@@ -214,6 +220,8 @@ func ParseEndpoint(
 			case "update-user":
 				endpoint = c.UpdateUser()
 				data, err = storec.BuildUpdateUserPayload(*storeUpdateUserBodyFlag)
+			case "delete-user":
+				endpoint = c.DeleteUser()
 			case "create-product":
 				endpoint = c.CreateProduct()
 				data, err = storec.BuildCreateProductPayload(*storeCreateProductBodyFlag)
@@ -259,6 +267,7 @@ COMMAND:
     get-user: GetUser implements getUser.
     get-user-all: GetUserAll implements getUserAll.
     update-user: UpdateUser implements updateUser.
+    delete-user: DeleteUser implements deleteUser.
     create-product: CreateProduct implements createProduct.
     get-product: GetProduct implements getProduct.
     list-products: ListProducts implements listProducts.
@@ -336,6 +345,16 @@ Example:
       "firstName": "Et nihil nesciunt odio quis et in.",
       "lastName": "Vel quam ab occaecati pariatur recusandae eum."
    }'
+`, os.Args[0])
+}
+
+func storeDeleteUserUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] store delete-user
+
+DeleteUser implements deleteUser.
+
+Example:
+    %[1]s store delete-user
 `, os.Args[0])
 }
 
