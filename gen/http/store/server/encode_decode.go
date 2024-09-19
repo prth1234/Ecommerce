@@ -475,6 +475,31 @@ func EncodeCreateOrderResponse(encoder func(context.Context, http.ResponseWriter
 	}
 }
 
+// EncodeDeleteOrderResponse returns an encoder for responses returned by the
+// store deleteOrder endpoint.
+func EncodeDeleteOrderResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+}
+
+// DecodeDeleteOrderRequest returns a decoder for requests sent to the store
+// deleteOrder endpoint.
+func DecodeDeleteOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			id string
+
+			params = mux.Vars(r)
+		)
+		id = params["id"]
+		payload := NewDeleteOrderPayload(id)
+
+		return payload, nil
+	}
+}
+
 // EncodeGetOrderResponse returns an encoder for responses returned by the
 // store getOrder endpoint.
 func EncodeGetOrderResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {

@@ -41,6 +41,8 @@ type Service interface {
 	GetCart(context.Context) (res *Cart, err error)
 	// Create an order from the current cart
 	CreateOrder(context.Context) (res *Order, err error)
+	// Delete an order from the current cart
+	DeleteOrder(context.Context, *DeleteOrderPayload) (err error)
 	// GetOrder implements getOrder.
 	GetOrder(context.Context, *GetOrderPayload) (res *Order, err error)
 	// Retrieve all orders for the authenticated user
@@ -61,7 +63,7 @@ const ServiceName = "store"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [15]string{"createUser", "loginUser", "getUser", "getUserAll", "updateUser", "deleteUser", "createProduct", "getProduct", "listProducts", "addToCart", "removeFromCart", "getCart", "createOrder", "getOrder", "getUserOrders"}
+var MethodNames = [16]string{"createUser", "loginUser", "getUser", "getUserAll", "updateUser", "deleteUser", "createProduct", "getProduct", "listProducts", "addToCart", "removeFromCart", "getCart", "createOrder", "deleteOrder", "getOrder", "getUserOrders"}
 
 // Cart is the result type of the store service addToCart method.
 type Cart struct {
@@ -81,6 +83,12 @@ type CartItem struct {
 	ProductID string
 	// Quantity of the product
 	Quantity int
+}
+
+// DeleteOrderPayload is the payload type of the store service deleteOrder
+// method.
+type DeleteOrderPayload struct {
+	ID string
 }
 
 // GetOrderPayload is the payload type of the store service getOrder method.

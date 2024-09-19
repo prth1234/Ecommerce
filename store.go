@@ -571,3 +571,35 @@ func (s *storesrvc) GetUserOrders(ctx context.Context) (res []*store.Order, err 
 
 	return result, nil
 }
+
+func (s *storesrvc) DeleteOrder(ctx context.Context, p *store.DeleteOrderPayload) (err error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	var userID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		return fmt.Errorf("error getting user ID: %v", err)
+	}
+	query := `DELETE FROM order_items where order_id = $1`
+	_, err = tx.ExecContext(ctx, query, p.ID)
+	if err != nil {
+		return fmt.Errorf("error deleting an item in the order: %v", err)
+	}
+	query = `DELETE FROM orders WHERE id = $1`
+	_, err = tx.ExecContext(ctx, query, p.ID)
+	if err != nil {
+		return fmt.Errorf("error deleting order: %v", err)
+	}
+	return tx.Commit()
+
+	return nil
+}

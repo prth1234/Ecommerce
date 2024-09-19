@@ -28,12 +28,13 @@ type Client struct {
 	RemoveFromCartEndpoint goa.Endpoint
 	GetCartEndpoint        goa.Endpoint
 	CreateOrderEndpoint    goa.Endpoint
+	DeleteOrderEndpoint    goa.Endpoint
 	GetOrderEndpoint       goa.Endpoint
 	GetUserOrdersEndpoint  goa.Endpoint
 }
 
 // NewClient initializes a "store" service client given the endpoints.
-func NewClient(createUser, loginUser, getUser, getUserAll, updateUser, deleteUser, createProduct, getProduct, listProducts, addToCart, removeFromCart, getCart, createOrder, getOrder, getUserOrders goa.Endpoint) *Client {
+func NewClient(createUser, loginUser, getUser, getUserAll, updateUser, deleteUser, createProduct, getProduct, listProducts, addToCart, removeFromCart, getCart, createOrder, deleteOrder, getOrder, getUserOrders goa.Endpoint) *Client {
 	return &Client{
 		CreateUserEndpoint:     createUser,
 		LoginUserEndpoint:      loginUser,
@@ -48,6 +49,7 @@ func NewClient(createUser, loginUser, getUser, getUserAll, updateUser, deleteUse
 		RemoveFromCartEndpoint: removeFromCart,
 		GetCartEndpoint:        getCart,
 		CreateOrderEndpoint:    createOrder,
+		DeleteOrderEndpoint:    deleteOrder,
 		GetOrderEndpoint:       getOrder,
 		GetUserOrdersEndpoint:  getUserOrders,
 	}
@@ -189,6 +191,12 @@ func (c *Client) CreateOrder(ctx context.Context) (res *Order, err error) {
 		return
 	}
 	return ires.(*Order), nil
+}
+
+// DeleteOrder calls the "deleteOrder" endpoint of the "store" service.
+func (c *Client) DeleteOrder(ctx context.Context, p *DeleteOrderPayload) (err error) {
+	_, err = c.DeleteOrderEndpoint(ctx, p)
+	return
 }
 
 // GetOrder calls the "getOrder" endpoint of the "store" service.

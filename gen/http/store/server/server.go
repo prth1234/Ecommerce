@@ -32,6 +32,7 @@ type Server struct {
 	RemoveFromCart http.Handler
 	GetCart        http.Handler
 	CreateOrder    http.Handler
+	DeleteOrder    http.Handler
 	GetOrder       http.Handler
 	GetUserOrders  http.Handler
 }
@@ -76,6 +77,7 @@ func New(
 			{"RemoveFromCart", "DELETE", "/cart/item/{productID}"},
 			{"GetCart", "GET", "/cart"},
 			{"CreateOrder", "POST", "/orders"},
+			{"DeleteOrder", "DELETE", "/orders/{id}"},
 			{"GetOrder", "GET", "/orders/{id}"},
 			{"GetUserOrders", "GET", "/orders"},
 		},
@@ -92,6 +94,7 @@ func New(
 		RemoveFromCart: NewRemoveFromCartHandler(e.RemoveFromCart, mux, decoder, encoder, errhandler, formatter),
 		GetCart:        NewGetCartHandler(e.GetCart, mux, decoder, encoder, errhandler, formatter),
 		CreateOrder:    NewCreateOrderHandler(e.CreateOrder, mux, decoder, encoder, errhandler, formatter),
+		DeleteOrder:    NewDeleteOrderHandler(e.DeleteOrder, mux, decoder, encoder, errhandler, formatter),
 		GetOrder:       NewGetOrderHandler(e.GetOrder, mux, decoder, encoder, errhandler, formatter),
 		GetUserOrders:  NewGetUserOrdersHandler(e.GetUserOrders, mux, decoder, encoder, errhandler, formatter),
 	}
@@ -115,6 +118,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.RemoveFromCart = m(s.RemoveFromCart)
 	s.GetCart = m(s.GetCart)
 	s.CreateOrder = m(s.CreateOrder)
+	s.DeleteOrder = m(s.DeleteOrder)
 	s.GetOrder = m(s.GetOrder)
 	s.GetUserOrders = m(s.GetUserOrders)
 }
@@ -137,6 +141,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountRemoveFromCartHandler(mux, h.RemoveFromCart)
 	MountGetCartHandler(mux, h.GetCart)
 	MountCreateOrderHandler(mux, h.CreateOrder)
+	MountDeleteOrderHandler(mux, h.DeleteOrder)
 	MountGetOrderHandler(mux, h.GetOrder)
 	MountGetUserOrdersHandler(mux, h.GetUserOrders)
 }
@@ -762,6 +767,57 @@ func NewCreateOrderHandler(
 		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
 		var err error
 		res, err := endpoint(ctx, nil)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountDeleteOrderHandler configures the mux to serve the "store" service
+// "deleteOrder" endpoint.
+func MountDeleteOrderHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("DELETE", "/orders/{id}", f)
+}
+
+// NewDeleteOrderHandler creates a HTTP handler which loads the HTTP request
+// and calls the "store" service "deleteOrder" endpoint.
+func NewDeleteOrderHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeDeleteOrderRequest(mux, decoder)
+		encodeResponse = EncodeDeleteOrderResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "deleteOrder")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil {
 				errhandler(ctx, w, err)

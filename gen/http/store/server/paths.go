@@ -76,6 +76,11 @@ func CreateOrderStorePath() string {
 	return "/orders"
 }
 
+// DeleteOrderStorePath returns the URL path to the store service deleteOrder HTTP endpoint.
+func DeleteOrderStorePath(id string) string {
+	return fmt.Sprintf("/orders/%v", id)
+}
+
 // GetOrderStorePath returns the URL path to the store service getOrder HTTP endpoint.
 func GetOrderStorePath(id string) string {
 	return fmt.Sprintf("/orders/%v", id)

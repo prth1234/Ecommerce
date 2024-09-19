@@ -715,6 +715,14 @@ func NewRemoveFromCartPayload(productID string) *store.RemoveFromCartPayload {
 	return v
 }
 
+// NewDeleteOrderPayload builds a store service deleteOrder endpoint payload.
+func NewDeleteOrderPayload(id string) *store.DeleteOrderPayload {
+	v := &store.DeleteOrderPayload{}
+	v.ID = id
+
+	return v
+}
+
 // NewGetOrderPayload builds a store service getOrder endpoint payload.
 func NewGetOrderPayload(id string) *store.GetOrderPayload {
 	v := &store.GetOrderPayload{}

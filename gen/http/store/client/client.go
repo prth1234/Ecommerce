@@ -69,6 +69,10 @@ type Client struct {
 	// endpoint.
 	CreateOrderDoer goahttp.Doer
 
+	// DeleteOrder Doer is the HTTP client used to make requests to the deleteOrder
+	// endpoint.
+	DeleteOrderDoer goahttp.Doer
+
 	// GetOrder Doer is the HTTP client used to make requests to the getOrder
 	// endpoint.
 	GetOrderDoer goahttp.Doer
@@ -110,6 +114,7 @@ func NewClient(
 		RemoveFromCartDoer:  doer,
 		GetCartDoer:         doer,
 		CreateOrderDoer:     doer,
+		DeleteOrderDoer:     doer,
 		GetOrderDoer:        doer,
 		GetUserOrdersDoer:   doer,
 		RestoreResponseBody: restoreBody,
@@ -387,6 +392,25 @@ func (c *Client) CreateOrder() goa.Endpoint {
 		resp, err := c.CreateOrderDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("store", "createOrder", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// DeleteOrder returns an endpoint that makes HTTP requests to the store
+// service deleteOrder server.
+func (c *Client) DeleteOrder() goa.Endpoint {
+	var (
+		decodeResponse = DecodeDeleteOrderResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildDeleteOrderRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.DeleteOrderDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("store", "deleteOrder", err)
 		}
 		return decodeResponse(resp)
 	}

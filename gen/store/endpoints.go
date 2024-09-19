@@ -28,6 +28,7 @@ type Endpoints struct {
 	RemoveFromCart goa.Endpoint
 	GetCart        goa.Endpoint
 	CreateOrder    goa.Endpoint
+	DeleteOrder    goa.Endpoint
 	GetOrder       goa.Endpoint
 	GetUserOrders  goa.Endpoint
 }
@@ -48,6 +49,7 @@ func NewEndpoints(s Service) *Endpoints {
 		RemoveFromCart: NewRemoveFromCartEndpoint(s),
 		GetCart:        NewGetCartEndpoint(s),
 		CreateOrder:    NewCreateOrderEndpoint(s),
+		DeleteOrder:    NewDeleteOrderEndpoint(s),
 		GetOrder:       NewGetOrderEndpoint(s),
 		GetUserOrders:  NewGetUserOrdersEndpoint(s),
 	}
@@ -68,6 +70,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.RemoveFromCart = m(e.RemoveFromCart)
 	e.GetCart = m(e.GetCart)
 	e.CreateOrder = m(e.CreateOrder)
+	e.DeleteOrder = m(e.DeleteOrder)
 	e.GetOrder = m(e.GetOrder)
 	e.GetUserOrders = m(e.GetUserOrders)
 }
@@ -181,6 +184,15 @@ func NewGetCartEndpoint(s Service) goa.Endpoint {
 func NewCreateOrderEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		return s.CreateOrder(ctx)
+	}
+}
+
+// NewDeleteOrderEndpoint returns an endpoint function that calls the method
+// "deleteOrder" of service "store".
+func NewDeleteOrderEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*DeleteOrderPayload)
+		return nil, s.DeleteOrder(ctx, p)
 	}
 }
 

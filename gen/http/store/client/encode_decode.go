@@ -903,6 +903,58 @@ func DecodeCreateOrderResponse(decoder func(*http.Response) goahttp.Decoder, res
 	}
 }
 
+// BuildDeleteOrderRequest instantiates a HTTP request object with method and
+// path set to call the "store" service "deleteOrder" endpoint
+func (c *Client) BuildDeleteOrderRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*store.DeleteOrderPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("store", "deleteOrder", "*store.DeleteOrderPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: DeleteOrderStorePath(id)}
+	req, err := http.NewRequest("DELETE", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("store", "deleteOrder", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeDeleteOrderResponse returns a decoder for responses returned by the
+// store deleteOrder endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+func DecodeDeleteOrderResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			return nil, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("store", "deleteOrder", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildGetOrderRequest instantiates a HTTP request object with method and path
 // set to call the "store" service "getOrder" endpoint
 func (c *Client) BuildGetOrderRequest(ctx context.Context, v any) (*http.Request, error) {

@@ -155,6 +155,17 @@ var _ = Service("store", func() {
 			Response(StatusCreated)
 		})
 	})
+	Method("deleteOrder", func() {
+		Payload(func() {
+			Field(1, "id", String)
+			Required("id")
+		})
+		Description("Delete an order from the current cart")
+		HTTP(func() {
+			DELETE("/orders/{id}")
+			Response(StatusOK)
+		})
+	})
 
 	Method("getOrder", func() {
 		Payload(func() {
