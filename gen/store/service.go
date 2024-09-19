@@ -33,16 +33,18 @@ type Service interface {
 	GetProduct(context.Context, *GetProductPayload) (res *Product, err error)
 	// ListProducts implements listProducts.
 	ListProducts(context.Context) (res []*Product, err error)
-	// CreateOrder implements createOrder.
-	CreateOrder(context.Context, *NewOrder) (res *Order, err error)
-	// GetOrder implements getOrder.
-	GetOrder(context.Context, *GetOrderPayload) (res *Order, err error)
-	// Retrieve all orders for a specific user
-	GetUserOrders(context.Context, *GetUserOrdersPayload) (res []*Order, err error)
 	// AddToCart implements addToCart.
 	AddToCart(context.Context, *CartItem) (res *Cart, err error)
+	// RemoveFromCart implements removeFromCart.
+	RemoveFromCart(context.Context, *RemoveFromCartPayload) (res *Cart, err error)
 	// GetCart implements getCart.
-	GetCart(context.Context, *GetCartPayload) (res *Cart, err error)
+	GetCart(context.Context) (res *Cart, err error)
+	// Create an order from the current cart
+	CreateOrder(context.Context) (res *Order, err error)
+	// GetOrder implements getOrder.
+	GetOrder(context.Context, *GetOrderPayload) (res *Order, err error)
+	// Retrieve all orders for the authenticated user
+	GetUserOrders(context.Context) (res []*Order, err error)
 }
 
 // APIName is the name of the API as defined in the design.
@@ -59,7 +61,7 @@ const ServiceName = "store"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [14]string{"createUser", "loginUser", "getUser", "getUserAll", "updateUser", "deleteUser", "createProduct", "getProduct", "listProducts", "createOrder", "getOrder", "getUserOrders", "addToCart", "getCart"}
+var MethodNames = [15]string{"createUser", "loginUser", "getUser", "getUserAll", "updateUser", "deleteUser", "createProduct", "getProduct", "listProducts", "addToCart", "removeFromCart", "getCart", "createOrder", "getOrder", "getUserOrders"}
 
 // Cart is the result type of the store service addToCart method.
 type Cart struct {
@@ -69,26 +71,16 @@ type Cart struct {
 	UserID string
 	// Items in the cart
 	Items []*CartItem
-	// Total amount of items in the cart
+	// Total amount of the cart
 	TotalAmount float64
 }
 
 // CartItem is the payload type of the store service addToCart method.
 type CartItem struct {
-	// ID of the user who owns the cart
-	UserID string
 	// ID of the product
 	ProductID string
 	// Quantity of the product
 	Quantity int
-	// Price of the product
-	Price *float64
-}
-
-// GetCartPayload is the payload type of the store service getCart method.
-type GetCartPayload struct {
-	// ID of the user whose cart to retrieve
-	UserID string
 }
 
 // GetOrderPayload is the payload type of the store service getOrder method.
@@ -99,12 +91,6 @@ type GetOrderPayload struct {
 // GetProductPayload is the payload type of the store service getProduct method.
 type GetProductPayload struct {
 	ID string
-}
-
-// GetUserOrdersPayload is the payload type of the store service getUserOrders
-// method.
-type GetUserOrdersPayload struct {
-	UserID string
 }
 
 // GetUserPayload is the payload type of the store service getUser method.
@@ -124,12 +110,6 @@ type LoginUserPayload struct {
 type LoginUserResult struct {
 	// JWT token for the authenticated user
 	Token *string
-}
-
-// NewOrder is the payload type of the store service createOrder method.
-type NewOrder struct {
-	// Items in the order
-	Items []*OrderItem
 }
 
 // NewProduct is the payload type of the store service createProduct method.
@@ -195,6 +175,12 @@ type Product struct {
 	Inventory int
 }
 
+// RemoveFromCartPayload is the payload type of the store service
+// removeFromCart method.
+type RemoveFromCartPayload struct {
+	ProductID string
+}
+
 // User is the result type of the store service createUser method.
 type User struct {
 	// Unique user ID
@@ -207,8 +193,6 @@ type User struct {
 	FirstName *string
 	// User's last name
 	LastName *string
-	// User's password
-	Password *string
 }
 
 // UserUpdatePayload is the payload type of the store service updateUser method.

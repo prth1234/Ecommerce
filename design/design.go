@@ -6,7 +6,7 @@ import (
 
 var _ = API("store", func() {
 	Title("Store API")
-	Description("Service for a complete store with users, products, orders, and cart functionality")
+	Description("Service for a complete store with users, products, carts, and orders")
 	Server("store", func() {
 		Host("localhost", func() {
 			URI("http://localhost:8000")
@@ -17,7 +17,7 @@ var _ = API("store", func() {
 var _ = Service("store", func() {
 	Description("Store service")
 
-	// User endpoints
+	// User endpoints (unchanged)
 	Method("createUser", func() {
 		Payload(NewUser)
 		Result(User)
@@ -27,7 +27,6 @@ var _ = Service("store", func() {
 		})
 	})
 
-	// Login endpoint
 	Method("loginUser", func() {
 		Description("Login a user and return a JWT token")
 		Payload(func() {
@@ -76,6 +75,7 @@ var _ = Service("store", func() {
 			Response(StatusOK)
 		})
 	})
+
 	Method("deleteUser", func() {
 		HTTP(func() {
 			POST("/users/delete")
@@ -83,7 +83,7 @@ var _ = Service("store", func() {
 		})
 	})
 
-	// Product endpoints
+	// Product endpoints (unchanged)
 	Method("createProduct", func() {
 		Payload(NewProduct)
 		Result(Product)
@@ -115,9 +115,40 @@ var _ = Service("store", func() {
 		})
 	})
 
-	// Order endpoints
+	// Cart endpoints
+	Method("addToCart", func() {
+		Payload(CartItem)
+		Result(Cart)
+		HTTP(func() {
+			POST("/cart/item")
+			Response(StatusOK)
+		})
+	})
+
+	Method("removeFromCart", func() {
+		Payload(func() {
+			Field(1, "productID", String)
+			Required("productID")
+		})
+		Result(Cart)
+		HTTP(func() {
+			DELETE("/cart/item/{productID}")
+			Response(StatusOK)
+		})
+	})
+
+	Method("getCart", func() {
+		Result(Cart)
+		Error("not-found")
+		HTTP(func() {
+			GET("/cart")
+			Response(StatusOK)
+			Response("not-found", StatusNotFound)
+		})
+	})
+
 	Method("createOrder", func() {
-		Payload(NewOrder)
+		Description("Create an order from the current cart")
 		Result(Order)
 		HTTP(func() {
 			POST("/orders")
@@ -140,38 +171,11 @@ var _ = Service("store", func() {
 	})
 
 	Method("getUserOrders", func() {
-		Description("Retrieve all orders for a specific user")
-		Payload(func() {
-			Field(1, "userID", String)
-			Required("userID")
-		})
+		Description("Retrieve all orders for the authenticated user")
 		Result(ArrayOf(Order))
-		Error("not-found")
 		HTTP(func() {
-			GET("/users/{userID}/orders")
+			GET("/orders")
 			Response(StatusOK)
-			Response("not-found", StatusNotFound)
-		})
-	})
-
-	// Cart endpoints
-	Method("addToCart", func() {
-		Payload(CartItem)
-		Result(Cart)
-		HTTP(func() {
-			POST("/cart/items")
-			Response(StatusOK)
-		})
-	})
-
-	Method("getCart", func() {
-		Payload(GetCartPayload)
-		Result(Cart)
-		Error("not-found")
-		HTTP(func() {
-			GET("/cart")
-			Response(StatusOK)
-			Response("not-found", StatusNotFound)
 		})
 	})
 })

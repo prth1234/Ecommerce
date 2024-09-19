@@ -18,21 +18,22 @@ import (
 
 // Server lists the store service endpoint HTTP handlers.
 type Server struct {
-	Mounts        []*MountPoint
-	CreateUser    http.Handler
-	LoginUser     http.Handler
-	GetUser       http.Handler
-	GetUserAll    http.Handler
-	UpdateUser    http.Handler
-	DeleteUser    http.Handler
-	CreateProduct http.Handler
-	GetProduct    http.Handler
-	ListProducts  http.Handler
-	CreateOrder   http.Handler
-	GetOrder      http.Handler
-	GetUserOrders http.Handler
-	AddToCart     http.Handler
-	GetCart       http.Handler
+	Mounts         []*MountPoint
+	CreateUser     http.Handler
+	LoginUser      http.Handler
+	GetUser        http.Handler
+	GetUserAll     http.Handler
+	UpdateUser     http.Handler
+	DeleteUser     http.Handler
+	CreateProduct  http.Handler
+	GetProduct     http.Handler
+	ListProducts   http.Handler
+	AddToCart      http.Handler
+	RemoveFromCart http.Handler
+	GetCart        http.Handler
+	CreateOrder    http.Handler
+	GetOrder       http.Handler
+	GetUserOrders  http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -71,26 +72,28 @@ func New(
 			{"CreateProduct", "POST", "/products"},
 			{"GetProduct", "GET", "/products/{id}"},
 			{"ListProducts", "GET", "/products"},
+			{"AddToCart", "POST", "/cart/item"},
+			{"RemoveFromCart", "DELETE", "/cart/item/{productID}"},
+			{"GetCart", "GET", "/cart"},
 			{"CreateOrder", "POST", "/orders"},
 			{"GetOrder", "GET", "/orders/{id}"},
-			{"GetUserOrders", "GET", "/users/{userID}/orders"},
-			{"AddToCart", "POST", "/cart/items"},
-			{"GetCart", "GET", "/cart"},
+			{"GetUserOrders", "GET", "/orders"},
 		},
-		CreateUser:    NewCreateUserHandler(e.CreateUser, mux, decoder, encoder, errhandler, formatter),
-		LoginUser:     NewLoginUserHandler(e.LoginUser, mux, decoder, encoder, errhandler, formatter),
-		GetUser:       NewGetUserHandler(e.GetUser, mux, decoder, encoder, errhandler, formatter),
-		GetUserAll:    NewGetUserAllHandler(e.GetUserAll, mux, decoder, encoder, errhandler, formatter),
-		UpdateUser:    NewUpdateUserHandler(e.UpdateUser, mux, decoder, encoder, errhandler, formatter),
-		DeleteUser:    NewDeleteUserHandler(e.DeleteUser, mux, decoder, encoder, errhandler, formatter),
-		CreateProduct: NewCreateProductHandler(e.CreateProduct, mux, decoder, encoder, errhandler, formatter),
-		GetProduct:    NewGetProductHandler(e.GetProduct, mux, decoder, encoder, errhandler, formatter),
-		ListProducts:  NewListProductsHandler(e.ListProducts, mux, decoder, encoder, errhandler, formatter),
-		CreateOrder:   NewCreateOrderHandler(e.CreateOrder, mux, decoder, encoder, errhandler, formatter),
-		GetOrder:      NewGetOrderHandler(e.GetOrder, mux, decoder, encoder, errhandler, formatter),
-		GetUserOrders: NewGetUserOrdersHandler(e.GetUserOrders, mux, decoder, encoder, errhandler, formatter),
-		AddToCart:     NewAddToCartHandler(e.AddToCart, mux, decoder, encoder, errhandler, formatter),
-		GetCart:       NewGetCartHandler(e.GetCart, mux, decoder, encoder, errhandler, formatter),
+		CreateUser:     NewCreateUserHandler(e.CreateUser, mux, decoder, encoder, errhandler, formatter),
+		LoginUser:      NewLoginUserHandler(e.LoginUser, mux, decoder, encoder, errhandler, formatter),
+		GetUser:        NewGetUserHandler(e.GetUser, mux, decoder, encoder, errhandler, formatter),
+		GetUserAll:     NewGetUserAllHandler(e.GetUserAll, mux, decoder, encoder, errhandler, formatter),
+		UpdateUser:     NewUpdateUserHandler(e.UpdateUser, mux, decoder, encoder, errhandler, formatter),
+		DeleteUser:     NewDeleteUserHandler(e.DeleteUser, mux, decoder, encoder, errhandler, formatter),
+		CreateProduct:  NewCreateProductHandler(e.CreateProduct, mux, decoder, encoder, errhandler, formatter),
+		GetProduct:     NewGetProductHandler(e.GetProduct, mux, decoder, encoder, errhandler, formatter),
+		ListProducts:   NewListProductsHandler(e.ListProducts, mux, decoder, encoder, errhandler, formatter),
+		AddToCart:      NewAddToCartHandler(e.AddToCart, mux, decoder, encoder, errhandler, formatter),
+		RemoveFromCart: NewRemoveFromCartHandler(e.RemoveFromCart, mux, decoder, encoder, errhandler, formatter),
+		GetCart:        NewGetCartHandler(e.GetCart, mux, decoder, encoder, errhandler, formatter),
+		CreateOrder:    NewCreateOrderHandler(e.CreateOrder, mux, decoder, encoder, errhandler, formatter),
+		GetOrder:       NewGetOrderHandler(e.GetOrder, mux, decoder, encoder, errhandler, formatter),
+		GetUserOrders:  NewGetUserOrdersHandler(e.GetUserOrders, mux, decoder, encoder, errhandler, formatter),
 	}
 }
 
@@ -108,11 +111,12 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.CreateProduct = m(s.CreateProduct)
 	s.GetProduct = m(s.GetProduct)
 	s.ListProducts = m(s.ListProducts)
+	s.AddToCart = m(s.AddToCart)
+	s.RemoveFromCart = m(s.RemoveFromCart)
+	s.GetCart = m(s.GetCart)
 	s.CreateOrder = m(s.CreateOrder)
 	s.GetOrder = m(s.GetOrder)
 	s.GetUserOrders = m(s.GetUserOrders)
-	s.AddToCart = m(s.AddToCart)
-	s.GetCart = m(s.GetCart)
 }
 
 // MethodNames returns the methods served.
@@ -129,11 +133,12 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountCreateProductHandler(mux, h.CreateProduct)
 	MountGetProductHandler(mux, h.GetProduct)
 	MountListProductsHandler(mux, h.ListProducts)
+	MountAddToCartHandler(mux, h.AddToCart)
+	MountRemoveFromCartHandler(mux, h.RemoveFromCart)
+	MountGetCartHandler(mux, h.GetCart)
 	MountCreateOrderHandler(mux, h.CreateOrder)
 	MountGetOrderHandler(mux, h.GetOrder)
 	MountGetUserOrdersHandler(mux, h.GetUserOrders)
-	MountAddToCartHandler(mux, h.AddToCart)
-	MountGetCartHandler(mux, h.GetCart)
 }
 
 // Mount configures the mux to serve the store endpoints.
@@ -579,6 +584,152 @@ func NewListProductsHandler(
 	})
 }
 
+// MountAddToCartHandler configures the mux to serve the "store" service
+// "addToCart" endpoint.
+func MountAddToCartHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/cart/item", f)
+}
+
+// NewAddToCartHandler creates a HTTP handler which loads the HTTP request and
+// calls the "store" service "addToCart" endpoint.
+func NewAddToCartHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeAddToCartRequest(mux, decoder)
+		encodeResponse = EncodeAddToCartResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "addToCart")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountRemoveFromCartHandler configures the mux to serve the "store" service
+// "removeFromCart" endpoint.
+func MountRemoveFromCartHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("DELETE", "/cart/item/{productID}", f)
+}
+
+// NewRemoveFromCartHandler creates a HTTP handler which loads the HTTP request
+// and calls the "store" service "removeFromCart" endpoint.
+func NewRemoveFromCartHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeRemoveFromCartRequest(mux, decoder)
+		encodeResponse = EncodeRemoveFromCartResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "removeFromCart")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountGetCartHandler configures the mux to serve the "store" service
+// "getCart" endpoint.
+func MountGetCartHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/cart", f)
+}
+
+// NewGetCartHandler creates a HTTP handler which loads the HTTP request and
+// calls the "store" service "getCart" endpoint.
+func NewGetCartHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		encodeResponse = EncodeGetCartResponse(encoder)
+		encodeError    = EncodeGetCartError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "getCart")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
+		var err error
+		res, err := endpoint(ctx, nil)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
 // MountCreateOrderHandler configures the mux to serve the "store" service
 // "createOrder" endpoint.
 func MountCreateOrderHandler(mux goahttp.Muxer, h http.Handler) {
@@ -602,7 +753,6 @@ func NewCreateOrderHandler(
 	formatter func(ctx context.Context, err error) goahttp.Statuser,
 ) http.Handler {
 	var (
-		decodeRequest  = DecodeCreateOrderRequest(mux, decoder)
 		encodeResponse = EncodeCreateOrderResponse(encoder)
 		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
 	)
@@ -610,14 +760,8 @@ func NewCreateOrderHandler(
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "createOrder")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
-		payload, err := decodeRequest(r)
-		if err != nil {
-			if err := encodeError(ctx, w, err); err != nil {
-				errhandler(ctx, w, err)
-			}
-			return
-		}
-		res, err := endpoint(ctx, payload)
+		var err error
+		res, err := endpoint(ctx, nil)
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil {
 				errhandler(ctx, w, err)
@@ -690,7 +834,7 @@ func MountGetUserOrdersHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("GET", "/users/{userID}/orders", f)
+	mux.Handle("GET", "/orders", f)
 }
 
 // NewGetUserOrdersHandler creates a HTTP handler which loads the HTTP request
@@ -704,124 +848,15 @@ func NewGetUserOrdersHandler(
 	formatter func(ctx context.Context, err error) goahttp.Statuser,
 ) http.Handler {
 	var (
-		decodeRequest  = DecodeGetUserOrdersRequest(mux, decoder)
 		encodeResponse = EncodeGetUserOrdersResponse(encoder)
-		encodeError    = EncodeGetUserOrdersError(encoder, formatter)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
 	)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "getUserOrders")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
-		payload, err := decodeRequest(r)
-		if err != nil {
-			if err := encodeError(ctx, w, err); err != nil {
-				errhandler(ctx, w, err)
-			}
-			return
-		}
-		res, err := endpoint(ctx, payload)
-		if err != nil {
-			if err := encodeError(ctx, w, err); err != nil {
-				errhandler(ctx, w, err)
-			}
-			return
-		}
-		if err := encodeResponse(ctx, w, res); err != nil {
-			errhandler(ctx, w, err)
-		}
-	})
-}
-
-// MountAddToCartHandler configures the mux to serve the "store" service
-// "addToCart" endpoint.
-func MountAddToCartHandler(mux goahttp.Muxer, h http.Handler) {
-	f, ok := h.(http.HandlerFunc)
-	if !ok {
-		f = func(w http.ResponseWriter, r *http.Request) {
-			h.ServeHTTP(w, r)
-		}
-	}
-	mux.Handle("POST", "/cart/items", f)
-}
-
-// NewAddToCartHandler creates a HTTP handler which loads the HTTP request and
-// calls the "store" service "addToCart" endpoint.
-func NewAddToCartHandler(
-	endpoint goa.Endpoint,
-	mux goahttp.Muxer,
-	decoder func(*http.Request) goahttp.Decoder,
-	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
-	errhandler func(context.Context, http.ResponseWriter, error),
-	formatter func(ctx context.Context, err error) goahttp.Statuser,
-) http.Handler {
-	var (
-		decodeRequest  = DecodeAddToCartRequest(mux, decoder)
-		encodeResponse = EncodeAddToCartResponse(encoder)
-		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
-	)
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
-		ctx = context.WithValue(ctx, goa.MethodKey, "addToCart")
-		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
-		payload, err := decodeRequest(r)
-		if err != nil {
-			if err := encodeError(ctx, w, err); err != nil {
-				errhandler(ctx, w, err)
-			}
-			return
-		}
-		res, err := endpoint(ctx, payload)
-		if err != nil {
-			if err := encodeError(ctx, w, err); err != nil {
-				errhandler(ctx, w, err)
-			}
-			return
-		}
-		if err := encodeResponse(ctx, w, res); err != nil {
-			errhandler(ctx, w, err)
-		}
-	})
-}
-
-// MountGetCartHandler configures the mux to serve the "store" service
-// "getCart" endpoint.
-func MountGetCartHandler(mux goahttp.Muxer, h http.Handler) {
-	f, ok := h.(http.HandlerFunc)
-	if !ok {
-		f = func(w http.ResponseWriter, r *http.Request) {
-			h.ServeHTTP(w, r)
-		}
-	}
-	mux.Handle("GET", "/cart", f)
-}
-
-// NewGetCartHandler creates a HTTP handler which loads the HTTP request and
-// calls the "store" service "getCart" endpoint.
-func NewGetCartHandler(
-	endpoint goa.Endpoint,
-	mux goahttp.Muxer,
-	decoder func(*http.Request) goahttp.Decoder,
-	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
-	errhandler func(context.Context, http.ResponseWriter, error),
-	formatter func(ctx context.Context, err error) goahttp.Statuser,
-) http.Handler {
-	var (
-		decodeRequest  = DecodeGetCartRequest(mux, decoder)
-		encodeResponse = EncodeGetCartResponse(encoder)
-		encodeError    = EncodeGetCartError(encoder, formatter)
-	)
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
-		ctx = context.WithValue(ctx, goa.MethodKey, "getCart")
-		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
-		payload, err := decodeRequest(r)
-		if err != nil {
-			if err := encodeError(ctx, w, err); err != nil {
-				errhandler(ctx, w, err)
-			}
-			return
-		}
-		res, err := endpoint(ctx, payload)
+		var err error
+		res, err := endpoint(ctx, nil)
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil {
 				errhandler(ctx, w, err)

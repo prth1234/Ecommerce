@@ -640,6 +640,214 @@ func DecodeListProductsResponse(decoder func(*http.Response) goahttp.Decoder, re
 	}
 }
 
+// BuildAddToCartRequest instantiates a HTTP request object with method and
+// path set to call the "store" service "addToCart" endpoint
+func (c *Client) BuildAddToCartRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: AddToCartStorePath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("store", "addToCart", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeAddToCartRequest returns an encoder for requests sent to the store
+// addToCart server.
+func EncodeAddToCartRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*store.CartItem)
+		if !ok {
+			return goahttp.ErrInvalidType("store", "addToCart", "*store.CartItem", v)
+		}
+		body := NewAddToCartRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("store", "addToCart", err)
+		}
+		return nil
+	}
+}
+
+// DecodeAddToCartResponse returns a decoder for responses returned by the
+// store addToCart endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+func DecodeAddToCartResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body AddToCartResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "addToCart", err)
+			}
+			err = ValidateAddToCartResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("store", "addToCart", err)
+			}
+			res := NewAddToCartCartOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("store", "addToCart", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildRemoveFromCartRequest instantiates a HTTP request object with method
+// and path set to call the "store" service "removeFromCart" endpoint
+func (c *Client) BuildRemoveFromCartRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		productID string
+	)
+	{
+		p, ok := v.(*store.RemoveFromCartPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("store", "removeFromCart", "*store.RemoveFromCartPayload", v)
+		}
+		productID = p.ProductID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RemoveFromCartStorePath(productID)}
+	req, err := http.NewRequest("DELETE", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("store", "removeFromCart", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeRemoveFromCartResponse returns a decoder for responses returned by the
+// store removeFromCart endpoint. restoreBody controls whether the response
+// body should be restored after having been read.
+func DecodeRemoveFromCartResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body RemoveFromCartResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "removeFromCart", err)
+			}
+			err = ValidateRemoveFromCartResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("store", "removeFromCart", err)
+			}
+			res := NewRemoveFromCartCartOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("store", "removeFromCart", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildGetCartRequest instantiates a HTTP request object with method and path
+// set to call the "store" service "getCart" endpoint
+func (c *Client) BuildGetCartRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetCartStorePath()}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("store", "getCart", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeGetCartResponse returns a decoder for responses returned by the store
+// getCart endpoint. restoreBody controls whether the response body should be
+// restored after having been read.
+// DecodeGetCartResponse may return the following errors:
+//   - "not-found" (type *goa.ServiceError): http.StatusNotFound
+//   - error: internal error
+func DecodeGetCartResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body GetCartResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "getCart", err)
+			}
+			err = ValidateGetCartResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("store", "getCart", err)
+			}
+			res := NewGetCartCartOK(&body)
+			return res, nil
+		case http.StatusNotFound:
+			var (
+				body GetCartNotFoundResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "getCart", err)
+			}
+			err = ValidateGetCartNotFoundResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("store", "getCart", err)
+			}
+			return nil, NewGetCartNotFound(&body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("store", "getCart", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildCreateOrderRequest instantiates a HTTP request object with method and
 // path set to call the "store" service "createOrder" endpoint
 func (c *Client) BuildCreateOrderRequest(ctx context.Context, v any) (*http.Request, error) {
@@ -653,22 +861,6 @@ func (c *Client) BuildCreateOrderRequest(ctx context.Context, v any) (*http.Requ
 	}
 
 	return req, nil
-}
-
-// EncodeCreateOrderRequest returns an encoder for requests sent to the store
-// createOrder server.
-func EncodeCreateOrderRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
-	return func(req *http.Request, v any) error {
-		p, ok := v.(*store.NewOrder)
-		if !ok {
-			return goahttp.ErrInvalidType("store", "createOrder", "*store.NewOrder", v)
-		}
-		body := NewCreateOrderRequestBody(p)
-		if err := encoder(req).Encode(&body); err != nil {
-			return goahttp.ErrEncodingError("store", "createOrder", err)
-		}
-		return nil
-	}
 }
 
 // DecodeCreateOrderResponse returns a decoder for responses returned by the
@@ -796,17 +988,7 @@ func DecodeGetOrderResponse(decoder func(*http.Response) goahttp.Decoder, restor
 // BuildGetUserOrdersRequest instantiates a HTTP request object with method and
 // path set to call the "store" service "getUserOrders" endpoint
 func (c *Client) BuildGetUserOrdersRequest(ctx context.Context, v any) (*http.Request, error) {
-	var (
-		userID string
-	)
-	{
-		p, ok := v.(*store.GetUserOrdersPayload)
-		if !ok {
-			return nil, goahttp.ErrInvalidType("store", "getUserOrders", "*store.GetUserOrdersPayload", v)
-		}
-		userID = p.UserID
-	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetUserOrdersStorePath(userID)}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetUserOrdersStorePath()}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("store", "getUserOrders", u.String(), err)
@@ -821,9 +1003,6 @@ func (c *Client) BuildGetUserOrdersRequest(ctx context.Context, v any) (*http.Re
 // DecodeGetUserOrdersResponse returns a decoder for responses returned by the
 // store getUserOrders endpoint. restoreBody controls whether the response body
 // should be restored after having been read.
-// DecodeGetUserOrdersResponse may return the following errors:
-//   - "not-found" (type *goa.ServiceError): http.StatusNotFound
-//   - error: internal error
 func DecodeGetUserOrdersResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
 	return func(resp *http.Response) (any, error) {
 		if restoreBody {
@@ -860,182 +1039,9 @@ func DecodeGetUserOrdersResponse(decoder func(*http.Response) goahttp.Decoder, r
 			}
 			res := NewGetUserOrdersOrderOK(body)
 			return res, nil
-		case http.StatusNotFound:
-			var (
-				body GetUserOrdersNotFoundResponseBody
-				err  error
-			)
-			err = decoder(resp).Decode(&body)
-			if err != nil {
-				return nil, goahttp.ErrDecodingError("store", "getUserOrders", err)
-			}
-			err = ValidateGetUserOrdersNotFoundResponseBody(&body)
-			if err != nil {
-				return nil, goahttp.ErrValidationError("store", "getUserOrders", err)
-			}
-			return nil, NewGetUserOrdersNotFound(&body)
 		default:
 			body, _ := io.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("store", "getUserOrders", resp.StatusCode, string(body))
-		}
-	}
-}
-
-// BuildAddToCartRequest instantiates a HTTP request object with method and
-// path set to call the "store" service "addToCart" endpoint
-func (c *Client) BuildAddToCartRequest(ctx context.Context, v any) (*http.Request, error) {
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: AddToCartStorePath()}
-	req, err := http.NewRequest("POST", u.String(), nil)
-	if err != nil {
-		return nil, goahttp.ErrInvalidURL("store", "addToCart", u.String(), err)
-	}
-	if ctx != nil {
-		req = req.WithContext(ctx)
-	}
-
-	return req, nil
-}
-
-// EncodeAddToCartRequest returns an encoder for requests sent to the store
-// addToCart server.
-func EncodeAddToCartRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
-	return func(req *http.Request, v any) error {
-		p, ok := v.(*store.CartItem)
-		if !ok {
-			return goahttp.ErrInvalidType("store", "addToCart", "*store.CartItem", v)
-		}
-		body := NewAddToCartRequestBody(p)
-		if err := encoder(req).Encode(&body); err != nil {
-			return goahttp.ErrEncodingError("store", "addToCart", err)
-		}
-		return nil
-	}
-}
-
-// DecodeAddToCartResponse returns a decoder for responses returned by the
-// store addToCart endpoint. restoreBody controls whether the response body
-// should be restored after having been read.
-func DecodeAddToCartResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
-		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
-			}
-			resp.Body = io.NopCloser(bytes.NewBuffer(b))
-			defer func() {
-				resp.Body = io.NopCloser(bytes.NewBuffer(b))
-			}()
-		} else {
-			defer resp.Body.Close()
-		}
-		switch resp.StatusCode {
-		case http.StatusOK:
-			var (
-				body AddToCartResponseBody
-				err  error
-			)
-			err = decoder(resp).Decode(&body)
-			if err != nil {
-				return nil, goahttp.ErrDecodingError("store", "addToCart", err)
-			}
-			err = ValidateAddToCartResponseBody(&body)
-			if err != nil {
-				return nil, goahttp.ErrValidationError("store", "addToCart", err)
-			}
-			res := NewAddToCartCartOK(&body)
-			return res, nil
-		default:
-			body, _ := io.ReadAll(resp.Body)
-			return nil, goahttp.ErrInvalidResponse("store", "addToCart", resp.StatusCode, string(body))
-		}
-	}
-}
-
-// BuildGetCartRequest instantiates a HTTP request object with method and path
-// set to call the "store" service "getCart" endpoint
-func (c *Client) BuildGetCartRequest(ctx context.Context, v any) (*http.Request, error) {
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetCartStorePath()}
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		return nil, goahttp.ErrInvalidURL("store", "getCart", u.String(), err)
-	}
-	if ctx != nil {
-		req = req.WithContext(ctx)
-	}
-
-	return req, nil
-}
-
-// EncodeGetCartRequest returns an encoder for requests sent to the store
-// getCart server.
-func EncodeGetCartRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
-	return func(req *http.Request, v any) error {
-		p, ok := v.(*store.GetCartPayload)
-		if !ok {
-			return goahttp.ErrInvalidType("store", "getCart", "*store.GetCartPayload", v)
-		}
-		body := NewGetCartRequestBody(p)
-		if err := encoder(req).Encode(&body); err != nil {
-			return goahttp.ErrEncodingError("store", "getCart", err)
-		}
-		return nil
-	}
-}
-
-// DecodeGetCartResponse returns a decoder for responses returned by the store
-// getCart endpoint. restoreBody controls whether the response body should be
-// restored after having been read.
-// DecodeGetCartResponse may return the following errors:
-//   - "not-found" (type *goa.ServiceError): http.StatusNotFound
-//   - error: internal error
-func DecodeGetCartResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
-		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
-			}
-			resp.Body = io.NopCloser(bytes.NewBuffer(b))
-			defer func() {
-				resp.Body = io.NopCloser(bytes.NewBuffer(b))
-			}()
-		} else {
-			defer resp.Body.Close()
-		}
-		switch resp.StatusCode {
-		case http.StatusOK:
-			var (
-				body GetCartResponseBody
-				err  error
-			)
-			err = decoder(resp).Decode(&body)
-			if err != nil {
-				return nil, goahttp.ErrDecodingError("store", "getCart", err)
-			}
-			err = ValidateGetCartResponseBody(&body)
-			if err != nil {
-				return nil, goahttp.ErrValidationError("store", "getCart", err)
-			}
-			res := NewGetCartCartOK(&body)
-			return res, nil
-		case http.StatusNotFound:
-			var (
-				body GetCartNotFoundResponseBody
-				err  error
-			)
-			err = decoder(resp).Decode(&body)
-			if err != nil {
-				return nil, goahttp.ErrDecodingError("store", "getCart", err)
-			}
-			err = ValidateGetCartNotFoundResponseBody(&body)
-			if err != nil {
-				return nil, goahttp.ErrValidationError("store", "getCart", err)
-			}
-			return nil, NewGetCartNotFound(&body)
-		default:
-			body, _ := io.ReadAll(resp.Body)
-			return nil, goahttp.ErrInvalidResponse("store", "getCart", resp.StatusCode, string(body))
 		}
 	}
 }
@@ -1049,7 +1055,6 @@ func unmarshalUserResponseToStoreUser(v *UserResponse) *store.User {
 		Email:     *v.Email,
 		FirstName: v.FirstName,
 		LastName:  v.LastName,
-		Password:  v.Password,
 	}
 
 	return res
@@ -1069,25 +1074,12 @@ func unmarshalProductResponseToStoreProduct(v *ProductResponse) *store.Product {
 	return res
 }
 
-// marshalStoreOrderItemToOrderItemRequestBody builds a value of type
-// *OrderItemRequestBody from a value of type *store.OrderItem.
-func marshalStoreOrderItemToOrderItemRequestBody(v *store.OrderItem) *OrderItemRequestBody {
-	res := &OrderItemRequestBody{
-		ProductID: v.ProductID,
-		Quantity:  v.Quantity,
-		Price:     v.Price,
-	}
-
-	return res
-}
-
-// marshalOrderItemRequestBodyToStoreOrderItem builds a value of type
-// *store.OrderItem from a value of type *OrderItemRequestBody.
-func marshalOrderItemRequestBodyToStoreOrderItem(v *OrderItemRequestBody) *store.OrderItem {
-	res := &store.OrderItem{
-		ProductID: v.ProductID,
-		Quantity:  v.Quantity,
-		Price:     v.Price,
+// unmarshalCartItemResponseBodyToStoreCartItem builds a value of type
+// *store.CartItem from a value of type *CartItemResponseBody.
+func unmarshalCartItemResponseBodyToStoreCartItem(v *CartItemResponseBody) *store.CartItem {
+	res := &store.CartItem{
+		ProductID: *v.ProductID,
+		Quantity:  *v.Quantity,
 	}
 
 	return res
@@ -1129,19 +1121,6 @@ func unmarshalOrderItemResponseToStoreOrderItem(v *OrderItemResponse) *store.Ord
 		ProductID: *v.ProductID,
 		Quantity:  *v.Quantity,
 		Price:     *v.Price,
-	}
-
-	return res
-}
-
-// unmarshalCartItemResponseBodyToStoreCartItem builds a value of type
-// *store.CartItem from a value of type *CartItemResponseBody.
-func unmarshalCartItemResponseBodyToStoreCartItem(v *CartItemResponseBody) *store.CartItem {
-	res := &store.CartItem{
-		UserID:    *v.UserID,
-		ProductID: *v.ProductID,
-		Quantity:  *v.Quantity,
-		Price:     v.Price,
 	}
 
 	return res

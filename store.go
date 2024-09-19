@@ -18,142 +18,26 @@ func NewStore(db *sql.DB) store.Service {
 	return &storesrvc{db: db}
 }
 
-type LoginUserResult struct {
-	Token *string `json:"token"` // Change this to *string
-}
-
-func (s *storesrvc) DeleteUser(ctx context.Context) (err error) {
-	userName, ok := ctx.Value("username").(string)
-	fmt.Println(userName)
-	if !ok {
-		return fmt.Errorf("unauthorized: missing username in context")
-	}
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	var userId string
-	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", userName).Scan(&userId)
-	if err != nil {
-		return err
-	}
-	_, err = tx.ExecContext(ctx, "DELETE FROM users WHERE id = $1", userId)
-	if err != nil {
-		return fmt.Errorf("error deleting user: %v", err)
-	}
-	err = tx.Commit()
-	if err != nil {
-		return fmt.Errorf("error committing transaction: %v", err)
-	}
-	return nil
-}
-
-func (s *storesrvc) UpdateUser(ctx context.Context, p *store.UserUpdatePayload) (res *store.User, err error) {
-	username, ok := ctx.Value("username").(string)
-	fmt.Println(username)
-
-	if !ok {
-		return nil, fmt.Errorf("unauthorized: missing username in context")
-	}
-
-	// Start a database transaction
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("error starting transaction: %v", err)
-	}
-	defer tx.Rollback()
-
-	// Get the user ID from the username
-	var userID string
-	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting user ID: %v", err)
-	}
-	query := `
-		UPDATE users
-		SET
-			email = COALESCE($1, email),
-			first_name = COALESCE($2, first_name),
-			last_name = COALESCE($3, last_name)
-		WHERE
-			id = $4
-		RETURNING id, username, email, first_name, last_name;
-	`
-
-	row := tx.QueryRowContext(ctx, query, p.Email, p.FirstName, p.LastName, userID)
-	updatedUser := &store.User{}
-	err = row.Scan(&updatedUser.ID, &updatedUser.Username, &updatedUser.Email, &updatedUser.FirstName, &updatedUser.LastName)
-	if err != nil {
-		return nil, fmt.Errorf("error updating user: %v", err)
-	}
-	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("error committing transaction: %v", err)
-	}
-	return updatedUser, nil
-}
-
-// In the CreateUser function
 func (s *storesrvc) CreateUser(ctx context.Context, p *store.NewUser) (res *store.User, err error) {
 	id := uuid.New().String()
-
-	// Hash the password before storing
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("error hashing password: %v", err)
 	}
 
 	query := `INSERT INTO users (id, username, email, first_name, last_name, password) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, username, email, first_name, last_name`
-
 	user := &store.User{}
 	err = s.db.QueryRowContext(ctx, query, id, p.Username, p.Email, p.FirstName, p.LastName, string(hashedPassword)).Scan(&user.ID, &user.Username, &user.Email, &user.FirstName, &user.LastName)
 	if err != nil {
 		return nil, fmt.Errorf("error creating user: %v", err)
 	}
 
-	// Don't return the hashed password
 	return user, nil
 }
 
-//// In the LoginUser function
-//func (s *storesrvc) LoginUser(ctx context.Context, p *store.LoginUserPayload) (*store.LoginUserResult, error) {
-//	query := `SELECT id, username, password FROM users WHERE username = $1`
-//	var id, username, hashedPassword string
-//
-//	err := s.db.QueryRowContext(ctx, query, p.Username).Scan(&id, &username, &hashedPassword)
-//	if err != nil {
-//		if err == sql.ErrNoRows {
-//			return nil, fmt.Errorf("invalid username or password")
-//		}
-//		return nil, fmt.Errorf("error querying user: %v", err)
-//	}
-//
-//	// Compare passwords
-//	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(p.Password))
-//	if err != nil {
-//		return nil, fmt.Errorf("invalid username or password")
-//	}
-//
-//	// Generate JWT token
-//	token, err := jwthelper.GenerateJWT(username)
-//	if err != nil {
-//		return nil, fmt.Errorf("error generating token: %v", err)
-//	}
-//
-//	return &store.LoginUserResult{Token: &token}, nil
-//}
-
 func (s *storesrvc) LoginUser(ctx context.Context, p *store.LoginUserPayload) (res *store.LoginUserResult, err error) {
-	if p.Username == "" || p.Password == "" {
-		return nil, fmt.Errorf("username and password are required")
-	}
-
-	// Query the database to get the hashed password for the given username
 	var hashedPassword string
 	err = s.db.QueryRowContext(ctx, "SELECT password FROM users WHERE username = $1", p.Username).Scan(&hashedPassword)
-	if hashedPassword == "" {
-		return nil, fmt.Errorf("user does not exist")
-	}
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("invalid username or password")
@@ -161,28 +45,21 @@ func (s *storesrvc) LoginUser(ctx context.Context, p *store.LoginUserPayload) (r
 		return nil, fmt.Errorf("database error: %v", err)
 	}
 
-	// Compare the provided password with the hashed password from the database
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(p.Password))
 	if err != nil {
-		// If the passwords don't match, bcrypt.CompareHashAndPassword will return an error
-		return nil, fmt.Errorf("wrong username or password")
+		return nil, fmt.Errorf("invalid username or password")
 	}
 
-	// If we've made it this far, the username and password are correct
-	// Generate JWT token
 	token, err := jwthelper.GenerateJWT(p.Username)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token: %v", err)
 	}
 
-	return &store.LoginUserResult{
-		Token: &token,
-	}, nil
+	return &store.LoginUserResult{Token: &token}, nil
 }
 
 func (s *storesrvc) GetUser(ctx context.Context, p *store.GetUserPayload) (res *store.User, err error) {
 	query := `SELECT id, username, email, first_name, last_name FROM users WHERE id = $1`
-
 	user := &store.User{}
 	err = s.db.QueryRowContext(ctx, query, p.ID).Scan(&user.ID, &user.Username, &user.Email, &user.FirstName, &user.LastName)
 	if err != nil {
@@ -191,13 +68,11 @@ func (s *storesrvc) GetUser(ctx context.Context, p *store.GetUserPayload) (res *
 		}
 		return nil, fmt.Errorf("error getting user: %v", err)
 	}
-
 	return user, nil
 }
 
 func (s *storesrvc) GetUserAll(ctx context.Context) (res []*store.User, err error) {
 	query := `SELECT id, username, email, first_name, last_name FROM users`
-
 	rows, err := s.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("error getting users: %v", err)
@@ -212,8 +87,77 @@ func (s *storesrvc) GetUserAll(ctx context.Context) (res []*store.User, err erro
 		}
 		users = append(users, user)
 	}
-
 	return users, nil
+}
+
+func (s *storesrvc) UpdateUser(ctx context.Context, p *store.UserUpdatePayload) (res *store.User, err error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	var userID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user ID: %v", err)
+	}
+
+	query := `
+		UPDATE users
+		SET email = $1, first_name = $2, last_name = $3
+		WHERE id = $4
+		RETURNING id, username, email, first_name, last_name;
+	`
+
+	updatedUser := &store.User{}
+	err = tx.QueryRowContext(ctx, query, p.Email, p.FirstName, p.LastName, userID).Scan(
+		&updatedUser.ID, &updatedUser.Username, &updatedUser.Email, &updatedUser.FirstName, &updatedUser.LastName)
+	if err != nil {
+		return nil, fmt.Errorf("error updating user: %v", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	return updatedUser, nil
+}
+
+func (s *storesrvc) DeleteUser(ctx context.Context) (err error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var userID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, "DELETE FROM users WHERE id = $1", userID)
+	if err != nil {
+		return fmt.Errorf("error deleting user: %v", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	return nil
 }
 
 func (s *storesrvc) CreateProduct(ctx context.Context, p *store.NewProduct) (res *store.Product, err error) {
@@ -264,124 +208,231 @@ func (s *storesrvc) ListProducts(ctx context.Context) (res []*store.Product, err
 
 	return products, nil
 }
-func (s *storesrvc) CreateOrder(ctx context.Context, p *store.NewOrder) (res *store.Order, err error) {
-	// Get the username from the context (set by the JWTAuthMiddleware)
+
+func (s *storesrvc) AddToCart(ctx context.Context, p *store.CartItem) (res *store.Cart, err error) {
 	username, ok := ctx.Value("username").(string)
 	if !ok {
 		return nil, fmt.Errorf("unauthorized: missing username in context")
 	}
 
-	// Start a database transaction
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error starting transaction: %v", err)
 	}
 	defer tx.Rollback()
 
-	// Get the user ID from the username
 	var userID string
 	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user ID: %v", err)
 	}
 
-	// Create a new order
-	id := uuid.New().String()
-	query := `INSERT INTO orders (id, user_id, total_amount, status) VALUES ($1, $2, $3, $4) RETURNING id, user_id, total_amount, status`
+	// Check if the cart exists, if not create a new one
+	var cartID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM carts WHERE user_id = $1", userID).Scan(&cartID)
+	if err == sql.ErrNoRows {
+		cartID = uuid.New().String()
+		_, err = tx.ExecContext(ctx, "INSERT INTO carts (id, user_id, total_amount) VALUES ($1, $2, $3)", cartID, userID, 0)
+		if err != nil {
+			return nil, fmt.Errorf("error creating cart: %v", err)
+		}
+	} else if err != nil {
+		return nil, fmt.Errorf("error checking for existing cart: %v", err)
+	}
 
-	order := &store.Order{Items: p.Items}
-	err = tx.QueryRowContext(ctx, query, id, userID, 0, "pending").Scan(&order.ID, &order.UserID, &order.TotalAmount, &order.Status)
+	// Get the price of the product
+	var price float64
+	err = tx.QueryRowContext(ctx, "SELECT price FROM products WHERE id = $1", p.ProductID).Scan(&price)
+	if err != nil {
+		return nil, fmt.Errorf("error getting product price: %v", err)
+	}
+
+	// Add or update the item in the cart
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO cart_items (cart_id, product_id, quantity)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (cart_id, product_id) DO UPDATE SET quantity = cart_items.quantity + $3
+	`, cartID, p.ProductID, p.Quantity)
+	if err != nil {
+		return nil, fmt.Errorf("error adding item to cart: %v", err)
+	}
+
+	// Update the total amount of the cart
+	_, err = tx.ExecContext(ctx, `
+		UPDATE carts
+		SET total_amount = total_amount + $1
+		WHERE id = $2
+	`, price*float64(p.Quantity), cartID)
+	if err != nil {
+		return nil, fmt.Errorf("error updating cart total amount: %v", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	return s.getCart(ctx, userID)
+}
+func (s *storesrvc) RemoveFromCart(ctx context.Context, p *store.RemoveFromCartPayload) (res *store.Cart, err error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	var userID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user ID: %v", err)
+	}
+
+	var cartID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM carts WHERE user_id = $1", userID).Scan(&cartID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting cart: %v", err)
+	}
+
+	_, err = tx.ExecContext(ctx, "DELETE FROM cart_items WHERE cart_id = $1 AND product_id = $2", cartID, p.ProductID)
+	if err != nil {
+		return nil, fmt.Errorf("error removing item from cart: %v", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	return s.getCart(ctx, userID)
+}
+
+func (s *storesrvc) GetCart(ctx context.Context) (res *store.Cart, err error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	var userID string
+	err = s.db.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user ID: %v", err)
+	}
+
+	return s.getCart(ctx, userID)
+}
+
+func (s *storesrvc) getCart(ctx context.Context, userID string) (*store.Cart, error) {
+	query := `
+		SELECT c.id, c.user_id, ci.product_id, ci.quantity, p.price
+		FROM carts c
+		LEFT JOIN cart_items ci ON c.id = ci.cart_id
+		LEFT JOIN products p ON ci.product_id = p.id
+		WHERE c.user_id = $1
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting cart: %v", err)
+	}
+	defer rows.Close()
+
+	cart := &store.Cart{UserID: userID, Items: []*store.CartItem{}, TotalAmount: 0}
+	for rows.Next() {
+		var productID sql.NullString
+		var quantity sql.NullInt32
+		var price sql.NullFloat64
+		err = rows.Scan(&cart.ID, &cart.UserID, &productID, &quantity, &price)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning cart item: %v", err)
+		}
+
+		if productID.Valid && quantity.Valid {
+			item := &store.CartItem{
+				ProductID: productID.String,
+				Quantity:  int(quantity.Int32),
+			}
+			cart.Items = append(cart.Items, item)
+			if price.Valid {
+				cart.TotalAmount += price.Float64 * float64(quantity.Int32)
+			}
+		}
+	}
+
+	if cart.ID == "" {
+		return nil, store.MakeNotFound(fmt.Errorf("cart not found"))
+	}
+
+	return cart, nil
+}
+func (s *storesrvc) CreateOrder(ctx context.Context) (res *store.Order, err error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	var userID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user ID: %v", err)
+	}
+
+	cart, err := s.getCart(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting cart: %v", err)
+	}
+
+	if len(cart.Items) == 0 {
+		return nil, fmt.Errorf("cart is empty")
+	}
+
+	orderID := uuid.New().String()
+	_, err = tx.ExecContext(ctx, "INSERT INTO orders (id, user_id, total_amount, status) VALUES ($1, $2, $3, $4)",
+		orderID, userID, cart.TotalAmount, "pending")
 	if err != nil {
 		return nil, fmt.Errorf("error creating order: %v", err)
 	}
 
-	// Add order items
-	for _, item := range p.Items {
-		_, err = tx.ExecContext(ctx, `INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)`,
-			order.ID, item.ProductID, item.Quantity, item.Price)
+	for _, item := range cart.Items {
+		var price float64
+		err = tx.QueryRowContext(ctx, "SELECT price FROM products WHERE id = $1", item.ProductID).Scan(&price)
+		if err != nil {
+			return nil, fmt.Errorf("error getting product price: %v", err)
+		}
+
+		_, err = tx.ExecContext(ctx, "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)",
+			orderID, item.ProductID, item.Quantity, price)
 		if err != nil {
 			return nil, fmt.Errorf("error adding order item: %v", err)
 		}
-		order.TotalAmount += item.Price * float64(item.Quantity)
+
+		_, err = tx.ExecContext(ctx, "UPDATE products SET inventory = inventory - $1 WHERE id = $2", item.Quantity, item.ProductID)
+		if err != nil {
+			return nil, fmt.Errorf("error updating product inventory: %v", err)
+		}
 	}
 
-	// Update the order total
-	_, err = tx.ExecContext(ctx, `UPDATE orders SET total_amount = $1 WHERE id = $2`, order.TotalAmount, order.ID)
+	_, err = tx.ExecContext(ctx, "DELETE FROM cart_items WHERE cart_id = $1", cart.ID)
 	if err != nil {
-		return nil, fmt.Errorf("error updating order total: %v", err)
+		return nil, fmt.Errorf("error clearing cart: %v", err)
 	}
 
-	// Commit the transaction
-	if err = tx.Commit(); err != nil {
+	err = tx.Commit()
+	if err != nil {
 		return nil, fmt.Errorf("error committing transaction: %v", err)
 	}
 
-	return order, nil
-}
-func (s *storesrvc) GetUserOrders(ctx context.Context, p *store.GetUserOrdersPayload) (res []*store.Order, err error) {
-	query := `
-		SELECT o.id, o.user_id, o.total_amount, o.status, 
-			   oi.product_id, oi.quantity, oi.price
-		FROM orders o
-		LEFT JOIN order_items oi ON o.id = oi.order_id
-		WHERE o.user_id = $1
-		ORDER BY o.id`
-
-	rows, err := s.db.QueryContext(ctx, query, p.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting user orders: %v", err)
-	}
-	defer rows.Close()
-
-	orders := make(map[string]*store.Order)
-	for rows.Next() {
-		var orderID, userID, productID sql.NullString
-		var totalAmount, price sql.NullFloat64
-		var status sql.NullString
-		var quantity sql.NullInt32
-
-		err = rows.Scan(&orderID, &userID, &totalAmount, &status, &productID, &quantity, &price)
-		if err != nil {
-			return nil, fmt.Errorf("error scanning order: %v", err)
-		}
-
-		order, exists := orders[orderID.String]
-		if !exists {
-			order = &store.Order{
-				ID:          orderID.String,
-				UserID:      userID.String,
-				TotalAmount: totalAmount.Float64,
-				Status:      status.String,
-				Items:       []*store.OrderItem{},
-			}
-			orders[orderID.String] = order
-		}
-
-		if productID.Valid {
-			item := &store.OrderItem{
-				ProductID: productID.String,
-				Quantity:  int(quantity.Int32),
-				Price:     price.Float64,
-			}
-			order.Items = append(order.Items, item)
-		}
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over rows: %v", err)
-	}
-
-	// Convert map to slice
-	var result []*store.Order
-	for _, order := range orders {
-		result = append(result, order)
-	}
-
-	if len(result) == 0 {
-		return nil, store.MakeNotFound(fmt.Errorf("no orders found for user"))
-	}
-
-	return result, nil
+	return s.GetOrder(ctx, &store.GetOrderPayload{ID: orderID})
 }
 
 func (s *storesrvc) GetOrder(ctx context.Context, p *store.GetOrderPayload) (res *store.Order, err error) {
@@ -445,83 +496,78 @@ func (s *storesrvc) GetOrder(ctx context.Context, p *store.GetOrderPayload) (res
 	return order, nil
 }
 
-func (s *storesrvc) AddToCart(ctx context.Context, p *store.CartItem) (res *store.Cart, err error) {
-	tx, err := s.db.BeginTx(ctx, nil)
+func (s *storesrvc) GetUserOrders(ctx context.Context) (res []*store.Order, err error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	var userID string
+	err = s.db.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
 	if err != nil {
-		return nil, fmt.Errorf("error starting transaction: %v", err)
-	}
-	defer tx.Rollback()
-
-	// Check if the cart exists, if not create it
-	var cartID string
-	err = tx.QueryRowContext(ctx, `SELECT id FROM carts WHERE user_id = $1`, p.UserID).Scan(&cartID)
-	if err == sql.ErrNoRows {
-		cartID = uuid.New().String()
-		_, err = tx.ExecContext(ctx, `INSERT INTO carts (id, user_id) VALUES ($1, $2)`, cartID, p.UserID)
-		if err != nil {
-			return nil, fmt.Errorf("error creating cart: %v", err)
-		}
-	} else if err != nil {
-		return nil, fmt.Errorf("error checking cart: %v", err)
+		return nil, fmt.Errorf("error getting user ID: %v", err)
 	}
 
-	// Add or update cart item
-	_, err = tx.ExecContext(ctx, `
-		INSERT INTO cart_items (cart_id, product_id, quantity)
-		VALUES ($1, $2, $3)
-		ON CONFLICT (cart_id, product_id) DO UPDATE SET quantity = cart_items.quantity + $3`,
-		cartID, p.ProductID, p.Quantity)
-	if err != nil {
-		return nil, fmt.Errorf("error adding item to cart: %v", err)
-	}
-
-	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("error committing transaction: %v", err)
-	}
-
-	return s.GetCart(ctx, &store.GetCartPayload{UserID: p.UserID})
-}
-
-func (s *storesrvc) GetCart(ctx context.Context, p *store.GetCartPayload) (res *store.Cart, err error) {
 	query := `
-		SELECT c.id, c.user_id, ci.product_id, ci.quantity, p.price
-		FROM carts c
-		LEFT JOIN cart_items ci ON c.id = ci.cart_id
-		LEFT JOIN products p ON ci.product_id = p.id
-		WHERE c.user_id = $1`
+		SELECT o.id, o.user_id, o.total_amount, o.status, 
+			   oi.product_id, oi.quantity, oi.price
+		FROM orders o
+		LEFT JOIN order_items oi ON o.id = oi.order_id
+		WHERE o.user_id = $1
+		ORDER BY o.id`
 
-	rows, err := s.db.QueryContext(ctx, query, p.UserID)
+	rows, err := s.db.QueryContext(ctx, query, userID)
 	if err != nil {
-		return nil, fmt.Errorf("error getting cart: %v", err)
+		return nil, fmt.Errorf("error getting user orders: %v", err)
 	}
 	defer rows.Close()
 
-	cart := &store.Cart{UserID: p.UserID, Items: []*store.CartItem{}, TotalAmount: 0}
+	orders := make(map[string]*store.Order)
 	for rows.Next() {
-		var productID sql.NullString
+		var orderID, userID, productID sql.NullString
+		var totalAmount, price sql.NullFloat64
+		var status sql.NullString
 		var quantity sql.NullInt32
-		var price sql.NullFloat64
-		err = rows.Scan(&cart.ID, &cart.UserID, &productID, &quantity, &price)
+
+		err = rows.Scan(&orderID, &userID, &totalAmount, &status, &productID, &quantity, &price)
 		if err != nil {
-			return nil, fmt.Errorf("error scanning cart item: %v", err)
+			return nil, fmt.Errorf("error scanning order: %v", err)
 		}
 
-		if productID.Valid && price.Valid && quantity.Valid {
-			item := &store.CartItem{
+		order, exists := orders[orderID.String]
+		if !exists {
+			order = &store.Order{
+				ID:          orderID.String,
+				UserID:      userID.String,
+				TotalAmount: totalAmount.Float64,
+				Status:      status.String,
+				Items:       []*store.OrderItem{},
+			} //making a new order to be able to see what products are there in the order
+			orders[orderID.String] = order
+		}
+
+		if productID.Valid {
+			item := &store.OrderItem{
 				ProductID: productID.String,
 				Quantity:  int(quantity.Int32),
+				Price:     price.Float64,
 			}
-			cart.Items = append(cart.Items, item)
-			if price.Valid && quantity.Valid {
-				cart.TotalAmount += price.Float64 * float64(quantity.Int32)
-			}
-
+			order.Items = append(order.Items, item)
 		}
 	}
 
-	if cart.ID == "" {
-		return nil, store.MakeNotFound(fmt.Errorf("cart not found"))
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	return cart, nil
+	var result []*store.Order
+	for _, eachOrder := range orders {
+		result = append(result, eachOrder)
+	}
+
+	if len(result) == 0 {
+		return nil, store.MakeNotFound(fmt.Errorf("no orders found for user"))
+	}
+
+	return result, nil
 }

@@ -353,24 +353,24 @@ func EncodeListProductsResponse(encoder func(context.Context, http.ResponseWrite
 	}
 }
 
-// EncodeCreateOrderResponse returns an encoder for responses returned by the
-// store createOrder endpoint.
-func EncodeCreateOrderResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+// EncodeAddToCartResponse returns an encoder for responses returned by the
+// store addToCart endpoint.
+func EncodeAddToCartResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res, _ := v.(*store.Order)
+		res, _ := v.(*store.Cart)
 		enc := encoder(ctx, w)
-		body := NewCreateOrderResponseBody(res)
-		w.WriteHeader(http.StatusCreated)
+		body := NewAddToCartResponseBody(res)
+		w.WriteHeader(http.StatusOK)
 		return enc.Encode(body)
 	}
 }
 
-// DecodeCreateOrderRequest returns a decoder for requests sent to the store
-// createOrder endpoint.
-func DecodeCreateOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+// DecodeAddToCartRequest returns a decoder for requests sent to the store
+// addToCart endpoint.
+func DecodeAddToCartRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
 	return func(r *http.Request) (any, error) {
 		var (
-			body CreateOrderRequestBody
+			body AddToCartRequestBody
 			err  error
 		)
 		err = decoder(r).Decode(&body)
@@ -384,13 +384,94 @@ func DecodeCreateOrderRequest(mux goahttp.Muxer, decoder func(*http.Request) goa
 			}
 			return nil, goa.DecodePayloadError(err.Error())
 		}
-		err = ValidateCreateOrderRequestBody(&body)
+		err = ValidateAddToCartRequestBody(&body)
 		if err != nil {
 			return nil, err
 		}
-		payload := NewCreateOrderNewOrder(&body)
+		payload := NewAddToCartCartItem(&body)
 
 		return payload, nil
+	}
+}
+
+// EncodeRemoveFromCartResponse returns an encoder for responses returned by
+// the store removeFromCart endpoint.
+func EncodeRemoveFromCartResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*store.Cart)
+		enc := encoder(ctx, w)
+		body := NewRemoveFromCartResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeRemoveFromCartRequest returns a decoder for requests sent to the store
+// removeFromCart endpoint.
+func DecodeRemoveFromCartRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			productID string
+
+			params = mux.Vars(r)
+		)
+		productID = params["productID"]
+		payload := NewRemoveFromCartPayload(productID)
+
+		return payload, nil
+	}
+}
+
+// EncodeGetCartResponse returns an encoder for responses returned by the store
+// getCart endpoint.
+func EncodeGetCartResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*store.Cart)
+		enc := encoder(ctx, w)
+		body := NewGetCartResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// EncodeGetCartError returns an encoder for errors returned by the getCart
+// store endpoint.
+func EncodeGetCartError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		var en goa.GoaErrorNamer
+		if !errors.As(v, &en) {
+			return encodeError(ctx, w, v)
+		}
+		switch en.GoaErrorName() {
+		case "not-found":
+			var res *goa.ServiceError
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			var body any
+			if formatter != nil {
+				body = formatter(ctx, res)
+			} else {
+				body = NewGetCartNotFoundResponseBody(res)
+			}
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusNotFound)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
+// EncodeCreateOrderResponse returns an encoder for responses returned by the
+// store createOrder endpoint.
+func EncodeCreateOrderResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*store.Order)
+		enc := encoder(ctx, w)
+		body := NewCreateOrderResponseBody(res)
+		w.WriteHeader(http.StatusCreated)
+		return enc.Encode(body)
 	}
 }
 
@@ -463,162 +544,6 @@ func EncodeGetUserOrdersResponse(encoder func(context.Context, http.ResponseWrit
 	}
 }
 
-// DecodeGetUserOrdersRequest returns a decoder for requests sent to the store
-// getUserOrders endpoint.
-func DecodeGetUserOrdersRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
-	return func(r *http.Request) (any, error) {
-		var (
-			userID string
-
-			params = mux.Vars(r)
-		)
-		userID = params["userID"]
-		payload := NewGetUserOrdersPayload(userID)
-
-		return payload, nil
-	}
-}
-
-// EncodeGetUserOrdersError returns an encoder for errors returned by the
-// getUserOrders store endpoint.
-func EncodeGetUserOrdersError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
-	encodeError := goahttp.ErrorEncoder(encoder, formatter)
-	return func(ctx context.Context, w http.ResponseWriter, v error) error {
-		var en goa.GoaErrorNamer
-		if !errors.As(v, &en) {
-			return encodeError(ctx, w, v)
-		}
-		switch en.GoaErrorName() {
-		case "not-found":
-			var res *goa.ServiceError
-			errors.As(v, &res)
-			enc := encoder(ctx, w)
-			var body any
-			if formatter != nil {
-				body = formatter(ctx, res)
-			} else {
-				body = NewGetUserOrdersNotFoundResponseBody(res)
-			}
-			w.Header().Set("goa-error", res.GoaErrorName())
-			w.WriteHeader(http.StatusNotFound)
-			return enc.Encode(body)
-		default:
-			return encodeError(ctx, w, v)
-		}
-	}
-}
-
-// EncodeAddToCartResponse returns an encoder for responses returned by the
-// store addToCart endpoint.
-func EncodeAddToCartResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
-	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res, _ := v.(*store.Cart)
-		enc := encoder(ctx, w)
-		body := NewAddToCartResponseBody(res)
-		w.WriteHeader(http.StatusOK)
-		return enc.Encode(body)
-	}
-}
-
-// DecodeAddToCartRequest returns a decoder for requests sent to the store
-// addToCart endpoint.
-func DecodeAddToCartRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
-	return func(r *http.Request) (any, error) {
-		var (
-			body AddToCartRequestBody
-			err  error
-		)
-		err = decoder(r).Decode(&body)
-		if err != nil {
-			if err == io.EOF {
-				return nil, goa.MissingPayloadError()
-			}
-			var gerr *goa.ServiceError
-			if errors.As(err, &gerr) {
-				return nil, gerr
-			}
-			return nil, goa.DecodePayloadError(err.Error())
-		}
-		err = ValidateAddToCartRequestBody(&body)
-		if err != nil {
-			return nil, err
-		}
-		payload := NewAddToCartCartItem(&body)
-
-		return payload, nil
-	}
-}
-
-// EncodeGetCartResponse returns an encoder for responses returned by the store
-// getCart endpoint.
-func EncodeGetCartResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
-	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res, _ := v.(*store.Cart)
-		enc := encoder(ctx, w)
-		body := NewGetCartResponseBody(res)
-		w.WriteHeader(http.StatusOK)
-		return enc.Encode(body)
-	}
-}
-
-// DecodeGetCartRequest returns a decoder for requests sent to the store
-// getCart endpoint.
-func DecodeGetCartRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
-	return func(r *http.Request) (any, error) {
-		var (
-			body GetCartRequestBody
-			err  error
-		)
-		err = decoder(r).Decode(&body)
-		if err != nil {
-			if err == io.EOF {
-				return nil, goa.MissingPayloadError()
-			}
-			var gerr *goa.ServiceError
-			if errors.As(err, &gerr) {
-				return nil, gerr
-			}
-			return nil, goa.DecodePayloadError(err.Error())
-		}
-		err = ValidateGetCartRequestBody(&body)
-		if err != nil {
-			return nil, err
-		}
-		payload := NewGetCartPayload(&body)
-
-		return payload, nil
-	}
-}
-
-// EncodeGetCartError returns an encoder for errors returned by the getCart
-// store endpoint.
-func EncodeGetCartError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
-	encodeError := goahttp.ErrorEncoder(encoder, formatter)
-	return func(ctx context.Context, w http.ResponseWriter, v error) error {
-		var en goa.GoaErrorNamer
-		if !errors.As(v, &en) {
-			return encodeError(ctx, w, v)
-		}
-		switch en.GoaErrorName() {
-		case "not-found":
-			var res *goa.ServiceError
-			errors.As(v, &res)
-			enc := encoder(ctx, w)
-			var body any
-			if formatter != nil {
-				body = formatter(ctx, res)
-			} else {
-				body = NewGetCartNotFoundResponseBody(res)
-			}
-			w.Header().Set("goa-error", res.GoaErrorName())
-			w.WriteHeader(http.StatusNotFound)
-			return enc.Encode(body)
-		default:
-			return encodeError(ctx, w, v)
-		}
-	}
-}
-
 // marshalStoreUserToUserResponse builds a value of type *UserResponse from a
 // value of type *store.User.
 func marshalStoreUserToUserResponse(v *store.User) *UserResponse {
@@ -628,7 +553,6 @@ func marshalStoreUserToUserResponse(v *store.User) *UserResponse {
 		Email:     v.Email,
 		FirstName: v.FirstName,
 		LastName:  v.LastName,
-		Password:  v.Password,
 	}
 
 	return res
@@ -648,13 +572,12 @@ func marshalStoreProductToProductResponse(v *store.Product) *ProductResponse {
 	return res
 }
 
-// unmarshalOrderItemRequestBodyToStoreOrderItem builds a value of type
-// *store.OrderItem from a value of type *OrderItemRequestBody.
-func unmarshalOrderItemRequestBodyToStoreOrderItem(v *OrderItemRequestBody) *store.OrderItem {
-	res := &store.OrderItem{
-		ProductID: *v.ProductID,
-		Quantity:  *v.Quantity,
-		Price:     *v.Price,
+// marshalStoreCartItemToCartItemResponseBody builds a value of type
+// *CartItemResponseBody from a value of type *store.CartItem.
+func marshalStoreCartItemToCartItemResponseBody(v *store.CartItem) *CartItemResponseBody {
+	res := &CartItemResponseBody{
+		ProductID: v.ProductID,
+		Quantity:  v.Quantity,
 	}
 
 	return res
@@ -697,19 +620,6 @@ func marshalStoreOrderToOrderResponse(v *store.Order) *OrderResponse {
 // *OrderItemResponse from a value of type *store.OrderItem.
 func marshalStoreOrderItemToOrderItemResponse(v *store.OrderItem) *OrderItemResponse {
 	res := &OrderItemResponse{
-		ProductID: v.ProductID,
-		Quantity:  v.Quantity,
-		Price:     v.Price,
-	}
-
-	return res
-}
-
-// marshalStoreCartItemToCartItemResponseBody builds a value of type
-// *CartItemResponseBody from a value of type *store.CartItem.
-func marshalStoreCartItemToCartItemResponseBody(v *store.CartItem) *CartItemResponseBody {
-	res := &CartItemResponseBody{
-		UserID:    v.UserID,
 		ProductID: v.ProductID,
 		Quantity:  v.Quantity,
 		Price:     v.Price,

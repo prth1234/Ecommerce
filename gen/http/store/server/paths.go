@@ -56,6 +56,21 @@ func ListProductsStorePath() string {
 	return "/products"
 }
 
+// AddToCartStorePath returns the URL path to the store service addToCart HTTP endpoint.
+func AddToCartStorePath() string {
+	return "/cart/item"
+}
+
+// RemoveFromCartStorePath returns the URL path to the store service removeFromCart HTTP endpoint.
+func RemoveFromCartStorePath(productID string) string {
+	return fmt.Sprintf("/cart/item/%v", productID)
+}
+
+// GetCartStorePath returns the URL path to the store service getCart HTTP endpoint.
+func GetCartStorePath() string {
+	return "/cart"
+}
+
 // CreateOrderStorePath returns the URL path to the store service createOrder HTTP endpoint.
 func CreateOrderStorePath() string {
 	return "/orders"
@@ -67,16 +82,6 @@ func GetOrderStorePath(id string) string {
 }
 
 // GetUserOrdersStorePath returns the URL path to the store service getUserOrders HTTP endpoint.
-func GetUserOrdersStorePath(userID string) string {
-	return fmt.Sprintf("/users/%v/orders", userID)
-}
-
-// AddToCartStorePath returns the URL path to the store service addToCart HTTP endpoint.
-func AddToCartStorePath() string {
-	return "/cart/items"
-}
-
-// GetCartStorePath returns the URL path to the store service getCart HTTP endpoint.
-func GetCartStorePath() string {
-	return "/cart"
+func GetUserOrdersStorePath() string {
+	return "/orders"
 }

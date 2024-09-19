@@ -53,6 +53,18 @@ type Client struct {
 	// listProducts endpoint.
 	ListProductsDoer goahttp.Doer
 
+	// AddToCart Doer is the HTTP client used to make requests to the addToCart
+	// endpoint.
+	AddToCartDoer goahttp.Doer
+
+	// RemoveFromCart Doer is the HTTP client used to make requests to the
+	// removeFromCart endpoint.
+	RemoveFromCartDoer goahttp.Doer
+
+	// GetCart Doer is the HTTP client used to make requests to the getCart
+	// endpoint.
+	GetCartDoer goahttp.Doer
+
 	// CreateOrder Doer is the HTTP client used to make requests to the createOrder
 	// endpoint.
 	CreateOrderDoer goahttp.Doer
@@ -64,14 +76,6 @@ type Client struct {
 	// GetUserOrders Doer is the HTTP client used to make requests to the
 	// getUserOrders endpoint.
 	GetUserOrdersDoer goahttp.Doer
-
-	// AddToCart Doer is the HTTP client used to make requests to the addToCart
-	// endpoint.
-	AddToCartDoer goahttp.Doer
-
-	// GetCart Doer is the HTTP client used to make requests to the getCart
-	// endpoint.
-	GetCartDoer goahttp.Doer
 
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
@@ -102,11 +106,12 @@ func NewClient(
 		CreateProductDoer:   doer,
 		GetProductDoer:      doer,
 		ListProductsDoer:    doer,
+		AddToCartDoer:       doer,
+		RemoveFromCartDoer:  doer,
+		GetCartDoer:         doer,
 		CreateOrderDoer:     doer,
 		GetOrderDoer:        doer,
 		GetUserOrdersDoer:   doer,
-		AddToCartDoer:       doer,
-		GetCartDoer:         doer,
 		RestoreResponseBody: restoreBody,
 		scheme:              scheme,
 		host:                host,
@@ -306,19 +311,76 @@ func (c *Client) ListProducts() goa.Endpoint {
 	}
 }
 
-// CreateOrder returns an endpoint that makes HTTP requests to the store
-// service createOrder server.
-func (c *Client) CreateOrder() goa.Endpoint {
+// AddToCart returns an endpoint that makes HTTP requests to the store service
+// addToCart server.
+func (c *Client) AddToCart() goa.Endpoint {
 	var (
-		encodeRequest  = EncodeCreateOrderRequest(c.encoder)
-		decodeResponse = DecodeCreateOrderResponse(c.decoder, c.RestoreResponseBody)
+		encodeRequest  = EncodeAddToCartRequest(c.encoder)
+		decodeResponse = DecodeAddToCartResponse(c.decoder, c.RestoreResponseBody)
 	)
 	return func(ctx context.Context, v any) (any, error) {
-		req, err := c.BuildCreateOrderRequest(ctx, v)
+		req, err := c.BuildAddToCartRequest(ctx, v)
 		if err != nil {
 			return nil, err
 		}
 		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.AddToCartDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("store", "addToCart", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// RemoveFromCart returns an endpoint that makes HTTP requests to the store
+// service removeFromCart server.
+func (c *Client) RemoveFromCart() goa.Endpoint {
+	var (
+		decodeResponse = DecodeRemoveFromCartResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildRemoveFromCartRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.RemoveFromCartDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("store", "removeFromCart", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// GetCart returns an endpoint that makes HTTP requests to the store service
+// getCart server.
+func (c *Client) GetCart() goa.Endpoint {
+	var (
+		decodeResponse = DecodeGetCartResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildGetCartRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetCartDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("store", "getCart", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// CreateOrder returns an endpoint that makes HTTP requests to the store
+// service createOrder server.
+func (c *Client) CreateOrder() goa.Endpoint {
+	var (
+		decodeResponse = DecodeCreateOrderResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildCreateOrderRequest(ctx, v)
 		if err != nil {
 			return nil, err
 		}
@@ -363,54 +425,6 @@ func (c *Client) GetUserOrders() goa.Endpoint {
 		resp, err := c.GetUserOrdersDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("store", "getUserOrders", err)
-		}
-		return decodeResponse(resp)
-	}
-}
-
-// AddToCart returns an endpoint that makes HTTP requests to the store service
-// addToCart server.
-func (c *Client) AddToCart() goa.Endpoint {
-	var (
-		encodeRequest  = EncodeAddToCartRequest(c.encoder)
-		decodeResponse = DecodeAddToCartResponse(c.decoder, c.RestoreResponseBody)
-	)
-	return func(ctx context.Context, v any) (any, error) {
-		req, err := c.BuildAddToCartRequest(ctx, v)
-		if err != nil {
-			return nil, err
-		}
-		err = encodeRequest(req, v)
-		if err != nil {
-			return nil, err
-		}
-		resp, err := c.AddToCartDoer.Do(req)
-		if err != nil {
-			return nil, goahttp.ErrRequestError("store", "addToCart", err)
-		}
-		return decodeResponse(resp)
-	}
-}
-
-// GetCart returns an endpoint that makes HTTP requests to the store service
-// getCart server.
-func (c *Client) GetCart() goa.Endpoint {
-	var (
-		encodeRequest  = EncodeGetCartRequest(c.encoder)
-		decodeResponse = DecodeGetCartResponse(c.decoder, c.RestoreResponseBody)
-	)
-	return func(ctx context.Context, v any) (any, error) {
-		req, err := c.BuildGetCartRequest(ctx, v)
-		if err != nil {
-			return nil, err
-		}
-		err = encodeRequest(req, v)
-		if err != nil {
-			return nil, err
-		}
-		resp, err := c.GetCartDoer.Do(req)
-		if err != nil {
-			return nil, goahttp.ErrRequestError("store", "getCart", err)
 		}
 		return decodeResponse(resp)
 	}

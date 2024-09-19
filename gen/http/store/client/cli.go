@@ -11,8 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 	store "store/gen/store"
-
-	goa "goa.design/goa/v3/pkg"
 )
 
 // BuildCreateUserPayload builds the payload for the store createUser endpoint
@@ -23,7 +21,7 @@ func BuildCreateUserPayload(storeCreateUserBody string) (*store.NewUser, error) 
 	{
 		err = json.Unmarshal([]byte(storeCreateUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Quibusdam necessitatibus impedit nihil.\",\n      \"firstName\": \"Doloremque possimus esse temporibus.\",\n      \"lastName\": \"Repellendus facilis sint.\",\n      \"password\": \"Et minus velit sed alias consequatur dolores.\",\n      \"username\": \"Deleniti sint debitis reprehenderit dicta non odit.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Pariatur autem labore nam.\",\n      \"firstName\": \"Placeat sapiente inventore quis omnis facilis.\",\n      \"lastName\": \"Nulla eius qui culpa.\",\n      \"password\": \"Et repudiandae.\",\n      \"username\": \"Sit velit molestias non ea.\"\n   }'")
 		}
 	}
 	v := &store.NewUser{
@@ -45,7 +43,7 @@ func BuildLoginUserPayload(storeLoginUserBody string) (*store.LoginUserPayload, 
 	{
 		err = json.Unmarshal([]byte(storeLoginUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"password\": \"Ratione aut.\",\n      \"username\": \"Nostrum ea quae sint qui.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"password\": \"Praesentium et aut.\",\n      \"username\": \"Quis itaque sed quo saepe.\"\n   }'")
 		}
 	}
 	v := &store.LoginUserPayload{
@@ -77,7 +75,7 @@ func BuildUpdateUserPayload(storeUpdateUserBody string) (*store.UserUpdatePayloa
 	{
 		err = json.Unmarshal([]byte(storeUpdateUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Est doloribus ut at.\",\n      \"firstName\": \"Et nihil nesciunt odio quis et in.\",\n      \"lastName\": \"Vel quam ab occaecati pariatur recusandae eum.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Sed temporibus.\",\n      \"firstName\": \"Blanditiis sunt quia est aperiam sit cupiditate.\",\n      \"lastName\": \"Doloribus ea porro laborum.\"\n   }'")
 		}
 	}
 	v := &store.UserUpdatePayload{
@@ -97,7 +95,7 @@ func BuildCreateProductPayload(storeCreateProductBody string) (*store.NewProduct
 	{
 		err = json.Unmarshal([]byte(storeCreateProductBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"Dolorum sunt aut distinctio cupiditate.\",\n      \"inventory\": 6723610395239258144,\n      \"name\": \"Aperiam autem earum.\",\n      \"price\": 0.7051507925775151\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"Doloribus ut at quasi et nihil.\",\n      \"inventory\": 8397877898724451087,\n      \"name\": \"Ipsum rerum et.\",\n      \"price\": 0.5270934932707446\n   }'")
 		}
 	}
 	v := &store.NewProduct{
@@ -123,32 +121,34 @@ func BuildGetProductPayload(storeGetProductID string) (*store.GetProductPayload,
 	return v, nil
 }
 
-// BuildCreateOrderPayload builds the payload for the store createOrder
-// endpoint from CLI flags.
-func BuildCreateOrderPayload(storeCreateOrderBody string) (*store.NewOrder, error) {
+// BuildAddToCartPayload builds the payload for the store addToCart endpoint
+// from CLI flags.
+func BuildAddToCartPayload(storeAddToCartBody string) (*store.CartItem, error) {
 	var err error
-	var body CreateOrderRequestBody
+	var body AddToCartRequestBody
 	{
-		err = json.Unmarshal([]byte(storeCreateOrderBody), &body)
+		err = json.Unmarshal([]byte(storeAddToCartBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"items\": [\n         {\n            \"price\": 0.3823852716922111,\n            \"productID\": \"Doloribus nulla consequuntur officia beatae laudantium.\",\n            \"quantity\": 6492112474321122596\n         },\n         {\n            \"price\": 0.3823852716922111,\n            \"productID\": \"Doloribus nulla consequuntur officia beatae laudantium.\",\n            \"quantity\": 6492112474321122596\n         }\n      ]\n   }'")
-		}
-		if body.Items == nil {
-			err = goa.MergeErrors(err, goa.MissingFieldError("items", "body"))
-		}
-		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"productID\": \"Doloremque voluptatem.\",\n      \"quantity\": 4233447202951741187\n   }'")
 		}
 	}
-	v := &store.NewOrder{}
-	if body.Items != nil {
-		v.Items = make([]*store.OrderItem, len(body.Items))
-		for i, val := range body.Items {
-			v.Items[i] = marshalOrderItemRequestBodyToStoreOrderItem(val)
-		}
-	} else {
-		v.Items = []*store.OrderItem{}
+	v := &store.CartItem{
+		ProductID: body.ProductID,
+		Quantity:  body.Quantity,
 	}
+
+	return v, nil
+}
+
+// BuildRemoveFromCartPayload builds the payload for the store removeFromCart
+// endpoint from CLI flags.
+func BuildRemoveFromCartPayload(storeRemoveFromCartProductID string) (*store.RemoveFromCartPayload, error) {
+	var productID string
+	{
+		productID = storeRemoveFromCartProductID
+	}
+	v := &store.RemoveFromCartPayload{}
+	v.ProductID = productID
 
 	return v, nil
 }
@@ -162,58 +162,6 @@ func BuildGetOrderPayload(storeGetOrderID string) (*store.GetOrderPayload, error
 	}
 	v := &store.GetOrderPayload{}
 	v.ID = id
-
-	return v, nil
-}
-
-// BuildGetUserOrdersPayload builds the payload for the store getUserOrders
-// endpoint from CLI flags.
-func BuildGetUserOrdersPayload(storeGetUserOrdersUserID string) (*store.GetUserOrdersPayload, error) {
-	var userID string
-	{
-		userID = storeGetUserOrdersUserID
-	}
-	v := &store.GetUserOrdersPayload{}
-	v.UserID = userID
-
-	return v, nil
-}
-
-// BuildAddToCartPayload builds the payload for the store addToCart endpoint
-// from CLI flags.
-func BuildAddToCartPayload(storeAddToCartBody string) (*store.CartItem, error) {
-	var err error
-	var body AddToCartRequestBody
-	{
-		err = json.Unmarshal([]byte(storeAddToCartBody), &body)
-		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"price\": 0.004896430620712159,\n      \"productID\": \"Unde explicabo.\",\n      \"quantity\": 1039259567183560186,\n      \"userID\": \"Quisquam fuga beatae dolor totam voluptas.\"\n   }'")
-		}
-	}
-	v := &store.CartItem{
-		UserID:    body.UserID,
-		ProductID: body.ProductID,
-		Quantity:  body.Quantity,
-		Price:     body.Price,
-	}
-
-	return v, nil
-}
-
-// BuildGetCartPayload builds the payload for the store getCart endpoint from
-// CLI flags.
-func BuildGetCartPayload(storeGetCartBody string) (*store.GetCartPayload, error) {
-	var err error
-	var body GetCartRequestBody
-	{
-		err = json.Unmarshal([]byte(storeGetCartBody), &body)
-		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"userID\": \"Alias et earum itaque.\"\n   }'")
-		}
-	}
-	v := &store.GetCartPayload{
-		UserID: body.UserID,
-	}
 
 	return v, nil
 }
