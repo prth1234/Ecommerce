@@ -23,6 +23,7 @@ type Server struct {
 	LoginUser     http.Handler
 	GetUser       http.Handler
 	GetUserAll    http.Handler
+	UpdateUser    http.Handler
 	CreateProduct http.Handler
 	GetProduct    http.Handler
 	ListProducts  http.Handler
@@ -64,6 +65,7 @@ func New(
 			{"LoginUser", "POST", "/login"},
 			{"GetUser", "GET", "/users/{id}"},
 			{"GetUserAll", "GET", "/users"},
+			{"UpdateUser", "POST", "/users/update"},
 			{"CreateProduct", "POST", "/products"},
 			{"GetProduct", "GET", "/products/{id}"},
 			{"ListProducts", "GET", "/products"},
@@ -77,6 +79,7 @@ func New(
 		LoginUser:     NewLoginUserHandler(e.LoginUser, mux, decoder, encoder, errhandler, formatter),
 		GetUser:       NewGetUserHandler(e.GetUser, mux, decoder, encoder, errhandler, formatter),
 		GetUserAll:    NewGetUserAllHandler(e.GetUserAll, mux, decoder, encoder, errhandler, formatter),
+		UpdateUser:    NewUpdateUserHandler(e.UpdateUser, mux, decoder, encoder, errhandler, formatter),
 		CreateProduct: NewCreateProductHandler(e.CreateProduct, mux, decoder, encoder, errhandler, formatter),
 		GetProduct:    NewGetProductHandler(e.GetProduct, mux, decoder, encoder, errhandler, formatter),
 		ListProducts:  NewListProductsHandler(e.ListProducts, mux, decoder, encoder, errhandler, formatter),
@@ -97,6 +100,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.LoginUser = m(s.LoginUser)
 	s.GetUser = m(s.GetUser)
 	s.GetUserAll = m(s.GetUserAll)
+	s.UpdateUser = m(s.UpdateUser)
 	s.CreateProduct = m(s.CreateProduct)
 	s.GetProduct = m(s.GetProduct)
 	s.ListProducts = m(s.ListProducts)
@@ -116,6 +120,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountLoginUserHandler(mux, h.LoginUser)
 	MountGetUserHandler(mux, h.GetUser)
 	MountGetUserAllHandler(mux, h.GetUserAll)
+	MountUpdateUserHandler(mux, h.UpdateUser)
 	MountCreateProductHandler(mux, h.CreateProduct)
 	MountGetProductHandler(mux, h.GetProduct)
 	MountListProductsHandler(mux, h.ListProducts)
@@ -316,6 +321,57 @@ func NewGetUserAllHandler(
 		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
 		var err error
 		res, err := endpoint(ctx, nil)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountUpdateUserHandler configures the mux to serve the "store" service
+// "updateUser" endpoint.
+func MountUpdateUserHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/users/update", f)
+}
+
+// NewUpdateUserHandler creates a HTTP handler which loads the HTTP request and
+// calls the "store" service "updateUser" endpoint.
+func NewUpdateUserHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeUpdateUserRequest(mux, decoder)
+		encodeResponse = EncodeUpdateUserResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "updateUser")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil {
 				errhandler(ctx, w, err)

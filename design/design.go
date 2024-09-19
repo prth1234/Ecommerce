@@ -68,6 +68,15 @@ var _ = Service("store", func() {
 		})
 	})
 
+	Method("updateUser", func() {
+		Payload(UserUpdatePayload)
+		Result(User)
+		HTTP(func() {
+			POST("/users/update")
+			Response(StatusOK)
+		})
+	})
+
 	// Product endpoints
 	Method("createProduct", func() {
 		Payload(NewProduct)

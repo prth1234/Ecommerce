@@ -19,6 +19,7 @@ type Endpoints struct {
 	LoginUser     goa.Endpoint
 	GetUser       goa.Endpoint
 	GetUserAll    goa.Endpoint
+	UpdateUser    goa.Endpoint
 	CreateProduct goa.Endpoint
 	GetProduct    goa.Endpoint
 	ListProducts  goa.Endpoint
@@ -36,6 +37,7 @@ func NewEndpoints(s Service) *Endpoints {
 		LoginUser:     NewLoginUserEndpoint(s),
 		GetUser:       NewGetUserEndpoint(s),
 		GetUserAll:    NewGetUserAllEndpoint(s),
+		UpdateUser:    NewUpdateUserEndpoint(s),
 		CreateProduct: NewCreateProductEndpoint(s),
 		GetProduct:    NewGetProductEndpoint(s),
 		ListProducts:  NewListProductsEndpoint(s),
@@ -53,6 +55,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.LoginUser = m(e.LoginUser)
 	e.GetUser = m(e.GetUser)
 	e.GetUserAll = m(e.GetUserAll)
+	e.UpdateUser = m(e.UpdateUser)
 	e.CreateProduct = m(e.CreateProduct)
 	e.GetProduct = m(e.GetProduct)
 	e.ListProducts = m(e.ListProducts)
@@ -95,6 +98,15 @@ func NewGetUserEndpoint(s Service) goa.Endpoint {
 func NewGetUserAllEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		return s.GetUserAll(ctx)
+	}
+}
+
+// NewUpdateUserEndpoint returns an endpoint function that calls the method
+// "updateUser" of service "store".
+func NewUpdateUserEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*UserUpdatePayload)
+		return s.UpdateUser(ctx, p)
 	}
 }
 

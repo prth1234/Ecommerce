@@ -193,6 +193,47 @@ func EncodeGetUserAllResponse(encoder func(context.Context, http.ResponseWriter)
 	}
 }
 
+// EncodeUpdateUserResponse returns an encoder for responses returned by the
+// store updateUser endpoint.
+func EncodeUpdateUserResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*store.User)
+		enc := encoder(ctx, w)
+		body := NewUpdateUserResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeUpdateUserRequest returns a decoder for requests sent to the store
+// updateUser endpoint.
+func DecodeUpdateUserRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			body UpdateUserRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if err == io.EOF {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateUpdateUserRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+		payload := NewUpdateUserUserUpdatePayload(&body)
+
+		return payload, nil
+	}
+}
+
 // EncodeCreateProductResponse returns an encoder for responses returned by the
 // store createProduct endpoint.
 func EncodeCreateProductResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {

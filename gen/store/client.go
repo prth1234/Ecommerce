@@ -19,6 +19,7 @@ type Client struct {
 	LoginUserEndpoint     goa.Endpoint
 	GetUserEndpoint       goa.Endpoint
 	GetUserAllEndpoint    goa.Endpoint
+	UpdateUserEndpoint    goa.Endpoint
 	CreateProductEndpoint goa.Endpoint
 	GetProductEndpoint    goa.Endpoint
 	ListProductsEndpoint  goa.Endpoint
@@ -30,12 +31,13 @@ type Client struct {
 }
 
 // NewClient initializes a "store" service client given the endpoints.
-func NewClient(createUser, loginUser, getUser, getUserAll, createProduct, getProduct, listProducts, createOrder, getOrder, getUserOrders, addToCart, getCart goa.Endpoint) *Client {
+func NewClient(createUser, loginUser, getUser, getUserAll, updateUser, createProduct, getProduct, listProducts, createOrder, getOrder, getUserOrders, addToCart, getCart goa.Endpoint) *Client {
 	return &Client{
 		CreateUserEndpoint:    createUser,
 		LoginUserEndpoint:     loginUser,
 		GetUserEndpoint:       getUser,
 		GetUserAllEndpoint:    getUserAll,
+		UpdateUserEndpoint:    updateUser,
 		CreateProductEndpoint: createProduct,
 		GetProductEndpoint:    getProduct,
 		ListProductsEndpoint:  listProducts,
@@ -91,6 +93,16 @@ func (c *Client) GetUserAll(ctx context.Context) (res []*User, err error) {
 		return
 	}
 	return ires.([]*User), nil
+}
+
+// UpdateUser calls the "updateUser" endpoint of the "store" service.
+func (c *Client) UpdateUser(ctx context.Context, p *UserUpdatePayload) (res *User, err error) {
+	var ires any
+	ires, err = c.UpdateUserEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*User), nil
 }
 
 // CreateProduct calls the "createProduct" endpoint of the "store" service.

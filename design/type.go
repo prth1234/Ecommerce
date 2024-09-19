@@ -50,6 +50,13 @@ var Order = Type("Order", func() {
 	Required("id", "userID", "items", "totalAmount", "status")
 })
 
+var UserUpdatePayload = Type("UserUpdatePayload", func() {
+	Attribute("email", String, "User's email address")
+	Attribute("firstName", String, "User's first name")
+	Attribute("lastName", String, "User's last name")
+	Required("email", "firstName", "lastName")
+})
+
 var NewOrder = Type("NewOrder", func() {
 	Attribute("items", ArrayOf(OrderItem), "Items in the order")
 	Required("items")

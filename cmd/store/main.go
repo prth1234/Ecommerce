@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
@@ -20,6 +21,39 @@ import (
 
 func main() {
 	// Define command line flags
+
+	// Serve Redoc static files
+	fs := http.FileServer(http.Dir("./redoc"))
+
+	// Serve the Redoc UI
+	http.Handle("/docs/", http.StripPrefix("/docs/", fs))
+
+	// Serve the OpenAPI spec (openapi.json)
+	http.Handle("/openapi.json", http.FileServer(http.Dir("./path/to/openapi")))
+
+	// Serve the Redoc HTML page that loads the OpenAPI spec
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`
+			<!DOCTYPE html>
+			<html>
+			  <head>
+				<title>Redoc</title>
+				<!-- Needed for adaptive design -->
+				<meta charset="utf-8"/>
+				<meta name="viewport" content="width=device-width, initial-scale=1">
+				<!--
+				Redoc script
+				-->
+				<script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"> </script>
+			  </head>
+			  <body>
+				<redoc spec-url='/openapi.json'></redoc>
+			  </body>
+			</html>
+		`))
+	})
+
 	var (
 		hostF     = flag.String("host", "localhost", "Server host (valid values: localhost)")
 		domainF   = flag.String("domain", "", "Host domain name (overrides host domain specified in service design)")

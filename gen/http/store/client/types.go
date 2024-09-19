@@ -37,6 +37,17 @@ type LoginUserRequestBody struct {
 	Password string `form:"password" json:"password" xml:"password"`
 }
 
+// UpdateUserRequestBody is the type of the "store" service "updateUser"
+// endpoint HTTP request body.
+type UpdateUserRequestBody struct {
+	// User's email address
+	Email string `form:"email" json:"email" xml:"email"`
+	// User's first name
+	FirstName string `form:"firstName" json:"firstName" xml:"firstName"`
+	// User's last name
+	LastName string `form:"lastName" json:"lastName" xml:"lastName"`
+}
+
 // CreateProductRequestBody is the type of the "store" service "createProduct"
 // endpoint HTTP request body.
 type CreateProductRequestBody struct {
@@ -121,6 +132,23 @@ type GetUserResponseBody struct {
 // GetUserAllResponseBody is the type of the "store" service "getUserAll"
 // endpoint HTTP response body.
 type GetUserAllResponseBody []*UserResponse
+
+// UpdateUserResponseBody is the type of the "store" service "updateUser"
+// endpoint HTTP response body.
+type UpdateUserResponseBody struct {
+	// Unique user ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// User's username
+	Username *string `form:"username,omitempty" json:"username,omitempty" xml:"username,omitempty"`
+	// User's email address
+	Email *string `form:"email,omitempty" json:"email,omitempty" xml:"email,omitempty"`
+	// User's first name
+	FirstName *string `form:"firstName,omitempty" json:"firstName,omitempty" xml:"firstName,omitempty"`
+	// User's last name
+	LastName *string `form:"lastName,omitempty" json:"lastName,omitempty" xml:"lastName,omitempty"`
+	// User's password
+	Password *string `form:"password,omitempty" json:"password,omitempty" xml:"password,omitempty"`
+}
 
 // CreateProductResponseBody is the type of the "store" service "createProduct"
 // endpoint HTTP response body.
@@ -415,6 +443,17 @@ func NewLoginUserRequestBody(p *store.LoginUserPayload) *LoginUserRequestBody {
 	return body
 }
 
+// NewUpdateUserRequestBody builds the HTTP request body from the payload of
+// the "updateUser" endpoint of the "store" service.
+func NewUpdateUserRequestBody(p *store.UserUpdatePayload) *UpdateUserRequestBody {
+	body := &UpdateUserRequestBody{
+		Email:     p.Email,
+		FirstName: p.FirstName,
+		LastName:  p.LastName,
+	}
+	return body
+}
+
 // NewCreateProductRequestBody builds the HTTP request body from the payload of
 // the "createProduct" endpoint of the "store" service.
 func NewCreateProductRequestBody(p *store.NewProduct) *CreateProductRequestBody {
@@ -531,6 +570,21 @@ func NewGetUserAllUserOK(body []*UserResponse) []*store.User {
 	v := make([]*store.User, len(body))
 	for i, val := range body {
 		v[i] = unmarshalUserResponseToStoreUser(val)
+	}
+
+	return v
+}
+
+// NewUpdateUserUserOK builds a "store" service "updateUser" endpoint result
+// from a HTTP "OK" response.
+func NewUpdateUserUserOK(body *UpdateUserResponseBody) *store.User {
+	v := &store.User{
+		ID:        *body.ID,
+		Username:  *body.Username,
+		Email:     *body.Email,
+		FirstName: body.FirstName,
+		LastName:  body.LastName,
+		Password:  body.Password,
 	}
 
 	return v
@@ -728,6 +782,21 @@ func ValidateCreateUserResponseBody(body *CreateUserResponseBody) (err error) {
 // ValidateGetUserResponseBody runs the validations defined on
 // GetUserResponseBody
 func ValidateGetUserResponseBody(body *GetUserResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Username == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("username", "body"))
+	}
+	if body.Email == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("email", "body"))
+	}
+	return
+}
+
+// ValidateUpdateUserResponseBody runs the validations defined on
+// UpdateUserResponseBody
+func ValidateUpdateUserResponseBody(body *UpdateUserResponseBody) (err error) {
 	if body.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
 	}

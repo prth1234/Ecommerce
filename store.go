@@ -22,6 +22,58 @@ type LoginUserResult struct {
 	Token *string `json:"token"` // Change this to *string
 }
 
+func (s *storesrvc) UpdateUser(ctx context.Context, p *store.UserUpdatePayload) (res *store.User, err error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	// Start a database transaction
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	// Get the user ID from the username
+	var userID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user ID: %v", err)
+	}
+	query := `
+		UPDATE users
+		SET
+			email = COALESCE($1, email),
+			first_name = COALESCE($2, first_name),
+			last_name = COALESCE($3, last_name)
+		WHERE
+			id = $4
+		RETURNING id, username, email, first_name, last_name;
+	`
+	//	query := `
+	//	UPDATE users
+	//	SET
+	//		email = COALESCE($1, email),
+	//		first_name = COALESCE($2, first_name),
+	//		last_name = COALESCE($3, last_name)
+	//	WHERE
+	//		id = $4
+	//	RETURNING id, username, email, first_name, last_name;
+	//`
+
+	row := tx.QueryRowContext(ctx, query, p.Email, p.FirstName, p.LastName, userID)
+	updatedUser := &store.User{}
+	err = row.Scan(&updatedUser.ID, &updatedUser.Username, &updatedUser.Email, &updatedUser.FirstName, &updatedUser.LastName)
+	if err != nil {
+		return nil, fmt.Errorf("error updating user: %v", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("error committing transaction: %v", err)
+	}
+	return updatedUser, nil
+}
+
 // In the CreateUser function
 func (s *storesrvc) CreateUser(ctx context.Context, p *store.NewUser) (res *store.User, err error) {
 	id := uuid.New().String()

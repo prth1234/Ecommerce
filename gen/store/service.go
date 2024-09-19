@@ -23,6 +23,8 @@ type Service interface {
 	GetUser(context.Context, *GetUserPayload) (res *User, err error)
 	// GetUserAll implements getUserAll.
 	GetUserAll(context.Context) (res []*User, err error)
+	// UpdateUser implements updateUser.
+	UpdateUser(context.Context, *UserUpdatePayload) (res *User, err error)
 	// CreateProduct implements createProduct.
 	CreateProduct(context.Context, *NewProduct) (res *Product, err error)
 	// GetProduct implements getProduct.
@@ -55,7 +57,7 @@ const ServiceName = "store"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [12]string{"createUser", "loginUser", "getUser", "getUserAll", "createProduct", "getProduct", "listProducts", "createOrder", "getOrder", "getUserOrders", "addToCart", "getCart"}
+var MethodNames = [13]string{"createUser", "loginUser", "getUser", "getUserAll", "updateUser", "createProduct", "getProduct", "listProducts", "createOrder", "getOrder", "getUserOrders", "addToCart", "getCart"}
 
 // Cart is the result type of the store service addToCart method.
 type Cart struct {
@@ -205,6 +207,16 @@ type User struct {
 	LastName *string
 	// User's password
 	Password *string
+}
+
+// UserUpdatePayload is the payload type of the store service updateUser method.
+type UserUpdatePayload struct {
+	// User's email address
+	Email string
+	// User's first name
+	FirstName string
+	// User's last name
+	LastName string
 }
 
 // Invalid username or password

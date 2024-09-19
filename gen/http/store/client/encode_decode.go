@@ -313,6 +313,77 @@ func DecodeGetUserAllResponse(decoder func(*http.Response) goahttp.Decoder, rest
 	}
 }
 
+// BuildUpdateUserRequest instantiates a HTTP request object with method and
+// path set to call the "store" service "updateUser" endpoint
+func (c *Client) BuildUpdateUserRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: UpdateUserStorePath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("store", "updateUser", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeUpdateUserRequest returns an encoder for requests sent to the store
+// updateUser server.
+func EncodeUpdateUserRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*store.UserUpdatePayload)
+		if !ok {
+			return goahttp.ErrInvalidType("store", "updateUser", "*store.UserUpdatePayload", v)
+		}
+		body := NewUpdateUserRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("store", "updateUser", err)
+		}
+		return nil
+	}
+}
+
+// DecodeUpdateUserResponse returns a decoder for responses returned by the
+// store updateUser endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+func DecodeUpdateUserResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body UpdateUserResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "updateUser", err)
+			}
+			err = ValidateUpdateUserResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("store", "updateUser", err)
+			}
+			res := NewUpdateUserUserOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("store", "updateUser", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildCreateProductRequest instantiates a HTTP request object with method and
 // path set to call the "store" service "createProduct" endpoint
 func (c *Client) BuildCreateProductRequest(ctx context.Context, v any) (*http.Request, error) {
