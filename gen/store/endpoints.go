@@ -15,43 +15,45 @@ import (
 
 // Endpoints wraps the "store" service endpoints.
 type Endpoints struct {
-	CreateUser     goa.Endpoint
-	LoginUser      goa.Endpoint
-	GetUser        goa.Endpoint
-	GetUserAll     goa.Endpoint
-	UpdateUser     goa.Endpoint
-	DeleteUser     goa.Endpoint
-	CreateProduct  goa.Endpoint
-	GetProduct     goa.Endpoint
-	ListProducts   goa.Endpoint
-	AddToCart      goa.Endpoint
-	RemoveFromCart goa.Endpoint
-	GetCart        goa.Endpoint
-	CreateOrder    goa.Endpoint
-	DeleteOrder    goa.Endpoint
-	GetOrder       goa.Endpoint
-	GetUserOrders  goa.Endpoint
+	CreateUser              goa.Endpoint
+	LoginUser               goa.Endpoint
+	GetUser                 goa.Endpoint
+	GetUserAll              goa.Endpoint
+	UpdateUser              goa.Endpoint
+	DeleteUser              goa.Endpoint
+	CreateProduct           goa.Endpoint
+	GetProduct              goa.Endpoint
+	ListProducts            goa.Endpoint
+	AddToCart               goa.Endpoint
+	RemoveFromCart          goa.Endpoint
+	GetCart                 goa.Endpoint
+	CreateOrder             goa.Endpoint
+	DeleteOrder             goa.Endpoint
+	GetOrder                goa.Endpoint
+	GetUserOrders           goa.Endpoint
+	GetProductsPostedByUser goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "store" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		CreateUser:     NewCreateUserEndpoint(s),
-		LoginUser:      NewLoginUserEndpoint(s),
-		GetUser:        NewGetUserEndpoint(s),
-		GetUserAll:     NewGetUserAllEndpoint(s),
-		UpdateUser:     NewUpdateUserEndpoint(s),
-		DeleteUser:     NewDeleteUserEndpoint(s),
-		CreateProduct:  NewCreateProductEndpoint(s),
-		GetProduct:     NewGetProductEndpoint(s),
-		ListProducts:   NewListProductsEndpoint(s),
-		AddToCart:      NewAddToCartEndpoint(s),
-		RemoveFromCart: NewRemoveFromCartEndpoint(s),
-		GetCart:        NewGetCartEndpoint(s),
-		CreateOrder:    NewCreateOrderEndpoint(s),
-		DeleteOrder:    NewDeleteOrderEndpoint(s),
-		GetOrder:       NewGetOrderEndpoint(s),
-		GetUserOrders:  NewGetUserOrdersEndpoint(s),
+		CreateUser:              NewCreateUserEndpoint(s),
+		LoginUser:               NewLoginUserEndpoint(s),
+		GetUser:                 NewGetUserEndpoint(s),
+		GetUserAll:              NewGetUserAllEndpoint(s),
+		UpdateUser:              NewUpdateUserEndpoint(s),
+		DeleteUser:              NewDeleteUserEndpoint(s),
+		CreateProduct:           NewCreateProductEndpoint(s),
+		GetProduct:              NewGetProductEndpoint(s),
+		ListProducts:            NewListProductsEndpoint(s),
+		AddToCart:               NewAddToCartEndpoint(s),
+		RemoveFromCart:          NewRemoveFromCartEndpoint(s),
+		GetCart:                 NewGetCartEndpoint(s),
+		CreateOrder:             NewCreateOrderEndpoint(s),
+		DeleteOrder:             NewDeleteOrderEndpoint(s),
+		GetOrder:                NewGetOrderEndpoint(s),
+		GetUserOrders:           NewGetUserOrdersEndpoint(s),
+		GetProductsPostedByUser: NewGetProductsPostedByUserEndpoint(s),
 	}
 }
 
@@ -73,6 +75,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.DeleteOrder = m(e.DeleteOrder)
 	e.GetOrder = m(e.GetOrder)
 	e.GetUserOrders = m(e.GetUserOrders)
+	e.GetProductsPostedByUser = m(e.GetProductsPostedByUser)
 }
 
 // NewCreateUserEndpoint returns an endpoint function that calls the method
@@ -210,5 +213,13 @@ func NewGetOrderEndpoint(s Service) goa.Endpoint {
 func NewGetUserOrdersEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		return s.GetUserOrders(ctx)
+	}
+}
+
+// NewGetProductsPostedByUserEndpoint returns an endpoint function that calls
+// the method "getProductsPostedByUser" of service "store".
+func NewGetProductsPostedByUserEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		return s.GetProductsPostedByUser(ctx)
 	}
 }

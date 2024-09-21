@@ -161,11 +161,28 @@ func (s *storesrvc) DeleteUser(ctx context.Context) (err error) {
 }
 
 func (s *storesrvc) CreateProduct(ctx context.Context, p *store.NewProduct) (res *store.Product, err error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	var userID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user ID: %v", err)
+	}
+
 	id := uuid.New().String()
-	query := `INSERT INTO products (id, name, description, price, inventory) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, description, price, inventory`
+	query := `INSERT INTO products (id, name, description, price, inventory, userid) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, description, price, inventory, userID`
 
 	product := &store.Product{}
-	err = s.db.QueryRowContext(ctx, query, id, p.Name, p.Description, p.Price, p.Inventory).Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Inventory)
+	err = s.db.QueryRowContext(ctx, query, id, p.Name, p.Description, p.Price, p.Inventory, userID).Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Inventory, &product.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("error creating product: %v", err)
 	}
@@ -602,4 +619,64 @@ func (s *storesrvc) DeleteOrder(ctx context.Context, p *store.DeleteOrderPayload
 	return tx.Commit()
 
 	return nil
+}
+
+func (s *storesrvc) GetProductsPostedByUser(ctx context.Context) (res []*store.Product, err error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	var userID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user ID: %v", err)
+	}
+	query := `SELECT name, description, price, inventory FROM products WHERE userid = $1`
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting products: %v", err)
+	}
+	defer rows.Close()
+	var products []*store.Product
+
+	//for rows.Next() {
+	//	var productID, productName, productDescription, productPrice, productInventory, productQuantity sql.NullString
+	//	err = rows.Scan(&productName, &productDescription, &productPrice, &productInventory, &productQuantity)
+	//	if err != nil {
+	//		return nil, fmt.Errorf("error scanning product: %v", err)
+	//	}
+	//	product := &store.Product{
+	//		Name:        productName.String,
+	//		Description: &productDescription,
+	//		Inventory:   productInventory,
+	//		Quantity:    productQuantity.String,
+	//	}
+	//	products[productID.String] = product
+	//	products[productID.String] = product
+	//}
+	for rows.Next() {
+		var product store.Product
+		var description sql.NullString
+		err = rows.Scan(&product.Name, &product.Description, &product.Price, &product.Inventory)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning product: %v", err)
+		}
+		if description.Valid {
+			product.Description = &description.String
+		}
+		products = append(products, &product)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %v", err)
+	}
+
+	return products, nil
+	//return products
 }

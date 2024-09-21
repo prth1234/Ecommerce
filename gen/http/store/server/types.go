@@ -129,6 +129,8 @@ type UpdateUserResponseBody struct {
 // CreateProductResponseBody is the type of the "store" service "createProduct"
 // endpoint HTTP response body.
 type CreateProductResponseBody struct {
+	// Product's owner's user ID
+	UserID string `form:"userId" json:"userId" xml:"userId"`
 	// Unique product ID
 	ID string `form:"id" json:"id" xml:"id"`
 	// Product name
@@ -144,6 +146,8 @@ type CreateProductResponseBody struct {
 // GetProductResponseBody is the type of the "store" service "getProduct"
 // endpoint HTTP response body.
 type GetProductResponseBody struct {
+	// Product's owner's user ID
+	UserID string `form:"userId" json:"userId" xml:"userId"`
 	// Unique product ID
 	ID string `form:"id" json:"id" xml:"id"`
 	// Product name
@@ -233,6 +237,10 @@ type GetOrderResponseBody struct {
 // endpoint HTTP response body.
 type GetUserOrdersResponseBody []*OrderResponse
 
+// GetProductsPostedByUserResponseBody is the type of the "store" service
+// "getProductsPostedByUser" endpoint HTTP response body.
+type GetProductsPostedByUserResponseBody []*ProductResponse
+
 // GetUserNotFoundResponseBody is the type of the "store" service "getUser"
 // endpoint HTTP response body for the "not-found" error.
 type GetUserNotFoundResponseBody struct {
@@ -321,6 +329,8 @@ type UserResponse struct {
 
 // ProductResponse is used to define fields on response body types.
 type ProductResponse struct {
+	// Product's owner's user ID
+	UserID string `form:"userId" json:"userId" xml:"userId"`
 	// Unique product ID
 	ID string `form:"id" json:"id" xml:"id"`
 	// Product name
@@ -437,6 +447,7 @@ func NewUpdateUserResponseBody(res *store.User) *UpdateUserResponseBody {
 // of the "createProduct" endpoint of the "store" service.
 func NewCreateProductResponseBody(res *store.Product) *CreateProductResponseBody {
 	body := &CreateProductResponseBody{
+		UserID:      res.UserID,
 		ID:          res.ID,
 		Name:        res.Name,
 		Description: res.Description,
@@ -450,6 +461,7 @@ func NewCreateProductResponseBody(res *store.Product) *CreateProductResponseBody
 // the "getProduct" endpoint of the "store" service.
 func NewGetProductResponseBody(res *store.Product) *GetProductResponseBody {
 	body := &GetProductResponseBody{
+		UserID:      res.UserID,
 		ID:          res.ID,
 		Name:        res.Name,
 		Description: res.Description,
@@ -572,6 +584,16 @@ func NewGetUserOrdersResponseBody(res []*store.Order) GetUserOrdersResponseBody 
 	body := make([]*OrderResponse, len(res))
 	for i, val := range res {
 		body[i] = marshalStoreOrderToOrderResponse(val)
+	}
+	return body
+}
+
+// NewGetProductsPostedByUserResponseBody builds the HTTP response body from
+// the result of the "getProductsPostedByUser" endpoint of the "store" service.
+func NewGetProductsPostedByUserResponseBody(res []*store.Product) GetProductsPostedByUserResponseBody {
+	body := make([]*ProductResponse, len(res))
+	for i, val := range res {
+		body[i] = marshalStoreProductToProductResponse(val)
 	}
 	return body
 }

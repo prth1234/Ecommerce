@@ -47,6 +47,8 @@ type Service interface {
 	GetOrder(context.Context, *GetOrderPayload) (res *Order, err error)
 	// Retrieve all orders for the authenticated user
 	GetUserOrders(context.Context) (res []*Order, err error)
+	// Retrieve all products posted by the user
+	GetProductsPostedByUser(context.Context) (res []*Product, err error)
 }
 
 // APIName is the name of the API as defined in the design.
@@ -63,7 +65,7 @@ const ServiceName = "store"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [16]string{"createUser", "loginUser", "getUser", "getUserAll", "updateUser", "deleteUser", "createProduct", "getProduct", "listProducts", "addToCart", "removeFromCart", "getCart", "createOrder", "deleteOrder", "getOrder", "getUserOrders"}
+var MethodNames = [17]string{"createUser", "loginUser", "getUser", "getUserAll", "updateUser", "deleteUser", "createProduct", "getProduct", "listProducts", "addToCart", "removeFromCart", "getCart", "createOrder", "deleteOrder", "getOrder", "getUserOrders", "getProductsPostedByUser"}
 
 // Cart is the result type of the store service addToCart method.
 type Cart struct {
@@ -171,6 +173,8 @@ type OrderItem struct {
 
 // Product is the result type of the store service createProduct method.
 type Product struct {
+	// Product's owner's user ID
+	UserID string
 	// Unique product ID
 	ID string
 	// Product name

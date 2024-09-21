@@ -155,6 +155,7 @@ var _ = Service("store", func() {
 			Response(StatusCreated)
 		})
 	})
+
 	Method("deleteOrder", func() {
 		Payload(func() {
 			Field(1, "id", String)
@@ -186,6 +187,15 @@ var _ = Service("store", func() {
 		Result(ArrayOf(Order))
 		HTTP(func() {
 			GET("/orders")
+			Response(StatusOK)
+		})
+	})
+
+	Method("getProductsPostedByUser", func() {
+		Description("Retrieve all products posted by the user")
+		Result(ArrayOf(Product))
+		HTTP(func() {
+			GET("/users/products")
 			Response(StatusOK)
 		})
 	})

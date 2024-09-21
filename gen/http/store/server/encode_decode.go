@@ -569,6 +569,18 @@ func EncodeGetUserOrdersResponse(encoder func(context.Context, http.ResponseWrit
 	}
 }
 
+// EncodeGetProductsPostedByUserResponse returns an encoder for responses
+// returned by the store getProductsPostedByUser endpoint.
+func EncodeGetProductsPostedByUserResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.([]*store.Product)
+		enc := encoder(ctx, w)
+		body := NewGetProductsPostedByUserResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
 // marshalStoreUserToUserResponse builds a value of type *UserResponse from a
 // value of type *store.User.
 func marshalStoreUserToUserResponse(v *store.User) *UserResponse {
@@ -587,6 +599,7 @@ func marshalStoreUserToUserResponse(v *store.User) *UserResponse {
 // from a value of type *store.Product.
 func marshalStoreProductToProductResponse(v *store.Product) *ProductResponse {
 	res := &ProductResponse{
+		UserID:      v.UserID,
 		ID:          v.ID,
 		Name:        v.Name,
 		Description: v.Description,

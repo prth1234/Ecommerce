@@ -81,6 +81,10 @@ type Client struct {
 	// getUserOrders endpoint.
 	GetUserOrdersDoer goahttp.Doer
 
+	// GetProductsPostedByUser Doer is the HTTP client used to make requests to the
+	// getProductsPostedByUser endpoint.
+	GetProductsPostedByUserDoer goahttp.Doer
+
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
 	RestoreResponseBody bool
@@ -101,27 +105,28 @@ func NewClient(
 	restoreBody bool,
 ) *Client {
 	return &Client{
-		CreateUserDoer:      doer,
-		LoginUserDoer:       doer,
-		GetUserDoer:         doer,
-		GetUserAllDoer:      doer,
-		UpdateUserDoer:      doer,
-		DeleteUserDoer:      doer,
-		CreateProductDoer:   doer,
-		GetProductDoer:      doer,
-		ListProductsDoer:    doer,
-		AddToCartDoer:       doer,
-		RemoveFromCartDoer:  doer,
-		GetCartDoer:         doer,
-		CreateOrderDoer:     doer,
-		DeleteOrderDoer:     doer,
-		GetOrderDoer:        doer,
-		GetUserOrdersDoer:   doer,
-		RestoreResponseBody: restoreBody,
-		scheme:              scheme,
-		host:                host,
-		decoder:             dec,
-		encoder:             enc,
+		CreateUserDoer:              doer,
+		LoginUserDoer:               doer,
+		GetUserDoer:                 doer,
+		GetUserAllDoer:              doer,
+		UpdateUserDoer:              doer,
+		DeleteUserDoer:              doer,
+		CreateProductDoer:           doer,
+		GetProductDoer:              doer,
+		ListProductsDoer:            doer,
+		AddToCartDoer:               doer,
+		RemoveFromCartDoer:          doer,
+		GetCartDoer:                 doer,
+		CreateOrderDoer:             doer,
+		DeleteOrderDoer:             doer,
+		GetOrderDoer:                doer,
+		GetUserOrdersDoer:           doer,
+		GetProductsPostedByUserDoer: doer,
+		RestoreResponseBody:         restoreBody,
+		scheme:                      scheme,
+		host:                        host,
+		decoder:                     dec,
+		encoder:                     enc,
 	}
 }
 
@@ -449,6 +454,25 @@ func (c *Client) GetUserOrders() goa.Endpoint {
 		resp, err := c.GetUserOrdersDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("store", "getUserOrders", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// GetProductsPostedByUser returns an endpoint that makes HTTP requests to the
+// store service getProductsPostedByUser server.
+func (c *Client) GetProductsPostedByUser() goa.Endpoint {
+	var (
+		decodeResponse = DecodeGetProductsPostedByUserResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildGetProductsPostedByUserRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetProductsPostedByUserDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("store", "getProductsPostedByUser", err)
 		}
 		return decodeResponse(resp)
 	}

@@ -24,12 +24,13 @@ var NewUser = Type("NewUser", func() {
 })
 
 var Product = Type("Product", func() {
+	Attribute("userId", String, "Product's owner's user ID")
 	Attribute("id", String, "Unique product ID")
 	Attribute("name", String, "Product name")
 	Attribute("description", String, "Product description")
 	Attribute("price", Float64, "Product price")
 	Attribute("inventory", Int, "Available inventory")
-	Required("id", "name", "price", "inventory")
+	Required("id", "name", "price", "inventory", "userId")
 })
 
 var NewProduct = Type("NewProduct", func() {

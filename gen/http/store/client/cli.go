@@ -21,7 +21,7 @@ func BuildCreateUserPayload(storeCreateUserBody string) (*store.NewUser, error) 
 	{
 		err = json.Unmarshal([]byte(storeCreateUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Inventore quis omnis facilis.\",\n      \"firstName\": \"Nulla eius qui culpa.\",\n      \"lastName\": \"Et repudiandae.\",\n      \"password\": \"Deleniti sint debitis reprehenderit dicta non odit.\",\n      \"username\": \"Labore nam a placeat.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Quis omnis facilis sed nulla eius qui.\",\n      \"firstName\": \"Ab et.\",\n      \"lastName\": \"Animi deleniti sint debitis reprehenderit dicta non.\",\n      \"password\": \"Est quibusdam necessitatibus impedit.\",\n      \"username\": \"Nam a placeat sapiente.\"\n   }'")
 		}
 	}
 	v := &store.NewUser{
@@ -43,7 +43,7 @@ func BuildLoginUserPayload(storeLoginUserBody string) (*store.LoginUserPayload, 
 	{
 		err = json.Unmarshal([]byte(storeLoginUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"password\": \"Sed voluptatem aspernatur.\",\n      \"username\": \"Praesentium et aut.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"password\": \"Et aperiam non esse non consectetur omnis.\",\n      \"username\": \"Sed voluptatem aspernatur.\"\n   }'")
 		}
 	}
 	v := &store.LoginUserPayload{
@@ -75,7 +75,7 @@ func BuildUpdateUserPayload(storeUpdateUserBody string) (*store.UserUpdatePayloa
 	{
 		err = json.Unmarshal([]byte(storeUpdateUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Sunt quia est aperiam.\",\n      \"firstName\": \"Cupiditate assumenda doloribus ea porro laborum.\",\n      \"lastName\": \"Dolor itaque quia nam et optio fugit.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Nobis dolor itaque quia nam et optio.\",\n      \"firstName\": \"Facilis harum omnis velit aperiam et.\",\n      \"lastName\": \"Atque illum quis non et.\"\n   }'")
 		}
 	}
 	v := &store.UserUpdatePayload{
@@ -95,7 +95,7 @@ func BuildCreateProductPayload(storeCreateProductBody string) (*store.NewProduct
 	{
 		err = json.Unmarshal([]byte(storeCreateProductBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"Odio quis et in quis.\",\n      \"inventory\": 4772358921376199104,\n      \"name\": \"Doloribus ut at quasi et nihil.\",\n      \"price\": 0.7615839668081023\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"description\": \"Quam ab occaecati.\",\n      \"inventory\": 1304738996334581379,\n      \"name\": \"Odio quis et in quis.\",\n      \"price\": 0.6602558447835104\n   }'")
 		}
 	}
 	v := &store.NewProduct{
@@ -129,7 +129,7 @@ func BuildAddToCartPayload(storeAddToCartBody string) (*store.CartItem, error) {
 	{
 		err = json.Unmarshal([]byte(storeAddToCartBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"productID\": \"Odio laboriosam in rerum quia.\",\n      \"quantity\": 2846043470729779113\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"productID\": \"Cumque dolores facere ipsa earum in.\",\n      \"quantity\": 1699868206532466126\n   }'")
 		}
 	}
 	v := &store.CartItem{

@@ -15,43 +15,45 @@ import (
 
 // Client is the "store" service client.
 type Client struct {
-	CreateUserEndpoint     goa.Endpoint
-	LoginUserEndpoint      goa.Endpoint
-	GetUserEndpoint        goa.Endpoint
-	GetUserAllEndpoint     goa.Endpoint
-	UpdateUserEndpoint     goa.Endpoint
-	DeleteUserEndpoint     goa.Endpoint
-	CreateProductEndpoint  goa.Endpoint
-	GetProductEndpoint     goa.Endpoint
-	ListProductsEndpoint   goa.Endpoint
-	AddToCartEndpoint      goa.Endpoint
-	RemoveFromCartEndpoint goa.Endpoint
-	GetCartEndpoint        goa.Endpoint
-	CreateOrderEndpoint    goa.Endpoint
-	DeleteOrderEndpoint    goa.Endpoint
-	GetOrderEndpoint       goa.Endpoint
-	GetUserOrdersEndpoint  goa.Endpoint
+	CreateUserEndpoint              goa.Endpoint
+	LoginUserEndpoint               goa.Endpoint
+	GetUserEndpoint                 goa.Endpoint
+	GetUserAllEndpoint              goa.Endpoint
+	UpdateUserEndpoint              goa.Endpoint
+	DeleteUserEndpoint              goa.Endpoint
+	CreateProductEndpoint           goa.Endpoint
+	GetProductEndpoint              goa.Endpoint
+	ListProductsEndpoint            goa.Endpoint
+	AddToCartEndpoint               goa.Endpoint
+	RemoveFromCartEndpoint          goa.Endpoint
+	GetCartEndpoint                 goa.Endpoint
+	CreateOrderEndpoint             goa.Endpoint
+	DeleteOrderEndpoint             goa.Endpoint
+	GetOrderEndpoint                goa.Endpoint
+	GetUserOrdersEndpoint           goa.Endpoint
+	GetProductsPostedByUserEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "store" service client given the endpoints.
-func NewClient(createUser, loginUser, getUser, getUserAll, updateUser, deleteUser, createProduct, getProduct, listProducts, addToCart, removeFromCart, getCart, createOrder, deleteOrder, getOrder, getUserOrders goa.Endpoint) *Client {
+func NewClient(createUser, loginUser, getUser, getUserAll, updateUser, deleteUser, createProduct, getProduct, listProducts, addToCart, removeFromCart, getCart, createOrder, deleteOrder, getOrder, getUserOrders, getProductsPostedByUser goa.Endpoint) *Client {
 	return &Client{
-		CreateUserEndpoint:     createUser,
-		LoginUserEndpoint:      loginUser,
-		GetUserEndpoint:        getUser,
-		GetUserAllEndpoint:     getUserAll,
-		UpdateUserEndpoint:     updateUser,
-		DeleteUserEndpoint:     deleteUser,
-		CreateProductEndpoint:  createProduct,
-		GetProductEndpoint:     getProduct,
-		ListProductsEndpoint:   listProducts,
-		AddToCartEndpoint:      addToCart,
-		RemoveFromCartEndpoint: removeFromCart,
-		GetCartEndpoint:        getCart,
-		CreateOrderEndpoint:    createOrder,
-		DeleteOrderEndpoint:    deleteOrder,
-		GetOrderEndpoint:       getOrder,
-		GetUserOrdersEndpoint:  getUserOrders,
+		CreateUserEndpoint:              createUser,
+		LoginUserEndpoint:               loginUser,
+		GetUserEndpoint:                 getUser,
+		GetUserAllEndpoint:              getUserAll,
+		UpdateUserEndpoint:              updateUser,
+		DeleteUserEndpoint:              deleteUser,
+		CreateProductEndpoint:           createProduct,
+		GetProductEndpoint:              getProduct,
+		ListProductsEndpoint:            listProducts,
+		AddToCartEndpoint:               addToCart,
+		RemoveFromCartEndpoint:          removeFromCart,
+		GetCartEndpoint:                 getCart,
+		CreateOrderEndpoint:             createOrder,
+		DeleteOrderEndpoint:             deleteOrder,
+		GetOrderEndpoint:                getOrder,
+		GetUserOrdersEndpoint:           getUserOrders,
+		GetProductsPostedByUserEndpoint: getProductsPostedByUser,
 	}
 }
 
@@ -220,4 +222,15 @@ func (c *Client) GetUserOrders(ctx context.Context) (res []*Order, err error) {
 		return
 	}
 	return ires.([]*Order), nil
+}
+
+// GetProductsPostedByUser calls the "getProductsPostedByUser" endpoint of the
+// "store" service.
+func (c *Client) GetProductsPostedByUser(ctx context.Context) (res []*Product, err error) {
+	var ires any
+	ires, err = c.GetProductsPostedByUserEndpoint(ctx, nil)
+	if err != nil {
+		return
+	}
+	return ires.([]*Product), nil
 }

@@ -129,6 +129,8 @@ type UpdateUserResponseBody struct {
 // CreateProductResponseBody is the type of the "store" service "createProduct"
 // endpoint HTTP response body.
 type CreateProductResponseBody struct {
+	// Product's owner's user ID
+	UserID *string `form:"userId,omitempty" json:"userId,omitempty" xml:"userId,omitempty"`
 	// Unique product ID
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Product name
@@ -144,6 +146,8 @@ type CreateProductResponseBody struct {
 // GetProductResponseBody is the type of the "store" service "getProduct"
 // endpoint HTTP response body.
 type GetProductResponseBody struct {
+	// Product's owner's user ID
+	UserID *string `form:"userId,omitempty" json:"userId,omitempty" xml:"userId,omitempty"`
 	// Unique product ID
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Product name
@@ -233,6 +237,10 @@ type GetOrderResponseBody struct {
 // endpoint HTTP response body.
 type GetUserOrdersResponseBody []*OrderResponse
 
+// GetProductsPostedByUserResponseBody is the type of the "store" service
+// "getProductsPostedByUser" endpoint HTTP response body.
+type GetProductsPostedByUserResponseBody []*ProductResponse
+
 // GetUserNotFoundResponseBody is the type of the "store" service "getUser"
 // endpoint HTTP response body for the "not-found" error.
 type GetUserNotFoundResponseBody struct {
@@ -321,6 +329,8 @@ type UserResponse struct {
 
 // ProductResponse is used to define fields on response body types.
 type ProductResponse struct {
+	// Product's owner's user ID
+	UserID *string `form:"userId,omitempty" json:"userId,omitempty" xml:"userId,omitempty"`
 	// Unique product ID
 	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
 	// Product name
@@ -520,6 +530,7 @@ func NewUpdateUserUserOK(body *UpdateUserResponseBody) *store.User {
 // endpoint result from a HTTP "Created" response.
 func NewCreateProductProductCreated(body *CreateProductResponseBody) *store.Product {
 	v := &store.Product{
+		UserID:      *body.UserID,
 		ID:          *body.ID,
 		Name:        *body.Name,
 		Description: body.Description,
@@ -534,6 +545,7 @@ func NewCreateProductProductCreated(body *CreateProductResponseBody) *store.Prod
 // from a HTTP "OK" response.
 func NewGetProductProductOK(body *GetProductResponseBody) *store.Product {
 	v := &store.Product{
+		UserID:      *body.UserID,
 		ID:          *body.ID,
 		Name:        *body.Name,
 		Description: body.Description,
@@ -691,6 +703,17 @@ func NewGetUserOrdersOrderOK(body []*OrderResponse) []*store.Order {
 	return v
 }
 
+// NewGetProductsPostedByUserProductOK builds a "store" service
+// "getProductsPostedByUser" endpoint result from a HTTP "OK" response.
+func NewGetProductsPostedByUserProductOK(body []*ProductResponse) []*store.Product {
+	v := make([]*store.Product, len(body))
+	for i, val := range body {
+		v[i] = unmarshalProductResponseToStoreProduct(val)
+	}
+
+	return v
+}
+
 // ValidateCreateUserResponseBody runs the validations defined on
 // CreateUserResponseBody
 func ValidateCreateUserResponseBody(body *CreateUserResponseBody) (err error) {
@@ -751,6 +774,9 @@ func ValidateCreateProductResponseBody(body *CreateProductResponseBody) (err err
 	if body.Inventory == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("inventory", "body"))
 	}
+	if body.UserID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("userId", "body"))
+	}
 	return
 }
 
@@ -768,6 +794,9 @@ func ValidateGetProductResponseBody(body *GetProductResponseBody) (err error) {
 	}
 	if body.Inventory == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("inventory", "body"))
+	}
+	if body.UserID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("userId", "body"))
 	}
 	return
 }
@@ -1026,6 +1055,9 @@ func ValidateProductResponse(body *ProductResponse) (err error) {
 	}
 	if body.Inventory == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("inventory", "body"))
+	}
+	if body.UserID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("userId", "body"))
 	}
 	return
 }

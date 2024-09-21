@@ -90,3 +90,8 @@ func GetOrderStorePath(id string) string {
 func GetUserOrdersStorePath() string {
 	return "/orders"
 }
+
+// GetProductsPostedByUserStorePath returns the URL path to the store service getProductsPostedByUser HTTP endpoint.
+func GetProductsPostedByUserStorePath() string {
+	return "/users/products"
+}

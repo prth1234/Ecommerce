@@ -1098,6 +1098,68 @@ func DecodeGetUserOrdersResponse(decoder func(*http.Response) goahttp.Decoder, r
 	}
 }
 
+// BuildGetProductsPostedByUserRequest instantiates a HTTP request object with
+// method and path set to call the "store" service "getProductsPostedByUser"
+// endpoint
+func (c *Client) BuildGetProductsPostedByUserRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetProductsPostedByUserStorePath()}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("store", "getProductsPostedByUser", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeGetProductsPostedByUserResponse returns a decoder for responses
+// returned by the store getProductsPostedByUser endpoint. restoreBody controls
+// whether the response body should be restored after having been read.
+func DecodeGetProductsPostedByUserResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body GetProductsPostedByUserResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "getProductsPostedByUser", err)
+			}
+			for _, e := range body {
+				if e != nil {
+					if err2 := ValidateProductResponse(e); err2 != nil {
+						err = goa.MergeErrors(err, err2)
+					}
+				}
+			}
+			if err != nil {
+				return nil, goahttp.ErrValidationError("store", "getProductsPostedByUser", err)
+			}
+			res := NewGetProductsPostedByUserProductOK(body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("store", "getProductsPostedByUser", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // unmarshalUserResponseToStoreUser builds a value of type *store.User from a
 // value of type *UserResponse.
 func unmarshalUserResponseToStoreUser(v *UserResponse) *store.User {
@@ -1116,6 +1178,7 @@ func unmarshalUserResponseToStoreUser(v *UserResponse) *store.User {
 // from a value of type *ProductResponse.
 func unmarshalProductResponseToStoreProduct(v *ProductResponse) *store.Product {
 	res := &store.Product{
+		UserID:      *v.UserID,
 		ID:          *v.ID,
 		Name:        *v.Name,
 		Description: v.Description,
