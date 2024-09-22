@@ -429,10 +429,10 @@ func (s *storesrvc) CreateOrder(ctx context.Context) (res *store.Order, err erro
 	if len(cart.Items) == 0 {
 		return nil, fmt.Errorf("cart is empty")
 	}
-
+	const defaultStatus = "pending"
 	orderID := uuid.New().String()
 	_, err = tx.ExecContext(ctx, "INSERT INTO orders (id, user_id, total_amount, overall_status) VALUES ($1, $2, $3, $4)",
-		orderID, userID, cart.TotalAmount, "pending")
+		orderID, userID, cart.TotalAmount, defaultStatus)
 	if err != nil {
 		return nil, fmt.Errorf("error creating order: %v", err)
 	}
@@ -446,7 +446,7 @@ func (s *storesrvc) CreateOrder(ctx context.Context) (res *store.Order, err erro
 		}
 
 		_, err = tx.ExecContext(ctx, "INSERT INTO order_items (order_id, product_id, seller_id, quantity, price, status) VALUES ($1, $2, $3, $4, $5, $6)",
-			orderID, item.ProductID, sellerID, item.Quantity, price, "pending")
+			orderID, item.ProductID, sellerID, item.Quantity, price, defaultStatus)
 		if err != nil {
 			return nil, fmt.Errorf("error adding order item: %v", err)
 		}
@@ -475,7 +475,7 @@ func (s *storesrvc) GetOrder(ctx context.Context, p *store.GetOrderPayload) (res
 		SELECT o.id, o.user_id, o.total_amount, o.overall_status, 
        oi.product_id, oi.seller_id, oi.quantity, oi.price, oi.status
 FROM orders o
-LEFT JOIN order_items oi ON o.id = oi.order_id
+ LEFT JOIN order_items oi ON o.id = oi.order_id
 WHERE o.id = $1`
 
 	rows, err := s.db.QueryContext(ctx, query, p.ID)
