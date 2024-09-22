@@ -85,6 +85,10 @@ type Client struct {
 	// getProductsPostedByUser endpoint.
 	GetProductsPostedByUserDoer goahttp.Doer
 
+	// UpdateOrderItemStatus Doer is the HTTP client used to make requests to the
+	// updateOrderItemStatus endpoint.
+	UpdateOrderItemStatusDoer goahttp.Doer
+
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
 	RestoreResponseBody bool
@@ -122,6 +126,7 @@ func NewClient(
 		GetOrderDoer:                doer,
 		GetUserOrdersDoer:           doer,
 		GetProductsPostedByUserDoer: doer,
+		UpdateOrderItemStatusDoer:   doer,
 		RestoreResponseBody:         restoreBody,
 		scheme:                      scheme,
 		host:                        host,
@@ -473,6 +478,30 @@ func (c *Client) GetProductsPostedByUser() goa.Endpoint {
 		resp, err := c.GetProductsPostedByUserDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("store", "getProductsPostedByUser", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// UpdateOrderItemStatus returns an endpoint that makes HTTP requests to the
+// store service updateOrderItemStatus server.
+func (c *Client) UpdateOrderItemStatus() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeUpdateOrderItemStatusRequest(c.encoder)
+		decodeResponse = DecodeUpdateOrderItemStatusResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildUpdateOrderItemStatusRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.UpdateOrderItemStatusDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("store", "updateOrderItemStatus", err)
 		}
 		return decodeResponse(resp)
 	}

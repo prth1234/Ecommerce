@@ -70,6 +70,13 @@ type AddToCartRequestBody struct {
 	Quantity *int `form:"quantity,omitempty" json:"quantity,omitempty" xml:"quantity,omitempty"`
 }
 
+// UpdateOrderItemStatusRequestBody is the type of the "store" service
+// "updateOrderItemStatus" endpoint HTTP request body.
+type UpdateOrderItemStatusRequestBody struct {
+	// New status for the order item
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+}
+
 // CreateUserResponseBody is the type of the "store" service "createUser"
 // endpoint HTTP response body.
 type CreateUserResponseBody struct {
@@ -214,8 +221,8 @@ type CreateOrderResponseBody struct {
 	Items []*OrderItemResponseBody `form:"items" json:"items" xml:"items"`
 	// Total amount of the order
 	TotalAmount float64 `form:"totalAmount" json:"totalAmount" xml:"totalAmount"`
-	// Order status
-	Status string `form:"status" json:"status" xml:"status"`
+	// Overall status of the order
+	OverallStatus string `form:"overallStatus" json:"overallStatus" xml:"overallStatus"`
 }
 
 // GetOrderResponseBody is the type of the "store" service "getOrder" endpoint
@@ -229,8 +236,8 @@ type GetOrderResponseBody struct {
 	Items []*OrderItemResponseBody `form:"items" json:"items" xml:"items"`
 	// Total amount of the order
 	TotalAmount float64 `form:"totalAmount" json:"totalAmount" xml:"totalAmount"`
-	// Order status
-	Status string `form:"status" json:"status" xml:"status"`
+	// Overall status of the order
+	OverallStatus string `form:"overallStatus" json:"overallStatus" xml:"overallStatus"`
 }
 
 // GetUserOrdersResponseBody is the type of the "store" service "getUserOrders"
@@ -240,6 +247,21 @@ type GetUserOrdersResponseBody []*OrderResponse
 // GetProductsPostedByUserResponseBody is the type of the "store" service
 // "getProductsPostedByUser" endpoint HTTP response body.
 type GetProductsPostedByUserResponseBody []*ProductResponse
+
+// UpdateOrderItemStatusResponseBody is the type of the "store" service
+// "updateOrderItemStatus" endpoint HTTP response body.
+type UpdateOrderItemStatusResponseBody struct {
+	// Unique order ID
+	ID string `form:"id" json:"id" xml:"id"`
+	// ID of the user who placed the order
+	UserID string `form:"userID" json:"userID" xml:"userID"`
+	// Items in the order
+	Items []*OrderItemResponseBody `form:"items" json:"items" xml:"items"`
+	// Total amount of the order
+	TotalAmount float64 `form:"totalAmount" json:"totalAmount" xml:"totalAmount"`
+	// Overall status of the order
+	OverallStatus string `form:"overallStatus" json:"overallStatus" xml:"overallStatus"`
+}
 
 // GetUserNotFoundResponseBody is the type of the "store" service "getUser"
 // endpoint HTTP response body for the "not-found" error.
@@ -355,10 +377,14 @@ type CartItemResponseBody struct {
 type OrderItemResponseBody struct {
 	// ID of the product
 	ProductID string `form:"productID" json:"productID" xml:"productID"`
+	// ID of the seller who posted this product
+	SellerID string `form:"sellerID" json:"sellerID" xml:"sellerID"`
 	// Quantity of the product
 	Quantity int `form:"quantity" json:"quantity" xml:"quantity"`
 	// Price of the product at the time of order
 	Price float64 `form:"price" json:"price" xml:"price"`
+	// Status of this specific item in the order
+	Status string `form:"status" json:"status" xml:"status"`
 }
 
 // OrderResponse is used to define fields on response body types.
@@ -371,18 +397,22 @@ type OrderResponse struct {
 	Items []*OrderItemResponse `form:"items" json:"items" xml:"items"`
 	// Total amount of the order
 	TotalAmount float64 `form:"totalAmount" json:"totalAmount" xml:"totalAmount"`
-	// Order status
-	Status string `form:"status" json:"status" xml:"status"`
+	// Overall status of the order
+	OverallStatus string `form:"overallStatus" json:"overallStatus" xml:"overallStatus"`
 }
 
 // OrderItemResponse is used to define fields on response body types.
 type OrderItemResponse struct {
 	// ID of the product
 	ProductID string `form:"productID" json:"productID" xml:"productID"`
+	// ID of the seller who posted this product
+	SellerID string `form:"sellerID" json:"sellerID" xml:"sellerID"`
 	// Quantity of the product
 	Quantity int `form:"quantity" json:"quantity" xml:"quantity"`
 	// Price of the product at the time of order
 	Price float64 `form:"price" json:"price" xml:"price"`
+	// Status of this specific item in the order
+	Status string `form:"status" json:"status" xml:"status"`
 }
 
 // NewCreateUserResponseBody builds the HTTP response body from the result of
@@ -542,10 +572,10 @@ func NewGetCartResponseBody(res *store.Cart) *GetCartResponseBody {
 // the "createOrder" endpoint of the "store" service.
 func NewCreateOrderResponseBody(res *store.Order) *CreateOrderResponseBody {
 	body := &CreateOrderResponseBody{
-		ID:          res.ID,
-		UserID:      res.UserID,
-		TotalAmount: res.TotalAmount,
-		Status:      res.Status,
+		ID:            res.ID,
+		UserID:        res.UserID,
+		TotalAmount:   res.TotalAmount,
+		OverallStatus: res.OverallStatus,
 	}
 	if res.Items != nil {
 		body.Items = make([]*OrderItemResponseBody, len(res.Items))
@@ -562,10 +592,10 @@ func NewCreateOrderResponseBody(res *store.Order) *CreateOrderResponseBody {
 // "getOrder" endpoint of the "store" service.
 func NewGetOrderResponseBody(res *store.Order) *GetOrderResponseBody {
 	body := &GetOrderResponseBody{
-		ID:          res.ID,
-		UserID:      res.UserID,
-		TotalAmount: res.TotalAmount,
-		Status:      res.Status,
+		ID:            res.ID,
+		UserID:        res.UserID,
+		TotalAmount:   res.TotalAmount,
+		OverallStatus: res.OverallStatus,
 	}
 	if res.Items != nil {
 		body.Items = make([]*OrderItemResponseBody, len(res.Items))
@@ -594,6 +624,26 @@ func NewGetProductsPostedByUserResponseBody(res []*store.Product) GetProductsPos
 	body := make([]*ProductResponse, len(res))
 	for i, val := range res {
 		body[i] = marshalStoreProductToProductResponse(val)
+	}
+	return body
+}
+
+// NewUpdateOrderItemStatusResponseBody builds the HTTP response body from the
+// result of the "updateOrderItemStatus" endpoint of the "store" service.
+func NewUpdateOrderItemStatusResponseBody(res *store.Order) *UpdateOrderItemStatusResponseBody {
+	body := &UpdateOrderItemStatusResponseBody{
+		ID:            res.ID,
+		UserID:        res.UserID,
+		TotalAmount:   res.TotalAmount,
+		OverallStatus: res.OverallStatus,
+	}
+	if res.Items != nil {
+		body.Items = make([]*OrderItemResponseBody, len(res.Items))
+		for i, val := range res.Items {
+			body.Items[i] = marshalStoreOrderItemToOrderItemResponseBody(val)
+		}
+	} else {
+		body.Items = []*OrderItemResponseBody{}
 	}
 	return body
 }
@@ -753,6 +803,18 @@ func NewGetOrderPayload(id string) *store.GetOrderPayload {
 	return v
 }
 
+// NewUpdateOrderItemStatusPayload builds a store service updateOrderItemStatus
+// endpoint payload.
+func NewUpdateOrderItemStatusPayload(body *UpdateOrderItemStatusRequestBody, orderID string, productID string) *store.UpdateOrderItemStatusPayload {
+	v := &store.UpdateOrderItemStatusPayload{
+		Status: *body.Status,
+	}
+	v.OrderID = orderID
+	v.ProductID = productID
+
+	return v
+}
+
 // ValidateCreateUserRequestBody runs the validations defined on
 // CreateUserRequestBody
 func ValidateCreateUserRequestBody(body *CreateUserRequestBody) (err error) {
@@ -824,6 +886,15 @@ func ValidateAddToCartRequestBody(body *AddToCartRequestBody) (err error) {
 	}
 	if body.Quantity == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("quantity", "body"))
+	}
+	return
+}
+
+// ValidateUpdateOrderItemStatusRequestBody runs the validations defined on
+// UpdateOrderItemStatusRequestBody
+func ValidateUpdateOrderItemStatusRequestBody(body *UpdateOrderItemStatusRequestBody) (err error) {
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
 	}
 	return
 }

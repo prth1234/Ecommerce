@@ -95,3 +95,8 @@ func GetUserOrdersStorePath() string {
 func GetProductsPostedByUserStorePath() string {
 	return "/users/products"
 }
+
+// UpdateOrderItemStatusStorePath returns the URL path to the store service updateOrderItemStatus HTTP endpoint.
+func UpdateOrderItemStatusStorePath(orderID string, productID string) string {
+	return fmt.Sprintf("/orders/%v/items/%v", orderID, productID)
+}

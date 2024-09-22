@@ -32,10 +32,11 @@ type Client struct {
 	GetOrderEndpoint                goa.Endpoint
 	GetUserOrdersEndpoint           goa.Endpoint
 	GetProductsPostedByUserEndpoint goa.Endpoint
+	UpdateOrderItemStatusEndpoint   goa.Endpoint
 }
 
 // NewClient initializes a "store" service client given the endpoints.
-func NewClient(createUser, loginUser, getUser, getUserAll, updateUser, deleteUser, createProduct, getProduct, listProducts, addToCart, removeFromCart, getCart, createOrder, deleteOrder, getOrder, getUserOrders, getProductsPostedByUser goa.Endpoint) *Client {
+func NewClient(createUser, loginUser, getUser, getUserAll, updateUser, deleteUser, createProduct, getProduct, listProducts, addToCart, removeFromCart, getCart, createOrder, deleteOrder, getOrder, getUserOrders, getProductsPostedByUser, updateOrderItemStatus goa.Endpoint) *Client {
 	return &Client{
 		CreateUserEndpoint:              createUser,
 		LoginUserEndpoint:               loginUser,
@@ -54,6 +55,7 @@ func NewClient(createUser, loginUser, getUser, getUserAll, updateUser, deleteUse
 		GetOrderEndpoint:                getOrder,
 		GetUserOrdersEndpoint:           getUserOrders,
 		GetProductsPostedByUserEndpoint: getProductsPostedByUser,
+		UpdateOrderItemStatusEndpoint:   updateOrderItemStatus,
 	}
 }
 
@@ -233,4 +235,19 @@ func (c *Client) GetProductsPostedByUser(ctx context.Context) (res []*Product, e
 		return
 	}
 	return ires.([]*Product), nil
+}
+
+// UpdateOrderItemStatus calls the "updateOrderItemStatus" endpoint of the
+// "store" service.
+// UpdateOrderItemStatus may return the following errors:
+//   - "not-found" (type NotFound)
+//   - "forbidden" (type Forbidden)
+//   - error: internal error
+func (c *Client) UpdateOrderItemStatus(ctx context.Context, p *UpdateOrderItemStatusPayload) (res *Order, err error) {
+	var ires any
+	ires, err = c.UpdateOrderItemStatusEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*Order), nil
 }

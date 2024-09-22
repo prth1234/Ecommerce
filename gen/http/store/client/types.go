@@ -70,6 +70,13 @@ type AddToCartRequestBody struct {
 	Quantity int `form:"quantity" json:"quantity" xml:"quantity"`
 }
 
+// UpdateOrderItemStatusRequestBody is the type of the "store" service
+// "updateOrderItemStatus" endpoint HTTP request body.
+type UpdateOrderItemStatusRequestBody struct {
+	// New status for the order item
+	Status string `form:"status" json:"status" xml:"status"`
+}
+
 // CreateUserResponseBody is the type of the "store" service "createUser"
 // endpoint HTTP response body.
 type CreateUserResponseBody struct {
@@ -214,8 +221,8 @@ type CreateOrderResponseBody struct {
 	Items []*OrderItemResponseBody `form:"items,omitempty" json:"items,omitempty" xml:"items,omitempty"`
 	// Total amount of the order
 	TotalAmount *float64 `form:"totalAmount,omitempty" json:"totalAmount,omitempty" xml:"totalAmount,omitempty"`
-	// Order status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Overall status of the order
+	OverallStatus *string `form:"overallStatus,omitempty" json:"overallStatus,omitempty" xml:"overallStatus,omitempty"`
 }
 
 // GetOrderResponseBody is the type of the "store" service "getOrder" endpoint
@@ -229,8 +236,8 @@ type GetOrderResponseBody struct {
 	Items []*OrderItemResponseBody `form:"items,omitempty" json:"items,omitempty" xml:"items,omitempty"`
 	// Total amount of the order
 	TotalAmount *float64 `form:"totalAmount,omitempty" json:"totalAmount,omitempty" xml:"totalAmount,omitempty"`
-	// Order status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Overall status of the order
+	OverallStatus *string `form:"overallStatus,omitempty" json:"overallStatus,omitempty" xml:"overallStatus,omitempty"`
 }
 
 // GetUserOrdersResponseBody is the type of the "store" service "getUserOrders"
@@ -240,6 +247,21 @@ type GetUserOrdersResponseBody []*OrderResponse
 // GetProductsPostedByUserResponseBody is the type of the "store" service
 // "getProductsPostedByUser" endpoint HTTP response body.
 type GetProductsPostedByUserResponseBody []*ProductResponse
+
+// UpdateOrderItemStatusResponseBody is the type of the "store" service
+// "updateOrderItemStatus" endpoint HTTP response body.
+type UpdateOrderItemStatusResponseBody struct {
+	// Unique order ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// ID of the user who placed the order
+	UserID *string `form:"userID,omitempty" json:"userID,omitempty" xml:"userID,omitempty"`
+	// Items in the order
+	Items []*OrderItemResponseBody `form:"items,omitempty" json:"items,omitempty" xml:"items,omitempty"`
+	// Total amount of the order
+	TotalAmount *float64 `form:"totalAmount,omitempty" json:"totalAmount,omitempty" xml:"totalAmount,omitempty"`
+	// Overall status of the order
+	OverallStatus *string `form:"overallStatus,omitempty" json:"overallStatus,omitempty" xml:"overallStatus,omitempty"`
+}
 
 // GetUserNotFoundResponseBody is the type of the "store" service "getUser"
 // endpoint HTTP response body for the "not-found" error.
@@ -355,10 +377,14 @@ type CartItemResponseBody struct {
 type OrderItemResponseBody struct {
 	// ID of the product
 	ProductID *string `form:"productID,omitempty" json:"productID,omitempty" xml:"productID,omitempty"`
+	// ID of the seller who posted this product
+	SellerID *string `form:"sellerID,omitempty" json:"sellerID,omitempty" xml:"sellerID,omitempty"`
 	// Quantity of the product
 	Quantity *int `form:"quantity,omitempty" json:"quantity,omitempty" xml:"quantity,omitempty"`
 	// Price of the product at the time of order
 	Price *float64 `form:"price,omitempty" json:"price,omitempty" xml:"price,omitempty"`
+	// Status of this specific item in the order
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
 }
 
 // OrderResponse is used to define fields on response body types.
@@ -371,18 +397,22 @@ type OrderResponse struct {
 	Items []*OrderItemResponse `form:"items,omitempty" json:"items,omitempty" xml:"items,omitempty"`
 	// Total amount of the order
 	TotalAmount *float64 `form:"totalAmount,omitempty" json:"totalAmount,omitempty" xml:"totalAmount,omitempty"`
-	// Order status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Overall status of the order
+	OverallStatus *string `form:"overallStatus,omitempty" json:"overallStatus,omitempty" xml:"overallStatus,omitempty"`
 }
 
 // OrderItemResponse is used to define fields on response body types.
 type OrderItemResponse struct {
 	// ID of the product
 	ProductID *string `form:"productID,omitempty" json:"productID,omitempty" xml:"productID,omitempty"`
+	// ID of the seller who posted this product
+	SellerID *string `form:"sellerID,omitempty" json:"sellerID,omitempty" xml:"sellerID,omitempty"`
 	// Quantity of the product
 	Quantity *int `form:"quantity,omitempty" json:"quantity,omitempty" xml:"quantity,omitempty"`
 	// Price of the product at the time of order
 	Price *float64 `form:"price,omitempty" json:"price,omitempty" xml:"price,omitempty"`
+	// Status of this specific item in the order
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
 }
 
 // NewCreateUserRequestBody builds the HTTP request body from the payload of
@@ -437,6 +467,15 @@ func NewAddToCartRequestBody(p *store.CartItem) *AddToCartRequestBody {
 	body := &AddToCartRequestBody{
 		ProductID: p.ProductID,
 		Quantity:  p.Quantity,
+	}
+	return body
+}
+
+// NewUpdateOrderItemStatusRequestBody builds the HTTP request body from the
+// payload of the "updateOrderItemStatus" endpoint of the "store" service.
+func NewUpdateOrderItemStatusRequestBody(p *store.UpdateOrderItemStatusPayload) *UpdateOrderItemStatusRequestBody {
+	body := &UpdateOrderItemStatusRequestBody{
+		Status: p.Status,
 	}
 	return body
 }
@@ -648,10 +687,10 @@ func NewGetCartNotFound(body *GetCartNotFoundResponseBody) *goa.ServiceError {
 // result from a HTTP "Created" response.
 func NewCreateOrderOrderCreated(body *CreateOrderResponseBody) *store.Order {
 	v := &store.Order{
-		ID:          *body.ID,
-		UserID:      *body.UserID,
-		TotalAmount: *body.TotalAmount,
-		Status:      *body.Status,
+		ID:            *body.ID,
+		UserID:        *body.UserID,
+		TotalAmount:   *body.TotalAmount,
+		OverallStatus: *body.OverallStatus,
 	}
 	v.Items = make([]*store.OrderItem, len(body.Items))
 	for i, val := range body.Items {
@@ -665,10 +704,10 @@ func NewCreateOrderOrderCreated(body *CreateOrderResponseBody) *store.Order {
 // a HTTP "OK" response.
 func NewGetOrderOrderOK(body *GetOrderResponseBody) *store.Order {
 	v := &store.Order{
-		ID:          *body.ID,
-		UserID:      *body.UserID,
-		TotalAmount: *body.TotalAmount,
-		Status:      *body.Status,
+		ID:            *body.ID,
+		UserID:        *body.UserID,
+		TotalAmount:   *body.TotalAmount,
+		OverallStatus: *body.OverallStatus,
 	}
 	v.Items = make([]*store.OrderItem, len(body.Items))
 	for i, val := range body.Items {
@@ -710,6 +749,39 @@ func NewGetProductsPostedByUserProductOK(body []*ProductResponse) []*store.Produ
 	for i, val := range body {
 		v[i] = unmarshalProductResponseToStoreProduct(val)
 	}
+
+	return v
+}
+
+// NewUpdateOrderItemStatusOrderOK builds a "store" service
+// "updateOrderItemStatus" endpoint result from a HTTP "OK" response.
+func NewUpdateOrderItemStatusOrderOK(body *UpdateOrderItemStatusResponseBody) *store.Order {
+	v := &store.Order{
+		ID:            *body.ID,
+		UserID:        *body.UserID,
+		TotalAmount:   *body.TotalAmount,
+		OverallStatus: *body.OverallStatus,
+	}
+	v.Items = make([]*store.OrderItem, len(body.Items))
+	for i, val := range body.Items {
+		v.Items[i] = unmarshalOrderItemResponseBodyToStoreOrderItem(val)
+	}
+
+	return v
+}
+
+// NewUpdateOrderItemStatusForbidden builds a store service
+// updateOrderItemStatus endpoint forbidden error.
+func NewUpdateOrderItemStatusForbidden(body string) store.Forbidden {
+	v := store.Forbidden(body)
+
+	return v
+}
+
+// NewUpdateOrderItemStatusNotFound builds a store service
+// updateOrderItemStatus endpoint not-found error.
+func NewUpdateOrderItemStatusNotFound(body string) store.NotFound {
+	v := store.NotFound(body)
 
 	return v
 }
@@ -891,8 +963,8 @@ func ValidateCreateOrderResponseBody(body *CreateOrderResponseBody) (err error) 
 	if body.TotalAmount == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("totalAmount", "body"))
 	}
-	if body.Status == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	if body.OverallStatus == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("overallStatus", "body"))
 	}
 	for _, e := range body.Items {
 		if e != nil {
@@ -919,8 +991,36 @@ func ValidateGetOrderResponseBody(body *GetOrderResponseBody) (err error) {
 	if body.TotalAmount == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("totalAmount", "body"))
 	}
-	if body.Status == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	if body.OverallStatus == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("overallStatus", "body"))
+	}
+	for _, e := range body.Items {
+		if e != nil {
+			if err2 := ValidateOrderItemResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
+// ValidateUpdateOrderItemStatusResponseBody runs the validations defined on
+// UpdateOrderItemStatusResponseBody
+func ValidateUpdateOrderItemStatusResponseBody(body *UpdateOrderItemStatusResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.UserID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("userID", "body"))
+	}
+	if body.Items == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("items", "body"))
+	}
+	if body.TotalAmount == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("totalAmount", "body"))
+	}
+	if body.OverallStatus == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("overallStatus", "body"))
 	}
 	for _, e := range body.Items {
 		if e != nil {
@@ -1080,11 +1180,17 @@ func ValidateOrderItemResponseBody(body *OrderItemResponseBody) (err error) {
 	if body.ProductID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("productID", "body"))
 	}
+	if body.SellerID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("sellerID", "body"))
+	}
 	if body.Quantity == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("quantity", "body"))
 	}
 	if body.Price == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("price", "body"))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
 	}
 	return
 }
@@ -1103,8 +1209,8 @@ func ValidateOrderResponse(body *OrderResponse) (err error) {
 	if body.TotalAmount == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("totalAmount", "body"))
 	}
-	if body.Status == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	if body.OverallStatus == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("overallStatus", "body"))
 	}
 	for _, e := range body.Items {
 		if e != nil {
@@ -1121,11 +1227,17 @@ func ValidateOrderItemResponse(body *OrderItemResponse) (err error) {
 	if body.ProductID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("productID", "body"))
 	}
+	if body.SellerID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("sellerID", "body"))
+	}
 	if body.Quantity == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("quantity", "body"))
 	}
 	if body.Price == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("price", "body"))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
 	}
 	return
 }

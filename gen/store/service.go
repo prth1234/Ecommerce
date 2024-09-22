@@ -49,6 +49,8 @@ type Service interface {
 	GetUserOrders(context.Context) (res []*Order, err error)
 	// Retrieve all products posted by the user
 	GetProductsPostedByUser(context.Context) (res []*Product, err error)
+	// Update the status of an order item
+	UpdateOrderItemStatus(context.Context, *UpdateOrderItemStatusPayload) (res *Order, err error)
 }
 
 // APIName is the name of the API as defined in the design.
@@ -65,7 +67,7 @@ const ServiceName = "store"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [17]string{"createUser", "loginUser", "getUser", "getUserAll", "updateUser", "deleteUser", "createProduct", "getProduct", "listProducts", "addToCart", "removeFromCart", "getCart", "createOrder", "deleteOrder", "getOrder", "getUserOrders", "getProductsPostedByUser"}
+var MethodNames = [18]string{"createUser", "loginUser", "getUser", "getUserAll", "updateUser", "deleteUser", "createProduct", "getProduct", "listProducts", "addToCart", "removeFromCart", "getCart", "createOrder", "deleteOrder", "getOrder", "getUserOrders", "getProductsPostedByUser", "updateOrderItemStatus"}
 
 // Cart is the result type of the store service addToCart method.
 type Cart struct {
@@ -158,17 +160,21 @@ type Order struct {
 	Items []*OrderItem
 	// Total amount of the order
 	TotalAmount float64
-	// Order status
-	Status string
+	// Overall status of the order
+	OverallStatus string
 }
 
 type OrderItem struct {
 	// ID of the product
 	ProductID string
+	// ID of the seller who posted this product
+	SellerID string
 	// Quantity of the product
 	Quantity int
 	// Price of the product at the time of order
 	Price float64
+	// Status of this specific item in the order
+	Status string
 }
 
 // Product is the result type of the store service createProduct method.
@@ -191,6 +197,17 @@ type Product struct {
 // removeFromCart method.
 type RemoveFromCartPayload struct {
 	ProductID string
+}
+
+// UpdateOrderItemStatusPayload is the payload type of the store service
+// updateOrderItemStatus method.
+type UpdateOrderItemStatusPayload struct {
+	// ID of the order
+	OrderID string
+	// ID of the product in the order
+	ProductID string
+	// New status for the order item
+	Status string
 }
 
 // User is the result type of the store service createUser method.
@@ -217,8 +234,48 @@ type UserUpdatePayload struct {
 	LastName string
 }
 
+// User is not authorized to update this order item
+type Forbidden string
+
+// Order or product not found
+type NotFound string
+
 // Invalid username or password
 type Unauthorized string
+
+// Error returns an error description.
+func (e Forbidden) Error() string {
+	return "User is not authorized to update this order item"
+}
+
+// ErrorName returns "forbidden".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e Forbidden) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "forbidden".
+func (e Forbidden) GoaErrorName() string {
+	return "forbidden"
+}
+
+// Error returns an error description.
+func (e NotFound) Error() string {
+	return "Order or product not found"
+}
+
+// ErrorName returns "not-found".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e NotFound) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "not-found".
+func (e NotFound) GoaErrorName() string {
+	return "not-found"
+}
 
 // Error returns an error description.
 func (e Unauthorized) Error() string {

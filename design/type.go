@@ -49,9 +49,11 @@ var CartItem = Type("CartItem", func() {
 
 var OrderItem = Type("OrderItem", func() {
 	Attribute("productID", String, "ID of the product")
+	Attribute("sellerID", String, "ID of the seller who posted this product")
 	Attribute("quantity", Int, "Quantity of the product")
 	Attribute("price", Float64, "Price of the product at the time of order")
-	Required("productID", "quantity", "price")
+	Attribute("status", String, "Status of this specific item in the order")
+	Required("productID", "sellerID", "quantity", "price", "status")
 })
 
 var Cart = Type("Cart", func() {
@@ -67,8 +69,8 @@ var Order = Type("Order", func() {
 	Attribute("userID", String, "ID of the user who placed the order")
 	Attribute("items", ArrayOf(OrderItem), "Items in the order")
 	Attribute("totalAmount", Float64, "Total amount of the order")
-	Attribute("status", String, "Order status")
-	Required("id", "userID", "items", "totalAmount", "status")
+	Attribute("overallStatus", String, "Overall status of the order")
+	Required("id", "userID", "items", "totalAmount", "overallStatus")
 })
 
 var UserUpdatePayload = Type("UserUpdatePayload", func() {

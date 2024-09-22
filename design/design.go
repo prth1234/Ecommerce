@@ -199,4 +199,22 @@ var _ = Service("store", func() {
 			Response(StatusOK)
 		})
 	})
+	Method("updateOrderItemStatus", func() {
+		Description("Update the status of an order item")
+		Payload(func() {
+			Field(1, "orderID", String, "ID of the order")
+			Field(2, "productID", String, "ID of the product in the order")
+			Field(3, "status", String, "New status for the order item")
+			Required("orderID", "productID", "status")
+		})
+		Result(Order)
+		Error("not-found", String, "Order or product not found")
+		Error("forbidden", String, "User is not authorized to update this order item")
+		HTTP(func() {
+			PATCH("/orders/{orderID}/items/{productID}")
+			Response(StatusOK)
+			Response("not-found", StatusNotFound)
+			Response("forbidden", StatusForbidden)
+		})
+	})
 })

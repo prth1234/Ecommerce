@@ -32,6 +32,7 @@ type Endpoints struct {
 	GetOrder                goa.Endpoint
 	GetUserOrders           goa.Endpoint
 	GetProductsPostedByUser goa.Endpoint
+	UpdateOrderItemStatus   goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "store" service with endpoints.
@@ -54,6 +55,7 @@ func NewEndpoints(s Service) *Endpoints {
 		GetOrder:                NewGetOrderEndpoint(s),
 		GetUserOrders:           NewGetUserOrdersEndpoint(s),
 		GetProductsPostedByUser: NewGetProductsPostedByUserEndpoint(s),
+		UpdateOrderItemStatus:   NewUpdateOrderItemStatusEndpoint(s),
 	}
 }
 
@@ -76,6 +78,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.GetOrder = m(e.GetOrder)
 	e.GetUserOrders = m(e.GetUserOrders)
 	e.GetProductsPostedByUser = m(e.GetProductsPostedByUser)
+	e.UpdateOrderItemStatus = m(e.UpdateOrderItemStatus)
 }
 
 // NewCreateUserEndpoint returns an endpoint function that calls the method
@@ -221,5 +224,14 @@ func NewGetUserOrdersEndpoint(s Service) goa.Endpoint {
 func NewGetProductsPostedByUserEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		return s.GetProductsPostedByUser(ctx)
+	}
+}
+
+// NewUpdateOrderItemStatusEndpoint returns an endpoint function that calls the
+// method "updateOrderItemStatus" of service "store".
+func NewUpdateOrderItemStatusEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*UpdateOrderItemStatusPayload)
+		return s.UpdateOrderItemStatus(ctx, p)
 	}
 }

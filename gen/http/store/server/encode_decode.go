@@ -581,6 +581,88 @@ func EncodeGetProductsPostedByUserResponse(encoder func(context.Context, http.Re
 	}
 }
 
+// EncodeUpdateOrderItemStatusResponse returns an encoder for responses
+// returned by the store updateOrderItemStatus endpoint.
+func EncodeUpdateOrderItemStatusResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*store.Order)
+		enc := encoder(ctx, w)
+		body := NewUpdateOrderItemStatusResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeUpdateOrderItemStatusRequest returns a decoder for requests sent to
+// the store updateOrderItemStatus endpoint.
+func DecodeUpdateOrderItemStatusRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
+	return func(r *http.Request) (any, error) {
+		var (
+			body UpdateOrderItemStatusRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if err == io.EOF {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateUpdateOrderItemStatusRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+
+		var (
+			orderID   string
+			productID string
+
+			params = mux.Vars(r)
+		)
+		orderID = params["orderID"]
+		productID = params["productID"]
+		payload := NewUpdateOrderItemStatusPayload(&body, orderID, productID)
+
+		return payload, nil
+	}
+}
+
+// EncodeUpdateOrderItemStatusError returns an encoder for errors returned by
+// the updateOrderItemStatus store endpoint.
+func EncodeUpdateOrderItemStatusError(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder, formatter func(ctx context.Context, err error) goahttp.Statuser) func(context.Context, http.ResponseWriter, error) error {
+	encodeError := goahttp.ErrorEncoder(encoder, formatter)
+	return func(ctx context.Context, w http.ResponseWriter, v error) error {
+		var en goa.GoaErrorNamer
+		if !errors.As(v, &en) {
+			return encodeError(ctx, w, v)
+		}
+		switch en.GoaErrorName() {
+		case "forbidden":
+			var res store.Forbidden
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			body := res
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusForbidden)
+			return enc.Encode(body)
+		case "not-found":
+			var res store.NotFound
+			errors.As(v, &res)
+			enc := encoder(ctx, w)
+			body := res
+			w.Header().Set("goa-error", res.GoaErrorName())
+			w.WriteHeader(http.StatusNotFound)
+			return enc.Encode(body)
+		default:
+			return encodeError(ctx, w, v)
+		}
+	}
+}
+
 // marshalStoreUserToUserResponse builds a value of type *UserResponse from a
 // value of type *store.User.
 func marshalStoreUserToUserResponse(v *store.User) *UserResponse {
@@ -626,8 +708,10 @@ func marshalStoreCartItemToCartItemResponseBody(v *store.CartItem) *CartItemResp
 func marshalStoreOrderItemToOrderItemResponseBody(v *store.OrderItem) *OrderItemResponseBody {
 	res := &OrderItemResponseBody{
 		ProductID: v.ProductID,
+		SellerID:  v.SellerID,
 		Quantity:  v.Quantity,
 		Price:     v.Price,
+		Status:    v.Status,
 	}
 
 	return res
@@ -637,10 +721,10 @@ func marshalStoreOrderItemToOrderItemResponseBody(v *store.OrderItem) *OrderItem
 // a value of type *store.Order.
 func marshalStoreOrderToOrderResponse(v *store.Order) *OrderResponse {
 	res := &OrderResponse{
-		ID:          v.ID,
-		UserID:      v.UserID,
-		TotalAmount: v.TotalAmount,
-		Status:      v.Status,
+		ID:            v.ID,
+		UserID:        v.UserID,
+		TotalAmount:   v.TotalAmount,
+		OverallStatus: v.OverallStatus,
 	}
 	if v.Items != nil {
 		res.Items = make([]*OrderItemResponse, len(v.Items))
@@ -659,8 +743,10 @@ func marshalStoreOrderToOrderResponse(v *store.Order) *OrderResponse {
 func marshalStoreOrderItemToOrderItemResponse(v *store.OrderItem) *OrderItemResponse {
 	res := &OrderItemResponse{
 		ProductID: v.ProductID,
+		SellerID:  v.SellerID,
 		Quantity:  v.Quantity,
 		Price:     v.Price,
+		Status:    v.Status,
 	}
 
 	return res

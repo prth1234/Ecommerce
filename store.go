@@ -10,6 +10,23 @@ import (
 	"store/jwthelper"
 )
 
+type CustomError struct {
+	StatusCode int
+	Message    string
+}
+
+func (e *CustomError) Error() string {
+	return e.Message
+}
+
+// NewForbiddenError creates a new CustomError with StatusForbidden
+func NewForbiddenError(message string) *CustomError {
+	return &CustomError{
+		StatusCode: 403,
+		Message:    message,
+	}
+}
+
 type storesrvc struct {
 	db *sql.DB
 }
@@ -206,7 +223,7 @@ func (s *storesrvc) GetProduct(ctx context.Context, p *store.GetProductPayload) 
 }
 
 func (s *storesrvc) ListProducts(ctx context.Context) (res []*store.Product, err error) {
-	query := `SELECT id, name, description, price, inventory FROM products`
+	query := `SELECT id, name, description, price, inventory,userid FROM products`
 
 	rows, err := s.db.QueryContext(ctx, query)
 	if err != nil {
@@ -217,7 +234,7 @@ func (s *storesrvc) ListProducts(ctx context.Context) (res []*store.Product, err
 	var products []*store.Product
 	for rows.Next() {
 		product := &store.Product{}
-		if err := rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Inventory); err != nil {
+		if err := rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Inventory, &product.UserID); err != nil {
 			return nil, fmt.Errorf("error scanning product: %v", err)
 		}
 		products = append(products, product)
@@ -414,7 +431,7 @@ func (s *storesrvc) CreateOrder(ctx context.Context) (res *store.Order, err erro
 	}
 
 	orderID := uuid.New().String()
-	_, err = tx.ExecContext(ctx, "INSERT INTO orders (id, user_id, total_amount, status) VALUES ($1, $2, $3, $4)",
+	_, err = tx.ExecContext(ctx, "INSERT INTO orders (id, user_id, total_amount, overall_status) VALUES ($1, $2, $3, $4)",
 		orderID, userID, cart.TotalAmount, "pending")
 	if err != nil {
 		return nil, fmt.Errorf("error creating order: %v", err)
@@ -422,13 +439,14 @@ func (s *storesrvc) CreateOrder(ctx context.Context) (res *store.Order, err erro
 
 	for _, item := range cart.Items {
 		var price float64
-		err = tx.QueryRowContext(ctx, "SELECT price FROM products WHERE id = $1", item.ProductID).Scan(&price)
+		var sellerID string
+		err = tx.QueryRowContext(ctx, "SELECT price, userid FROM products WHERE id = $1", item.ProductID).Scan(&price, &sellerID)
 		if err != nil {
-			return nil, fmt.Errorf("error getting product price: %v", err)
+			return nil, fmt.Errorf("error getting product price and seller: %v", err)
 		}
 
-		_, err = tx.ExecContext(ctx, "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)",
-			orderID, item.ProductID, item.Quantity, price)
+		_, err = tx.ExecContext(ctx, "INSERT INTO order_items (order_id, product_id, seller_id, quantity, price, status) VALUES ($1, $2, $3, $4, $5, $6)",
+			orderID, item.ProductID, sellerID, item.Quantity, price, "pending")
 		if err != nil {
 			return nil, fmt.Errorf("error adding order item: %v", err)
 		}
@@ -454,8 +472,8 @@ func (s *storesrvc) CreateOrder(ctx context.Context) (res *store.Order, err erro
 
 func (s *storesrvc) GetOrder(ctx context.Context, p *store.GetOrderPayload) (res *store.Order, err error) {
 	query := `
-		SELECT o.id, o.user_id, o.total_amount, o.status, 
-			   oi.product_id, oi.quantity, oi.price
+		SELECT o.id, o.user_id, o.total_amount, o.overall_status, 
+			   oi.product_id, oi.seller_id, oi.quantity, oi.price, oi.status
 		FROM orders o
 		LEFT JOIN order_items oi ON o.id = oi.order_id
 		WHERE o.id = $1`
@@ -470,36 +488,40 @@ func (s *storesrvc) GetOrder(ctx context.Context, p *store.GetOrderPayload) (res
 	for rows.Next() {
 		if order == nil {
 			order = &store.Order{Items: []*store.OrderItem{}}
-			var productID sql.NullString
+			var productID, sellerID, itemStatus sql.NullString
 			var quantity sql.NullInt32
 			var price sql.NullFloat64
-			err = rows.Scan(&order.ID, &order.UserID, &order.TotalAmount, &order.Status,
-				&productID, &quantity, &price)
+			err = rows.Scan(&order.ID, &order.UserID, &order.TotalAmount, &order.OverallStatus,
+				&productID, &sellerID, &quantity, &price, &itemStatus)
 			if err != nil {
 				return nil, fmt.Errorf("error scanning order: %v", err)
 			}
 			if productID.Valid {
 				item := &store.OrderItem{
 					ProductID: productID.String,
+					SellerID:  sellerID.String,
 					Quantity:  int(quantity.Int32),
 					Price:     price.Float64,
+					Status:    itemStatus.String,
 				}
 				order.Items = append(order.Items, item)
 			}
 		} else {
-			var productID sql.NullString
+			var productID, sellerID, itemStatus sql.NullString
 			var quantity sql.NullInt32
 			var price sql.NullFloat64
 			err = rows.Scan(new(sql.NullString), new(sql.NullString), new(sql.NullFloat64), new(sql.NullString),
-				&productID, &quantity, &price)
+				&productID, &sellerID, &quantity, &price, &itemStatus)
 			if err != nil {
 				return nil, fmt.Errorf("error scanning order item: %v", err)
 			}
 			if productID.Valid {
 				item := &store.OrderItem{
 					ProductID: productID.String,
+					SellerID:  sellerID.String,
 					Quantity:  int(quantity.Int32),
 					Price:     price.Float64,
+					Status:    itemStatus.String,
 				}
 				order.Items = append(order.Items, item)
 			}
@@ -526,7 +548,7 @@ func (s *storesrvc) GetUserOrders(ctx context.Context) (res []*store.Order, err 
 	}
 
 	query := `
-		SELECT o.id, o.user_id, o.total_amount, o.status, 
+		SELECT o.id, o.user_id, o.total_amount, o.overall_status, 
 			   oi.product_id, oi.quantity, oi.price
 		FROM orders o
 		LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -554,11 +576,11 @@ func (s *storesrvc) GetUserOrders(ctx context.Context) (res []*store.Order, err 
 		order, exists := orders[orderID.String]
 		if !exists {
 			order = &store.Order{
-				ID:          orderID.String,
-				UserID:      userID.String,
-				TotalAmount: totalAmount.Float64,
-				Status:      status.String,
-				Items:       []*store.OrderItem{},
+				ID:            orderID.String,
+				UserID:        userID.String,
+				TotalAmount:   totalAmount.Float64,
+				OverallStatus: status.String,
+				Items:         []*store.OrderItem{},
 			} //making a new order to be able to see what products are there in the order
 			orders[orderID.String] = order
 		}
@@ -638,7 +660,7 @@ func (s *storesrvc) GetProductsPostedByUser(ctx context.Context) (res []*store.P
 	if err != nil {
 		return nil, fmt.Errorf("error getting user ID: %v", err)
 	}
-	query := `SELECT name, description, price, inventory FROM products WHERE userid = $1`
+	query := `SELECT name, description, price, inventory,userid FROM products WHERE userid = $1`
 	rows, err := s.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting products: %v", err)
@@ -664,7 +686,7 @@ func (s *storesrvc) GetProductsPostedByUser(ctx context.Context) (res []*store.P
 	for rows.Next() {
 		var product store.Product
 		var description sql.NullString
-		err = rows.Scan(&product.Name, &product.Description, &product.Price, &product.Inventory)
+		err = rows.Scan(&product.Name, &product.Description, &product.Price, &product.Inventory, &product.UserID)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning product: %v", err)
 		}
@@ -679,4 +701,72 @@ func (s *storesrvc) GetProductsPostedByUser(ctx context.Context) (res []*store.P
 
 	return products, nil
 	//return products
+}
+
+func (s *storesrvc) UpdateOrderItemStatus(ctx context.Context, p *store.UpdateOrderItemStatusPayload) (res *store.Order, err error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized: missing username in context")
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	var userID string
+	err = tx.QueryRowContext(ctx, "SELECT id FROM users WHERE username = $1", username).Scan(&userID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user ID: %v", err)
+	}
+
+	// Check if the user is the seller of the product
+	var sellerID string
+	err = tx.QueryRowContext(ctx, "SELECT seller_id FROM order_items WHERE order_id = $1 AND product_id = $2", p.OrderID, p.ProductID).Scan(&sellerID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, store.MakeNotFound(fmt.Errorf("order item not found"))
+		}
+		return nil, fmt.Errorf("error checking seller: %v", err)
+	}
+
+	if sellerID != userID {
+		return nil, NewForbiddenError("user is not authorized to update this order item")
+	}
+
+	// Update the status of the order item
+	_, err = tx.ExecContext(ctx, "UPDATE order_items SET status = $1 WHERE order_id = $2 AND product_id = $3", p.Status, p.OrderID, p.ProductID)
+	if err != nil {
+		return nil, fmt.Errorf("error updating order item status: %v", err)
+	}
+
+	// Check if all items in the order have the same status
+	var allSameStatus bool
+	err = tx.QueryRowContext(ctx, "SELECT COUNT(DISTINCT status) = 1 FROM order_items WHERE order_id = $1", p.OrderID).Scan(&allSameStatus)
+	if err != nil {
+		return nil, fmt.Errorf("error checking order items status: %v", err)
+	}
+
+	// Update the overall order status if all items have the same status
+	if allSameStatus {
+		_, err = tx.ExecContext(ctx, "UPDATE orders SET overall_status = $1 WHERE id = $2", p.Status, p.OrderID)
+		if err != nil {
+			return nil, fmt.Errorf("error updating overall order status: %v", err)
+		}
+	} else {
+		// Set overall status to "in progress" if items have different statuses
+		_, err = tx.ExecContext(ctx, "UPDATE orders SET overall_status = 'in progress' WHERE id = $1", p.OrderID)
+		if err != nil {
+			return nil, fmt.Errorf("error updating overall order status: %v", err)
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	// Fetch and return the updated order
+	return s.GetOrder(ctx, &store.GetOrderPayload{ID: p.OrderID})
 }

@@ -36,6 +36,7 @@ type Server struct {
 	GetOrder                http.Handler
 	GetUserOrders           http.Handler
 	GetProductsPostedByUser http.Handler
+	UpdateOrderItemStatus   http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -82,6 +83,7 @@ func New(
 			{"GetOrder", "GET", "/orders/{id}"},
 			{"GetUserOrders", "GET", "/orders"},
 			{"GetProductsPostedByUser", "GET", "/users/products"},
+			{"UpdateOrderItemStatus", "PATCH", "/orders/{orderID}/items/{productID}"},
 		},
 		CreateUser:              NewCreateUserHandler(e.CreateUser, mux, decoder, encoder, errhandler, formatter),
 		LoginUser:               NewLoginUserHandler(e.LoginUser, mux, decoder, encoder, errhandler, formatter),
@@ -100,6 +102,7 @@ func New(
 		GetOrder:                NewGetOrderHandler(e.GetOrder, mux, decoder, encoder, errhandler, formatter),
 		GetUserOrders:           NewGetUserOrdersHandler(e.GetUserOrders, mux, decoder, encoder, errhandler, formatter),
 		GetProductsPostedByUser: NewGetProductsPostedByUserHandler(e.GetProductsPostedByUser, mux, decoder, encoder, errhandler, formatter),
+		UpdateOrderItemStatus:   NewUpdateOrderItemStatusHandler(e.UpdateOrderItemStatus, mux, decoder, encoder, errhandler, formatter),
 	}
 }
 
@@ -125,6 +128,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.GetOrder = m(s.GetOrder)
 	s.GetUserOrders = m(s.GetUserOrders)
 	s.GetProductsPostedByUser = m(s.GetProductsPostedByUser)
+	s.UpdateOrderItemStatus = m(s.UpdateOrderItemStatus)
 }
 
 // MethodNames returns the methods served.
@@ -149,6 +153,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountGetOrderHandler(mux, h.GetOrder)
 	MountGetUserOrdersHandler(mux, h.GetUserOrders)
 	MountGetProductsPostedByUserHandler(mux, h.GetProductsPostedByUser)
+	MountUpdateOrderItemStatusHandler(mux, h.UpdateOrderItemStatus)
 }
 
 // Mount configures the mux to serve the store endpoints.
@@ -963,6 +968,57 @@ func NewGetProductsPostedByUserHandler(
 		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
 		var err error
 		res, err := endpoint(ctx, nil)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			errhandler(ctx, w, err)
+		}
+	})
+}
+
+// MountUpdateOrderItemStatusHandler configures the mux to serve the "store"
+// service "updateOrderItemStatus" endpoint.
+func MountUpdateOrderItemStatusHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("PATCH", "/orders/{orderID}/items/{productID}", f)
+}
+
+// NewUpdateOrderItemStatusHandler creates a HTTP handler which loads the HTTP
+// request and calls the "store" service "updateOrderItemStatus" endpoint.
+func NewUpdateOrderItemStatusHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeUpdateOrderItemStatusRequest(mux, decoder)
+		encodeResponse = EncodeUpdateOrderItemStatusResponse(encoder)
+		encodeError    = EncodeUpdateOrderItemStatusError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "updateOrderItemStatus")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil {
 				errhandler(ctx, w, err)

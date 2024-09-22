@@ -1160,6 +1160,114 @@ func DecodeGetProductsPostedByUserResponse(decoder func(*http.Response) goahttp.
 	}
 }
 
+// BuildUpdateOrderItemStatusRequest instantiates a HTTP request object with
+// method and path set to call the "store" service "updateOrderItemStatus"
+// endpoint
+func (c *Client) BuildUpdateOrderItemStatusRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		orderID   string
+		productID string
+	)
+	{
+		p, ok := v.(*store.UpdateOrderItemStatusPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("store", "updateOrderItemStatus", "*store.UpdateOrderItemStatusPayload", v)
+		}
+		orderID = p.OrderID
+		productID = p.ProductID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: UpdateOrderItemStatusStorePath(orderID, productID)}
+	req, err := http.NewRequest("PATCH", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("store", "updateOrderItemStatus", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeUpdateOrderItemStatusRequest returns an encoder for requests sent to
+// the store updateOrderItemStatus server.
+func EncodeUpdateOrderItemStatusRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*store.UpdateOrderItemStatusPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("store", "updateOrderItemStatus", "*store.UpdateOrderItemStatusPayload", v)
+		}
+		body := NewUpdateOrderItemStatusRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("store", "updateOrderItemStatus", err)
+		}
+		return nil
+	}
+}
+
+// DecodeUpdateOrderItemStatusResponse returns a decoder for responses returned
+// by the store updateOrderItemStatus endpoint. restoreBody controls whether
+// the response body should be restored after having been read.
+// DecodeUpdateOrderItemStatusResponse may return the following errors:
+//   - "forbidden" (type store.Forbidden): http.StatusForbidden
+//   - "not-found" (type store.NotFound): http.StatusNotFound
+//   - error: internal error
+func DecodeUpdateOrderItemStatusResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body UpdateOrderItemStatusResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "updateOrderItemStatus", err)
+			}
+			err = ValidateUpdateOrderItemStatusResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("store", "updateOrderItemStatus", err)
+			}
+			res := NewUpdateOrderItemStatusOrderOK(&body)
+			return res, nil
+		case http.StatusForbidden:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "updateOrderItemStatus", err)
+			}
+			return nil, NewUpdateOrderItemStatusForbidden(body)
+		case http.StatusNotFound:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("store", "updateOrderItemStatus", err)
+			}
+			return nil, NewUpdateOrderItemStatusNotFound(body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("store", "updateOrderItemStatus", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // unmarshalUserResponseToStoreUser builds a value of type *store.User from a
 // value of type *UserResponse.
 func unmarshalUserResponseToStoreUser(v *UserResponse) *store.User {
@@ -1205,8 +1313,10 @@ func unmarshalCartItemResponseBodyToStoreCartItem(v *CartItemResponseBody) *stor
 func unmarshalOrderItemResponseBodyToStoreOrderItem(v *OrderItemResponseBody) *store.OrderItem {
 	res := &store.OrderItem{
 		ProductID: *v.ProductID,
+		SellerID:  *v.SellerID,
 		Quantity:  *v.Quantity,
 		Price:     *v.Price,
+		Status:    *v.Status,
 	}
 
 	return res
@@ -1216,10 +1326,10 @@ func unmarshalOrderItemResponseBodyToStoreOrderItem(v *OrderItemResponseBody) *s
 // a value of type *OrderResponse.
 func unmarshalOrderResponseToStoreOrder(v *OrderResponse) *store.Order {
 	res := &store.Order{
-		ID:          *v.ID,
-		UserID:      *v.UserID,
-		TotalAmount: *v.TotalAmount,
-		Status:      *v.Status,
+		ID:            *v.ID,
+		UserID:        *v.UserID,
+		TotalAmount:   *v.TotalAmount,
+		OverallStatus: *v.OverallStatus,
 	}
 	res.Items = make([]*store.OrderItem, len(v.Items))
 	for i, val := range v.Items {
@@ -1234,8 +1344,10 @@ func unmarshalOrderResponseToStoreOrder(v *OrderResponse) *store.Order {
 func unmarshalOrderItemResponseToStoreOrderItem(v *OrderItemResponse) *store.OrderItem {
 	res := &store.OrderItem{
 		ProductID: *v.ProductID,
+		SellerID:  *v.SellerID,
 		Quantity:  *v.Quantity,
 		Price:     *v.Price,
+		Status:    *v.Status,
 	}
 
 	return res
