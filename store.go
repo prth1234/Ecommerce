@@ -722,24 +722,33 @@ func (s *storesrvc) UpdateOrderItemStatus(ctx context.Context, p *store.UpdateOr
 		return nil, fmt.Errorf("error getting user ID: %v", err)
 	}
 
-	// Check if the user is the seller of the product
+	// Check if the order item exists
 	var sellerID string
 	err = tx.QueryRowContext(ctx, "SELECT seller_id FROM order_items WHERE order_id = $1 AND product_id = $2", p.OrderID, p.ProductID).Scan(&sellerID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, store.MakeNotFound(fmt.Errorf("order item not found"))
+			return nil, fmt.Errorf("item not in order: the specified item is not in the order")
 		}
-		return nil, fmt.Errorf("error checking seller: %v", err)
+		return nil, fmt.Errorf("error checking order item: %v", err)
 	}
 
 	if sellerID != userID {
-		return nil, NewForbiddenError("user is not authorized to update this order item")
+		return nil, fmt.Errorf("forbidden: user is not authorized to update this order item")
 	}
 
 	// Update the status of the order item
-	_, err = tx.ExecContext(ctx, "UPDATE order_items SET status = $1 WHERE order_id = $2 AND product_id = $3", p.Status, p.OrderID, p.ProductID)
+	result, err := tx.ExecContext(ctx, "UPDATE order_items SET status = $1 WHERE order_id = $2 AND product_id = $3", p.Status, p.OrderID, p.ProductID)
 	if err != nil {
 		return nil, fmt.Errorf("error updating order item status: %v", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("error getting rows affected: %v", err)
+	}
+
+	if rowsAffected == 0 {
+		return nil, fmt.Errorf("item not in order: the specified item is not in the order")
 	}
 
 	// Check if all items in the order have the same status
