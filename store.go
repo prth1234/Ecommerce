@@ -473,10 +473,10 @@ func (s *storesrvc) CreateOrder(ctx context.Context) (res *store.Order, err erro
 func (s *storesrvc) GetOrder(ctx context.Context, p *store.GetOrderPayload) (res *store.Order, err error) {
 	query := `
 		SELECT o.id, o.user_id, o.total_amount, o.overall_status, 
-			   oi.product_id, oi.seller_id, oi.quantity, oi.price, oi.status
-		FROM orders o
-		LEFT JOIN order_items oi ON o.id = oi.order_id
-		WHERE o.id = $1`
+       oi.product_id, oi.seller_id, oi.quantity, oi.price, oi.status
+FROM orders o
+LEFT JOIN order_items oi ON o.id = oi.order_id
+WHERE o.id = $1`
 
 	rows, err := s.db.QueryContext(ctx, query, p.ID)
 	if err != nil {
@@ -493,6 +493,7 @@ func (s *storesrvc) GetOrder(ctx context.Context, p *store.GetOrderPayload) (res
 			var price sql.NullFloat64
 			err = rows.Scan(&order.ID, &order.UserID, &order.TotalAmount, &order.OverallStatus,
 				&productID, &sellerID, &quantity, &price, &itemStatus)
+
 			if err != nil {
 				return nil, fmt.Errorf("error scanning order: %v", err)
 			}
