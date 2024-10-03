@@ -61,6 +61,17 @@ type CreateProductRequestBody struct {
 	Inventory int `form:"inventory" json:"inventory" xml:"inventory"`
 }
 
+// ListProductsRequestBody is the type of the "store" service "listProducts"
+// endpoint HTTP request body.
+type ListProductsRequestBody struct {
+	// Minimum price filter
+	MinPrice *float32 `form:"minPrice,omitempty" json:"minPrice,omitempty" xml:"minPrice,omitempty"`
+	// Maximum price filter
+	MaxPrice *float32 `form:"maxPrice,omitempty" json:"maxPrice,omitempty" xml:"maxPrice,omitempty"`
+	// Price range filter (e.g. [min, max])
+	PriceRange []float32 `form:"priceRange,omitempty" json:"priceRange,omitempty" xml:"priceRange,omitempty"`
+}
+
 // AddToCartRequestBody is the type of the "store" service "addToCart" endpoint
 // HTTP request body.
 type AddToCartRequestBody struct {
@@ -457,6 +468,22 @@ func NewCreateProductRequestBody(p *store.NewProduct) *CreateProductRequestBody 
 		Description: p.Description,
 		Price:       p.Price,
 		Inventory:   p.Inventory,
+	}
+	return body
+}
+
+// NewListProductsRequestBody builds the HTTP request body from the payload of
+// the "listProducts" endpoint of the "store" service.
+func NewListProductsRequestBody(p *store.ListProductsPayload) *ListProductsRequestBody {
+	body := &ListProductsRequestBody{
+		MinPrice: p.MinPrice,
+		MaxPrice: p.MaxPrice,
+	}
+	if p.PriceRange != nil {
+		body.PriceRange = make([]float32, len(p.PriceRange))
+		for i, val := range p.PriceRange {
+			body.PriceRange[i] = val
+		}
 	}
 	return body
 }

@@ -10,12 +10,10 @@ package client
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	store "store/gen/store"
-	"strconv"
 
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
@@ -604,21 +602,10 @@ func EncodeListProductsRequest(encoder func(*http.Request) goahttp.Encoder) func
 		if !ok {
 			return goahttp.ErrInvalidType("store", "listProducts", "*store.ListProductsPayload", v)
 		}
-		values := req.URL.Query()
-		if p.MinPrice != nil {
-			values.Add("minPrice", fmt.Sprintf("%v", *p.MinPrice))
+		body := NewListProductsRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("store", "listProducts", err)
 		}
-		if p.MaxPrice != nil {
-			values.Add("maxPrice", fmt.Sprintf("%v", *p.MaxPrice))
-		}
-		for _, value := range p.PriceRange {
-			valueStr := strconv.FormatFloat(float64(value), 'f', -1, 32)
-			values.Add("priceRange", valueStr)
-		}
-		if p.SortBy != nil {
-			values.Add("sortBy", *p.SortBy)
-		}
-		req.URL.RawQuery = values.Encode()
 		return nil
 	}
 }

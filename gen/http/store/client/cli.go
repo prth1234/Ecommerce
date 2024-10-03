@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 	store "store/gen/store"
-	"strconv"
 )
 
 // BuildCreateUserPayload builds the payload for the store createUser endpoint
@@ -22,7 +21,7 @@ func BuildCreateUserPayload(storeCreateUserBody string) (*store.NewUser, error) 
 	{
 		err = json.Unmarshal([]byte(storeCreateUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Quo saepe voluptas praesentium et aut qui.\",\n      \"firstName\": \"Voluptatem aspernatur animi et.\",\n      \"lastName\": \"Non esse non consectetur.\",\n      \"password\": \"Ratione excepturi doloremque.\",\n      \"username\": \"Consequatur dolores dicta quis itaque.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Repellendus facilis sint.\",\n      \"firstName\": \"Et minus velit sed alias consequatur dolores.\",\n      \"lastName\": \"Quis itaque sed quo saepe.\",\n      \"password\": \"Praesentium et aut.\",\n      \"username\": \"Doloremque possimus esse temporibus.\"\n   }'")
 		}
 	}
 	v := &store.NewUser{
@@ -44,7 +43,7 @@ func BuildLoginUserPayload(storeLoginUserBody string) (*store.LoginUserPayload, 
 	{
 		err = json.Unmarshal([]byte(storeLoginUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"password\": \"Molestiae qui voluptas.\",\n      \"username\": \"Eos ducimus eos.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"password\": \"Suscipit rem ipsum.\",\n      \"username\": \"Ratione aut.\"\n   }'")
 		}
 	}
 	v := &store.LoginUserPayload{
@@ -76,7 +75,7 @@ func BuildUpdateUserPayload(storeUpdateUserBody string) (*store.UserUpdatePayloa
 	{
 		err = json.Unmarshal([]byte(storeUpdateUserBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Ut amet.\",\n      \"firstName\": \"Rerum et.\",\n      \"lastName\": \"Doloribus ut at quasi et nihil.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"A molestias ut amet.\",\n      \"firstName\": \"Rerum et.\",\n      \"lastName\": \"Doloribus ut at quasi et nihil.\"\n   }'")
 		}
 	}
 	v := &store.UserUpdatePayload{
@@ -124,52 +123,25 @@ func BuildGetProductPayload(storeGetProductID string) (*store.GetProductPayload,
 
 // BuildListProductsPayload builds the payload for the store listProducts
 // endpoint from CLI flags.
-func BuildListProductsPayload(storeListProductsMinPrice string, storeListProductsMaxPrice string, storeListProductsPriceRange string, storeListProductsSortBy string) (*store.ListProductsPayload, error) {
+func BuildListProductsPayload(storeListProductsBody string) (*store.ListProductsPayload, error) {
 	var err error
-	var minPrice *float32
+	var body ListProductsRequestBody
 	{
-		if storeListProductsMinPrice != "" {
-			var v float64
-			v, err = strconv.ParseFloat(storeListProductsMinPrice, 32)
-			val := float32(v)
-			minPrice = &val
-			if err != nil {
-				return nil, fmt.Errorf("invalid value for minPrice, must be FLOAT32")
-			}
+		err = json.Unmarshal([]byte(storeListProductsBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"maxPrice\": 0.5778814,\n      \"minPrice\": 0.49577764,\n      \"priceRange\": [\n         0.3109654,\n         0.15941387,\n         0.9122273\n      ]\n   }'")
 		}
 	}
-	var maxPrice *float32
-	{
-		if storeListProductsMaxPrice != "" {
-			var v float64
-			v, err = strconv.ParseFloat(storeListProductsMaxPrice, 32)
-			val := float32(v)
-			maxPrice = &val
-			if err != nil {
-				return nil, fmt.Errorf("invalid value for maxPrice, must be FLOAT32")
-			}
+	v := &store.ListProductsPayload{
+		MinPrice: body.MinPrice,
+		MaxPrice: body.MaxPrice,
+	}
+	if body.PriceRange != nil {
+		v.PriceRange = make([]float32, len(body.PriceRange))
+		for i, val := range body.PriceRange {
+			v.PriceRange[i] = val
 		}
 	}
-	var priceRange []float32
-	{
-		if storeListProductsPriceRange != "" {
-			err = json.Unmarshal([]byte(storeListProductsPriceRange), &priceRange)
-			if err != nil {
-				return nil, fmt.Errorf("invalid JSON for priceRange, \nerror: %s, \nexample of valid JSON:\n%s", err, "'[\n      0.3109654,\n      0.15941387,\n      0.9122273\n   ]'")
-			}
-		}
-	}
-	var sortBy *string
-	{
-		if storeListProductsSortBy != "" {
-			sortBy = &storeListProductsSortBy
-		}
-	}
-	v := &store.ListProductsPayload{}
-	v.MinPrice = minPrice
-	v.MaxPrice = maxPrice
-	v.PriceRange = priceRange
-	v.SortBy = sortBy
 
 	return v, nil
 }
@@ -182,7 +154,7 @@ func BuildAddToCartPayload(storeAddToCartBody string) (*store.CartItem, error) {
 	{
 		err = json.Unmarshal([]byte(storeAddToCartBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"productID\": \"Nobis placeat et non sit voluptates autem.\",\n      \"quantity\": 5245208415194013183\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"productID\": \"Id doloribus amet.\",\n      \"quantity\": 8954758678043437516\n   }'")
 		}
 	}
 	v := &store.CartItem{
@@ -240,7 +212,7 @@ func BuildUpdateOrderItemStatusPayload(storeUpdateOrderItemStatusBody string, st
 	{
 		err = json.Unmarshal([]byte(storeUpdateOrderItemStatusBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"status\": \"Odit odio ipsam et quas.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"status\": \"Porro dolores aperiam reiciendis provident quasi.\"\n   }'")
 		}
 	}
 	var orderID string

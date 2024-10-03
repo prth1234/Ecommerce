@@ -13,7 +13,6 @@ import (
 	"io"
 	"net/http"
 	store "store/gen/store"
-	"strconv"
 
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
@@ -359,56 +358,21 @@ func EncodeListProductsResponse(encoder func(context.Context, http.ResponseWrite
 func DecodeListProductsRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (any, error) {
 	return func(r *http.Request) (any, error) {
 		var (
-			minPrice   *float32
-			maxPrice   *float32
-			priceRange []float32
-			sortBy     *string
-			err        error
+			body ListProductsRequestBody
+			err  error
 		)
-		qp := r.URL.Query()
-		{
-			minPriceRaw := qp.Get("minPrice")
-			if minPriceRaw != "" {
-				v, err2 := strconv.ParseFloat(minPriceRaw, 32)
-				if err2 != nil {
-					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("minPrice", minPriceRaw, "float"))
-				}
-				pv := float32(v)
-				minPrice = &pv
-			}
-		}
-		{
-			maxPriceRaw := qp.Get("maxPrice")
-			if maxPriceRaw != "" {
-				v, err2 := strconv.ParseFloat(maxPriceRaw, 32)
-				if err2 != nil {
-					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("maxPrice", maxPriceRaw, "float"))
-				}
-				pv := float32(v)
-				maxPrice = &pv
-			}
-		}
-		{
-			priceRangeRaw := qp["priceRange"]
-			if priceRangeRaw != nil {
-				priceRange = make([]float32, len(priceRangeRaw))
-				for i, rv := range priceRangeRaw {
-					v, err2 := strconv.ParseFloat(rv, 32)
-					if err2 != nil {
-						err = goa.MergeErrors(err, goa.InvalidFieldTypeError("priceRange", priceRangeRaw, "array of floats"))
-					}
-					priceRange[i] = float32(v)
-				}
-			}
-		}
-		sortByRaw := qp.Get("sortBy")
-		if sortByRaw != "" {
-			sortBy = &sortByRaw
-		}
+		err = decoder(r).Decode(&body)
 		if err != nil {
-			return nil, err
+			if err == io.EOF {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
 		}
-		payload := NewListProductsPayload(minPrice, maxPrice, priceRange, sortBy)
+		payload := NewListProductsPayload(&body)
 
 		return payload, nil
 	}

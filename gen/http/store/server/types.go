@@ -61,6 +61,17 @@ type CreateProductRequestBody struct {
 	Inventory *int `form:"inventory,omitempty" json:"inventory,omitempty" xml:"inventory,omitempty"`
 }
 
+// ListProductsRequestBody is the type of the "store" service "listProducts"
+// endpoint HTTP request body.
+type ListProductsRequestBody struct {
+	// Minimum price filter
+	MinPrice *float32 `form:"minPrice,omitempty" json:"minPrice,omitempty" xml:"minPrice,omitempty"`
+	// Maximum price filter
+	MaxPrice *float32 `form:"maxPrice,omitempty" json:"maxPrice,omitempty" xml:"maxPrice,omitempty"`
+	// Price range filter (e.g. [min, max])
+	PriceRange []float32 `form:"priceRange,omitempty" json:"priceRange,omitempty" xml:"priceRange,omitempty"`
+}
+
 // AddToCartRequestBody is the type of the "store" service "addToCart" endpoint
 // HTTP request body.
 type AddToCartRequestBody struct {
@@ -769,12 +780,17 @@ func NewGetProductPayload(id string) *store.GetProductPayload {
 }
 
 // NewListProductsPayload builds a store service listProducts endpoint payload.
-func NewListProductsPayload(minPrice *float32, maxPrice *float32, priceRange []float32, sortBy *string) *store.ListProductsPayload {
-	v := &store.ListProductsPayload{}
-	v.MinPrice = minPrice
-	v.MaxPrice = maxPrice
-	v.PriceRange = priceRange
-	v.SortBy = sortBy
+func NewListProductsPayload(body *ListProductsRequestBody) *store.ListProductsPayload {
+	v := &store.ListProductsPayload{
+		MinPrice: body.MinPrice,
+		MaxPrice: body.MaxPrice,
+	}
+	if body.PriceRange != nil {
+		v.PriceRange = make([]float32, len(body.PriceRange))
+		for i, val := range body.PriceRange {
+			v.PriceRange[i] = val
+		}
+	}
 
 	return v
 }

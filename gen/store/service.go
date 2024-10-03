@@ -119,8 +119,6 @@ type ListProductsPayload struct {
 	MaxPrice *float32
 	// Price range filter (e.g. [min, max])
 	PriceRange []float32
-	// Sort products by: 'price_asc' or 'price_desc'
-	SortBy *string
 }
 
 // LoginUserPayload is the payload type of the store service loginUser method.

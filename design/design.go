@@ -117,10 +117,7 @@ var _ = Service("store", func() {
 		Result(ArrayOf(Product))
 		HTTP(func() {
 			POST("/products")
-			Param("minPrice")
-			Param("maxPrice")
-			Param("priceRange")
-			Param("sortBy")
+
 			Response(StatusOK)
 		})
 	})
