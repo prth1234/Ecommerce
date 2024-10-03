@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	store "store/gen/store"
 	"store/jwthelper"
+	"strings"
 )
 
 type CustomError struct {
@@ -222,27 +224,65 @@ func (s *storesrvc) GetProduct(ctx context.Context, p *store.GetProductPayload) 
 	return product, nil
 }
 
-func (s *storesrvc) ListProducts(ctx context.Context) (res []*store.Product, err error) {
-	query := `SELECT id, name, description, price, inventory,userid FROM products`
+func (s *storesrvc) ListProducts(ctx context.Context, p *store.ListProductsPayload) (res []*store.Product, err error) {
+	query := `SELECT id, name, description, price, inventory, userid FROM products`
+	var args []interface{}
+	var conditions []string
 
-	rows, err := s.db.QueryContext(ctx, query)
+	log.Printf("Input payload: %+v", p)
+
+	// Handle price filters
+	if p.PriceRange != nil && len(p.PriceRange) == 2 {
+		conditions = append(conditions, fmt.Sprintf("price BETWEEN $%d AND $%d", len(args)+1, len(args)+2))
+		args = append(args, p.PriceRange[0], p.PriceRange[1])
+		log.Printf("Using price range filter: %v", p.PriceRange)
+	} else {
+		if p.MinPrice != nil {
+			conditions = append(conditions, fmt.Sprintf("price >= $%d", len(args)+1))
+			args = append(args, *p.MinPrice)
+			log.Printf("Using min price filter: %v", *p.MinPrice)
+		}
+		if p.MaxPrice != nil {
+			conditions = append(conditions, fmt.Sprintf("price <= $%d", len(args)+1))
+			args = append(args, *p.MaxPrice)
+			log.Printf("Using max price filter: %v", *p.MaxPrice)
+		}
+	}
+
+	// Add WHERE clause if conditions exist
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	log.Printf("Executing query: %s with args: %v", query, args)
+
+	// Execute query
+	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
+		log.Printf("Error executing query: %v", err)
 		return nil, fmt.Errorf("error listing products: %v", err)
 	}
 	defer rows.Close()
 
+	// Scan results
 	var products []*store.Product
 	for rows.Next() {
 		product := &store.Product{}
 		if err := rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Inventory, &product.UserID); err != nil {
+			log.Printf("Error scanning product: %v", err)
 			return nil, fmt.Errorf("error scanning product: %v", err)
 		}
 		products = append(products, product)
 	}
 
+	if err = rows.Err(); err != nil {
+		log.Printf("Error after scanning all rows: %v", err)
+		return nil, fmt.Errorf("error after scanning all products: %v", err)
+	}
+
+	log.Printf("Retrieved %d products", len(products))
 	return products, nil
 }
-
 func (s *storesrvc) AddToCart(ctx context.Context, p *store.CartItem) (res *store.Cart, err error) {
 	username, ok := ctx.Value("username").(string)
 	if !ok {

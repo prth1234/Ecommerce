@@ -768,6 +768,17 @@ func NewGetProductPayload(id string) *store.GetProductPayload {
 	return v
 }
 
+// NewListProductsPayload builds a store service listProducts endpoint payload.
+func NewListProductsPayload(minPrice *float32, maxPrice *float32, priceRange []float32, sortBy *string) *store.ListProductsPayload {
+	v := &store.ListProductsPayload{}
+	v.MinPrice = minPrice
+	v.MaxPrice = maxPrice
+	v.PriceRange = priceRange
+	v.SortBy = sortBy
+
+	return v
+}
+
 // NewAddToCartCartItem builds a store service addToCart endpoint payload.
 func NewAddToCartCartItem(body *AddToCartRequestBody) *store.CartItem {
 	v := &store.CartItem{

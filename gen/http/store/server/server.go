@@ -74,7 +74,7 @@ func New(
 			{"DeleteUser", "POST", "/users/delete"},
 			{"CreateProduct", "POST", "/products"},
 			{"GetProduct", "GET", "/products/{id}"},
-			{"ListProducts", "GET", "/products"},
+			{"ListProducts", "POST", "/products"},
 			{"AddToCart", "POST", "/cart/item"},
 			{"RemoveFromCart", "DELETE", "/cart/item/{productID}"},
 			{"GetCart", "GET", "/cart"},
@@ -564,7 +564,7 @@ func MountListProductsHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("GET", "/products", f)
+	mux.Handle("POST", "/products", f)
 }
 
 // NewListProductsHandler creates a HTTP handler which loads the HTTP request
@@ -578,6 +578,7 @@ func NewListProductsHandler(
 	formatter func(ctx context.Context, err error) goahttp.Statuser,
 ) http.Handler {
 	var (
+		decodeRequest  = DecodeListProductsRequest(mux, decoder)
 		encodeResponse = EncodeListProductsResponse(encoder)
 		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
 	)
@@ -585,8 +586,14 @@ func NewListProductsHandler(
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "listProducts")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "store")
-		var err error
-		res, err := endpoint(ctx, nil)
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil {
 				errhandler(ctx, w, err)

@@ -145,9 +145,9 @@ func (c *Client) GetProduct(ctx context.Context, p *GetProductPayload) (res *Pro
 }
 
 // ListProducts calls the "listProducts" endpoint of the "store" service.
-func (c *Client) ListProducts(ctx context.Context) (res []*Product, err error) {
+func (c *Client) ListProducts(ctx context.Context, p *ListProductsPayload) (res []*Product, err error) {
 	var ires any
-	ires, err = c.ListProductsEndpoint(ctx, nil)
+	ires, err = c.ListProductsEndpoint(ctx, p)
 	if err != nil {
 		return
 	}

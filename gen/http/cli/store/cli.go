@@ -29,11 +29,11 @@ func UsageCommands() string {
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
 	return os.Args[0] + ` store create-user --body '{
-      "email": "Quibusdam necessitatibus impedit nihil.",
-      "firstName": "Doloremque possimus esse temporibus.",
-      "lastName": "Repellendus facilis sint.",
-      "password": "Et minus velit sed alias consequatur dolores.",
-      "username": "Deleniti sint debitis reprehenderit dicta non odit."
+      "email": "Quo saepe voluptas praesentium et aut qui.",
+      "firstName": "Voluptatem aspernatur animi et.",
+      "lastName": "Non esse non consectetur.",
+      "password": "Ratione excepturi doloremque.",
+      "username": "Consequatur dolores dicta quis itaque."
    }'` + "\n" +
 		""
 }
@@ -72,7 +72,11 @@ func ParseEndpoint(
 		storeGetProductFlags  = flag.NewFlagSet("get-product", flag.ExitOnError)
 		storeGetProductIDFlag = storeGetProductFlags.String("id", "REQUIRED", "")
 
-		storeListProductsFlags = flag.NewFlagSet("list-products", flag.ExitOnError)
+		storeListProductsFlags          = flag.NewFlagSet("list-products", flag.ExitOnError)
+		storeListProductsMinPriceFlag   = storeListProductsFlags.String("min-price", "", "")
+		storeListProductsMaxPriceFlag   = storeListProductsFlags.String("max-price", "", "")
+		storeListProductsPriceRangeFlag = storeListProductsFlags.String("price-range", "", "")
+		storeListProductsSortByFlag     = storeListProductsFlags.String("sort-by", "", "")
 
 		storeAddToCartFlags    = flag.NewFlagSet("add-to-cart", flag.ExitOnError)
 		storeAddToCartBodyFlag = storeAddToCartFlags.String("body", "REQUIRED", "")
@@ -256,6 +260,7 @@ func ParseEndpoint(
 				data, err = storec.BuildGetProductPayload(*storeGetProductIDFlag)
 			case "list-products":
 				endpoint = c.ListProducts()
+				data, err = storec.BuildListProductsPayload(*storeListProductsMinPriceFlag, *storeListProductsMaxPriceFlag, *storeListProductsPriceRangeFlag, *storeListProductsSortByFlag)
 			case "add-to-cart":
 				endpoint = c.AddToCart()
 				data, err = storec.BuildAddToCartPayload(*storeAddToCartBodyFlag)
@@ -327,11 +332,11 @@ CreateUser implements createUser.
 
 Example:
     %[1]s store create-user --body '{
-      "email": "Quibusdam necessitatibus impedit nihil.",
-      "firstName": "Doloremque possimus esse temporibus.",
-      "lastName": "Repellendus facilis sint.",
-      "password": "Et minus velit sed alias consequatur dolores.",
-      "username": "Deleniti sint debitis reprehenderit dicta non odit."
+      "email": "Quo saepe voluptas praesentium et aut qui.",
+      "firstName": "Voluptatem aspernatur animi et.",
+      "lastName": "Non esse non consectetur.",
+      "password": "Ratione excepturi doloremque.",
+      "username": "Consequatur dolores dicta quis itaque."
    }'
 `, os.Args[0])
 }
@@ -344,8 +349,8 @@ Login a user and return a JWT token
 
 Example:
     %[1]s store login-user --body '{
-      "password": "Nostrum ea quae sint qui.",
-      "username": "Voluptates et."
+      "password": "Molestiae qui voluptas.",
+      "username": "Eos ducimus eos."
    }'
 `, os.Args[0])
 }
@@ -357,7 +362,7 @@ GetUser implements getUser.
     -id STRING: 
 
 Example:
-    %[1]s store get-user --id "Et esse quis voluptatem."
+    %[1]s store get-user --id "Quia consequatur nulla dolor qui dolores aperiam."
 `, os.Args[0])
 }
 
@@ -379,9 +384,9 @@ UpdateUser implements updateUser.
 
 Example:
     %[1]s store update-user --body '{
-      "email": "Et eaque earum ducimus et architecto.",
-      "firstName": "Quidem ab voluptatem a molestias ut.",
-      "lastName": "Ipsum rerum et."
+      "email": "Ut amet.",
+      "firstName": "Rerum et.",
+      "lastName": "Doloribus ut at quasi et nihil."
    }'
 `, os.Args[0])
 }
@@ -404,10 +409,10 @@ CreateProduct implements createProduct.
 
 Example:
     %[1]s store create-product --body '{
-      "description": "Et culpa quibusdam debitis alias dicta.",
-      "inventory": 9121937478798294681,
-      "name": "Voluptas tempore voluptatibus velit.",
-      "price": 0.4317084684695014
+      "description": "Quidem mollitia odit quos.",
+      "inventory": 756948882314648393,
+      "name": "Et culpa quibusdam debitis alias dicta.",
+      "price": 0.3172263357680944
    }'
 `, os.Args[0])
 }
@@ -419,17 +424,25 @@ GetProduct implements getProduct.
     -id STRING: 
 
 Example:
-    %[1]s store get-product --id "Voluptatem odit et."
+    %[1]s store get-product --id "Aliquam eos ipsum distinctio voluptas doloremque."
 `, os.Args[0])
 }
 
 func storeListProductsUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] store list-products
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] store list-products -min-price FLOAT32 -max-price FLOAT32 -price-range JSON -sort-by STRING
 
 ListProducts implements listProducts.
+    -min-price FLOAT32: 
+    -max-price FLOAT32: 
+    -price-range JSON: 
+    -sort-by STRING: 
 
 Example:
-    %[1]s store list-products
+    %[1]s store list-products --min-price 0.49577764 --max-price 0.5778814 --price-range '[
+      0.3109654,
+      0.15941387,
+      0.9122273
+   ]' --sort-by "Porro cumque dolores facere."
 `, os.Args[0])
 }
 
@@ -441,8 +454,8 @@ AddToCart implements addToCart.
 
 Example:
     %[1]s store add-to-cart --body '{
-      "productID": "Beatae laudantium eaque eveniet.",
-      "quantity": 7913193388225507630
+      "productID": "Nobis placeat et non sit voluptates autem.",
+      "quantity": 5245208415194013183
    }'
 `, os.Args[0])
 }
@@ -454,7 +467,7 @@ RemoveFromCart implements removeFromCart.
     -product-id STRING: 
 
 Example:
-    %[1]s store remove-from-cart --product-id "Sint perspiciatis laboriosam non consectetur."
+    %[1]s store remove-from-cart --product-id "Impedit vel magnam harum dolores placeat accusamus."
 `, os.Args[0])
 }
 
@@ -485,7 +498,7 @@ Delete an order from the current cart
     -id STRING: 
 
 Example:
-    %[1]s store delete-order --id "Cumque sit tempore adipisci provident accusamus."
+    %[1]s store delete-order --id "Soluta voluptatibus tempore quo perspiciatis ullam."
 `, os.Args[0])
 }
 
@@ -496,7 +509,7 @@ GetOrder implements getOrder.
     -id STRING: 
 
 Example:
-    %[1]s store get-order --id "Fuga beatae dolor totam."
+    %[1]s store get-order --id "Eum id error aspernatur esse hic placeat."
 `, os.Args[0])
 }
 
@@ -530,7 +543,7 @@ Update the status of an order item
 
 Example:
     %[1]s store update-order-item-status --body '{
-      "status": "Et ut."
-   }' --order-id "Iusto itaque." --product-id "Rerum et dolorem et asperiores porro dolores."
+      "status": "Odit odio ipsam et quas."
+   }' --order-id "Debitis est." --product-id "Libero dolores eum in magni provident sapiente."
 `, os.Args[0])
 }

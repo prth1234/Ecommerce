@@ -108,9 +108,19 @@ var _ = Service("store", func() {
 	})
 
 	Method("listProducts", func() {
+		Payload(func() {
+			Field(1, "minPrice", Float32, "Minimum price filter")
+			Field(2, "maxPrice", Float32, "Maximum price filter")
+			Field(3, "priceRange", ArrayOf(Float32), "Price range filter (e.g. [min, max])")
+			//Field(4, "sortBy", String, "Sort products by: 'price_asc' or 'price_desc'")
+		})
 		Result(ArrayOf(Product))
 		HTTP(func() {
-			GET("/products")
+			POST("/products")
+			Param("minPrice")
+			Param("maxPrice")
+			Param("priceRange")
+			Param("sortBy")
 			Response(StatusOK)
 		})
 	})

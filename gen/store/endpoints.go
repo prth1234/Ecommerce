@@ -155,7 +155,8 @@ func NewGetProductEndpoint(s Service) goa.Endpoint {
 // "listProducts" of service "store".
 func NewListProductsEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		return s.ListProducts(ctx)
+		p := req.(*ListProductsPayload)
+		return s.ListProducts(ctx, p)
 	}
 }
 

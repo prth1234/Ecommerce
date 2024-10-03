@@ -311,10 +311,15 @@ func (c *Client) GetProduct() goa.Endpoint {
 // service listProducts server.
 func (c *Client) ListProducts() goa.Endpoint {
 	var (
+		encodeRequest  = EncodeListProductsRequest(c.encoder)
 		decodeResponse = DecodeListProductsResponse(c.decoder, c.RestoreResponseBody)
 	)
 	return func(ctx context.Context, v any) (any, error) {
 		req, err := c.BuildListProductsRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
 		if err != nil {
 			return nil, err
 		}

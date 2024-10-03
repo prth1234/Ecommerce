@@ -32,7 +32,7 @@ type Service interface {
 	// GetProduct implements getProduct.
 	GetProduct(context.Context, *GetProductPayload) (res *Product, err error)
 	// ListProducts implements listProducts.
-	ListProducts(context.Context) (res []*Product, err error)
+	ListProducts(context.Context, *ListProductsPayload) (res []*Product, err error)
 	// AddToCart implements addToCart.
 	AddToCart(context.Context, *CartItem) (res *Cart, err error)
 	// RemoveFromCart implements removeFromCart.
@@ -108,6 +108,19 @@ type GetProductPayload struct {
 // GetUserPayload is the payload type of the store service getUser method.
 type GetUserPayload struct {
 	ID string
+}
+
+// ListProductsPayload is the payload type of the store service listProducts
+// method.
+type ListProductsPayload struct {
+	// Minimum price filter
+	MinPrice *float32
+	// Maximum price filter
+	MaxPrice *float32
+	// Price range filter (e.g. [min, max])
+	PriceRange []float32
+	// Sort products by: 'price_asc' or 'price_desc'
+	SortBy *string
 }
 
 // LoginUserPayload is the payload type of the store service loginUser method.

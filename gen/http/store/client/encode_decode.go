@@ -10,10 +10,12 @@ package client
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	store "store/gen/store"
+	"strconv"
 
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
@@ -583,7 +585,7 @@ func DecodeGetProductResponse(decoder func(*http.Response) goahttp.Decoder, rest
 // path set to call the "store" service "listProducts" endpoint
 func (c *Client) BuildListProductsRequest(ctx context.Context, v any) (*http.Request, error) {
 	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ListProductsStorePath()}
-	req, err := http.NewRequest("GET", u.String(), nil)
+	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
 		return nil, goahttp.ErrInvalidURL("store", "listProducts", u.String(), err)
 	}
@@ -592,6 +594,33 @@ func (c *Client) BuildListProductsRequest(ctx context.Context, v any) (*http.Req
 	}
 
 	return req, nil
+}
+
+// EncodeListProductsRequest returns an encoder for requests sent to the store
+// listProducts server.
+func EncodeListProductsRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*store.ListProductsPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("store", "listProducts", "*store.ListProductsPayload", v)
+		}
+		values := req.URL.Query()
+		if p.MinPrice != nil {
+			values.Add("minPrice", fmt.Sprintf("%v", *p.MinPrice))
+		}
+		if p.MaxPrice != nil {
+			values.Add("maxPrice", fmt.Sprintf("%v", *p.MaxPrice))
+		}
+		for _, value := range p.PriceRange {
+			valueStr := strconv.FormatFloat(float64(value), 'f', -1, 32)
+			values.Add("priceRange", valueStr)
+		}
+		if p.SortBy != nil {
+			values.Add("sortBy", *p.SortBy)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
 }
 
 // DecodeListProductsResponse returns a decoder for responses returned by the
