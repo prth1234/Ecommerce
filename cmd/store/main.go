@@ -60,7 +60,7 @@ func main() {
 		httpPortF = flag.String("http-port", "8000", "HTTP port (overrides host HTTP port specified in service design)")
 		secureF   = flag.Bool("secure", false, "Use secure scheme (https or grpcs)")
 		dbgF      = flag.Bool("debug", false, "Log request and response bodies")
-		dbURLF    = flag.String("db-url", "postgres://postgres:kundan@localhost:5432/EcommerceDatabase2?sslmode=disable", "PostgreSQL connection URL")
+		dbURLF    = flag.String("db-url", "postgres://postgres:kundan@localhost:5432/ecom?sslmode=disable", "PostgreSQL connection URL")
 	)
 	flag.Parse()
 
