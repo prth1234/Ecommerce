@@ -79,7 +79,10 @@ Follow these steps to set up the project locally on your machine.
      ```bash
      ./store
      ```
-
+Shortcut : Once go module are downloaded, just run 
+  ```bash
+lsof -t -i :8000 | xargs -r kill -9 && go build && ./store 
+  ```
 5. **Access the application**:
    - The API server will start running at `http://localhost:8080`.
    - Use tools like **Postman** or **cURL** to interact with the API endpoints.
