@@ -79,8 +79,8 @@ Follow these steps to set up the project locally on your machine.
      ```bash
      ./store
      ```
-Shortcut : Once go module are downloaded, just run 
-  ```bash
+Once the Go modules are downloaded, you can simply run it again after making changes during each iteration  
+```bash
 lsof -t -i :8000 | xargs -r kill -9 && go build && ./store 
   ```
 5. **Access the application**:
