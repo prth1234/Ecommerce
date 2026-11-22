@@ -2,6 +2,14 @@
   <img src="docs/assets/hero.svg" alt="Ecommerce - Goa v3 Marketplace API" width="100%"/>
 </div>
 
+<p align="center">
+  <a href="#service-architecture">Architecture</a> &middot;
+  <a href="#features">Features</a> &middot;
+  <a href="#api-endpoints">API Endpoints</a> &middot;
+  <a href="#getting-started">Getting Started</a> &middot;
+  <a href="#folder-structure">Structure</a>
+</p>
+
 A scalable online marketplace backend built with **Go (Golang)** and the **Goa v3** DSL framework. Inspired by platforms like HYPD, Etsy, Depop, and Poshmark, it provides user authentication, product listings with price filtering, shopping cart management, and order lifecycle endpoints backed by **PostgreSQL** and **JWT**.
 
 ---
@@ -29,6 +37,9 @@ A scalable online marketplace backend built with **Go (Golang)** and the **Goa v
 
 Defined in [`design/design.go`](design/design.go) for the `store` service (default host `http://localhost:8000`):
 
+<details open>
+<summary><strong>Full Endpoint Reference (Users, Products, Cart, Orders)</strong></summary>
+
 | Domain | Method &amp; Path | Operation |
 | :--- | :--- | :--- |
 | Users | `POST /users` | Create a new user account |
@@ -44,9 +55,10 @@ Defined in [`design/design.go`](design/design.go) for the `store` service (defau
 | Orders | `GET /orders/{id}` / `DELETE /orders/{id}` | Get or delete order by ID |
 | Orders | `PATCH /orders/{orderID}/items/{productID}` | Update status of an order item |
 
----
+</details>
 
-## Technologies Used
+<details>
+<summary><strong>Technologies Used</strong></summary>
 
 - **Backend**: Go 1.22 (`database/sql`)
 - **Framework**: Goa v3 (`goa.design/goa/v3`)
@@ -54,9 +66,24 @@ Defined in [`design/design.go`](design/design.go) for the `store` service (defau
 - **Authentication**: JWT (`github.com/golang-jwt/jwt/v5`) &amp; `golang.org/x/crypto/bcrypt`
 - **Testing**: `github.com/stretchr/testify` &amp; `github.com/DATA-DOG/go-sqlmock`
 
+</details>
+
 ---
 
 ## Getting Started
+
+```bash
+git clone https://github.com/prth1234/Ecommerce.git
+cd Ecommerce
+go mod tidy
+cd cmd/store && go build && ./store
+```
+
+- Server runs at `http://localhost:8000` (use Postman, cURL, or `cmd/store-cli`).
+- Redoc documentation is served at `/docs/` with `/openapi.json`.
+
+<details>
+<summary><strong>Prerequisites, Database Config, Server Flags &amp; Tests</strong></summary>
 
 ### Prerequisites
 
@@ -67,49 +94,30 @@ Defined in [`design/design.go`](design/design.go) for the `store` service (defau
   go install goa.design/goa/v3/cmd/goa@v3
   ```
 
-### Installation &amp; Running
+### Database Configuration
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/prth1234/Ecommerce.git
-   cd Ecommerce
-   ```
+Create a PostgreSQL database and configure your connection settings (for example in `.env` or `config.yaml`, or via the `-db-url` flag):
 
-2. **Set up the database**:
-   Create a PostgreSQL database and configure your connection settings (for example in `.env` or `config.yaml`, or via the `-db-url` flag):
-   ```env
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_USER=your_db_user
-   DB_PASSWORD=your_db_password
-   DB_NAME=your_db_name
-   ```
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=your_db_name
+```
 
-3. **Install dependencies**:
-   ```bash
-   go mod tidy
-   ```
+### Server Flags (`cmd/store/main.go`)
 
-4. **Build and run the server**:
-   ```bash
-   cd cmd/store
-   go build
-   ./store
-   ```
-   Optional flags supported by `cmd/store/main.go`:
-   - `-host` (default `localhost`)
-   - `-http-port` (default `8000`)
-   - `-db-url` (PostgreSQL connection URL)
-   - `-secure` / `-debug`
+- `-host` (default `localhost`)
+- `-http-port` (default `8000`)
+- `-db-url` (PostgreSQL connection URL)
+- `-secure` / `-debug`
 
-   Quick rebuild/restart loop on port `8000`:
-   ```bash
-   lsof -t -i :8000 | xargs -r kill -9 && go build && ./store
-   ```
+Quick rebuild/restart loop on port `8000`:
 
-5. **Access the API**:
-   - Server runs at `http://localhost:8000` (use Postman, cURL, or `cmd/store-cli` to interact with endpoints).
-   - Redoc documentation is served at `/docs/` with `/openapi.json`.
+```bash
+lsof -t -i :8000 | xargs -r kill -9 && go build && ./store
+```
 
 ### Running Tests
 
@@ -117,9 +125,14 @@ Defined in [`design/design.go`](design/design.go) for the `store` service (defau
 go test ./...
 ```
 
+</details>
+
 ---
 
 ## Folder Structure
+
+<details>
+<summary><strong>Repository File Tree</strong></summary>
 
 ```text
 Ecommerce/
@@ -138,9 +151,11 @@ Ecommerce/
 └── README.md
 ```
 
+</details>
+
 ---
 
-## Contributing
+## Contributing &amp; License
 
 1. Fork the repository.
 2. Create a new branch (`git checkout -b feature/YourFeatureName`).
@@ -148,25 +163,11 @@ Ecommerce/
 4. Push to the branch (`git push origin feature/YourFeatureName`).
 5. Open a pull request with appropriate tests.
 
----
-
-## License
-
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
-## Acknowledgments
+## Acknowledgments &amp; Contact
 
-- Inspired by platforms like **HYPD**, **Etsy**, **Depop**, and **Poshmark**.
-- [Goa Framework Documentation](https://goa.design/)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
-- [JWT Introduction](https://jwt.io/introduction)
-
----
-
-## Contact
-
-- **Author**: Parth
-- **Email**: dearparthsingh@gmail.com
-- **GitHub**: [prth1234](https://github.com/prth1234)
+- Inspired by platforms like **HYPD**, **Etsy**, **Depop**, and **Poshmark** · [Goa Framework](https://goa.design/) · [PostgreSQL](https://www.postgresql.org/docs/) · [JWT](https://jwt.io/introduction)
+- **Author**: Parth · `dearparthsingh@gmail.com` · [prth1234](https://github.com/prth1234)

@@ -14,27 +14,87 @@
       .ecom-a-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12.5px; fill: #38BDF8; }
       .ecom-a-warm { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12.5px; fill: #FB923C; }
       .ecom-a-box { fill: none; stroke: #334155; stroke-width: 1.25; }
-      .ecom-a-cyan-box { fill: none; stroke: #00ADD8; stroke-width: 1.5; }
-      .ecom-a-warm-box { fill: none; stroke: #EA580C; stroke-width: 1.5; }
-      .ecom-a-conn { fill: none; stroke: #00ADD8; stroke-width: 1.5; marker-end: url(#ecom-arch-arrow); }
-      .ecom-a-conn-warm { fill: none; stroke: #EA580C; stroke-width: 1.5; marker-end: url(#ecom-arch-arrow-warm); }
+      .ecom-a-conn { fill: none; stroke: #00ADD8; stroke-width: 1.5; stroke-dasharray: 5 4; marker-end: url(#ecom-arch-arrow); animation: ecomArchFlow 14s linear infinite; }
+      .ecom-a-conn-warm { fill: none; stroke: #EA580C; stroke-width: 1.5; stroke-dasharray: 5 4; marker-end: url(#ecom-arch-arrow-warm); animation: ecomArchFlow 14s linear infinite; }
+      .ecom-a-sig-cyan { fill: #38BDF8; }
+      .ecom-a-sig-warm { fill: #FB923C; }
+
+      /* Synchronized 8s cycle across 4 stages + bottom codegen strip */
+      .ecom-a-n1-box { animation: ecomArchCyanBox 8s ease-in-out infinite 0s; }
+      .ecom-a-n2-box { animation: ecomArchCyanBox 8s ease-in-out infinite 2s; }
+      .ecom-a-n3-box { animation: ecomArchCyanBox 8s ease-in-out infinite 4s; }
+      .ecom-a-n4-box { animation: ecomArchWarmBox 8s ease-in-out infinite 6s; }
+      .ecom-a-ng-box { animation: ecomArchCyanBox 8s ease-in-out infinite 3s; }
+
+      .ecom-a-n1-title { animation: ecomArchCyanTitle 8s ease-in-out infinite 0s; }
+      .ecom-a-n2-title { animation: ecomArchCyanTitle 8s ease-in-out infinite 2s; }
+      .ecom-a-n3-title { animation: ecomArchCyanTitle 8s ease-in-out infinite 4s; }
+      .ecom-a-n4-title { animation: ecomArchWarmTitle 8s ease-in-out infinite 6s; }
+      .ecom-a-ng-title { animation: ecomArchCyanTitle 8s ease-in-out infinite 3s; }
+
+      @keyframes ecomArchFlow { to { stroke-dashoffset: -180; } }
+      @keyframes ecomArchCyanBox {
+        0%, 32%, 100% { stroke: #334155; stroke-width: 1.25; }
+        8%, 22% { stroke: #00ADD8; stroke-width: 1.9; }
+      }
+      @keyframes ecomArchWarmBox {
+        0%, 32%, 100% { stroke: #334155; stroke-width: 1.25; }
+        8%, 22% { stroke: #EA580C; stroke-width: 1.9; }
+      }
+      @keyframes ecomArchCyanTitle {
+        0%, 32%, 100% { fill: #F8FAFC; }
+        8%, 22% { fill: #38BDF8; }
+      }
+      @keyframes ecomArchWarmTitle {
+        0%, 32%, 100% { fill: #F8FAFC; }
+        8%, 22% { fill: #FB923C; }
+      }
+
       @media (prefers-color-scheme: light) {
         .ecom-a-title { fill: #0F172A; }
         .ecom-a-body { fill: #475569; }
         .ecom-a-mono { fill: #0284C7; }
         .ecom-a-warm { fill: #C2410C; }
         .ecom-a-box { stroke: #CBD5E1; }
+        .ecom-a-sig-cyan { fill: #0284C7; }
+        .ecom-a-sig-warm { fill: #C2410C; }
+        .ecom-a-n1-box, .ecom-a-n2-box, .ecom-a-n3-box, .ecom-a-ng-box { animation-name: ecomArchCyanBoxLight; }
+        .ecom-a-n4-box { animation-name: ecomArchWarmBoxLight; }
+        .ecom-a-n1-title, .ecom-a-n2-title, .ecom-a-n3-title, .ecom-a-ng-title { animation-name: ecomArchCyanTitleLight; }
+        .ecom-a-n4-title { animation-name: ecomArchWarmTitleLight; }
+      }
+      @keyframes ecomArchCyanBoxLight {
+        0%, 32%, 100% { stroke: #CBD5E1; stroke-width: 1.25; }
+        8%, 22% { stroke: #0284C7; stroke-width: 1.9; }
+      }
+      @keyframes ecomArchWarmBoxLight {
+        0%, 32%, 100% { stroke: #CBD5E1; stroke-width: 1.25; }
+        8%, 22% { stroke: #C2410C; stroke-width: 1.9; }
+      }
+      @keyframes ecomArchCyanTitleLight {
+        0%, 32%, 100% { fill: #0F172A; }
+        8%, 22% { fill: #0284C7; }
+      }
+      @keyframes ecomArchWarmTitleLight {
+        0%, 32%, 100% { fill: #0F172A; }
+        8%, 22% { fill: #C2410C; }
       }
       @media (prefers-reduced-motion: reduce) {
-        * { animation: none !important; }
+        .ecom-a-conn, .ecom-a-conn-warm,
+        .ecom-a-n1-box, .ecom-a-n2-box, .ecom-a-n3-box, .ecom-a-n4-box, .ecom-a-ng-box,
+        .ecom-a-n1-title, .ecom-a-n2-title, .ecom-a-n3-title, .ecom-a-n4-title, .ecom-a-ng-title {
+          animation: none !important;
+        }
+        .ecom-a-conn, .ecom-a-conn-warm { stroke-dasharray: none; }
+        .ecom-a-sig-cyan, .ecom-a-sig-warm { display: none; }
       }
     </style>
   </defs>
 
   <!-- Stage 1: Clients -->
   <g transform="translate(20, 24)">
-    <rect x="0" y="0" width="168" height="148" rx="6" class="ecom-a-box"/>
-    <text x="14" y="28" class="ecom-a-title">Clients</text>
+    <rect x="0" y="0" width="168" height="148" rx="6" class="ecom-a-box ecom-a-n1-box"/>
+    <text x="14" y="28" class="ecom-a-title ecom-a-n1-title">Clients</text>
     <text x="14" y="50" class="ecom-a-mono">HTTP / CLI</text>
     <text x="14" y="78" class="ecom-a-body">cmd/store-cli</text>
     <text x="14" y="98" class="ecom-a-body">Redoc /docs/</text>
@@ -42,11 +102,14 @@
   </g>
 
   <line x1="188" y1="98" x2="222" y2="98" class="ecom-a-conn"/>
+  <circle r="3.5" class="ecom-a-sig-cyan">
+    <animateMotion dur="8s" repeatCount="indefinite" path="M 188 98 L 222 98" keyPoints="0;1;1" keyTimes="0;0.25;1" calcMode="linear"/>
+  </circle>
 
   <!-- Stage 2: Transport & Middleware -->
   <g transform="translate(224, 24)">
-    <rect x="0" y="0" width="204" height="148" rx="6" class="ecom-a-cyan-box"/>
-    <text x="14" y="28" class="ecom-a-title">Transport Layer</text>
+    <rect x="0" y="0" width="204" height="148" rx="6" class="ecom-a-box ecom-a-n2-box"/>
+    <text x="14" y="28" class="ecom-a-title ecom-a-n2-title">Transport Layer</text>
     <text x="14" y="50" class="ecom-a-mono">cmd/store + middleware</text>
     <text x="14" y="78" class="ecom-a-body">Goa HTTP Mux (:8000)</text>
     <text x="14" y="98" class="ecom-a-body">RequestID &amp; Logger</text>
@@ -54,11 +117,14 @@
   </g>
 
   <line x1="428" y1="98" x2="462" y2="98" class="ecom-a-conn"/>
+  <circle r="3.5" class="ecom-a-sig-cyan">
+    <animateMotion dur="8s" repeatCount="indefinite" path="M 428 98 L 462 98" keyPoints="0;0;1;1" keyTimes="0;0.25;0.5;1" calcMode="linear"/>
+  </circle>
 
   <!-- Stage 3: Service & Business Logic -->
   <g transform="translate(464, 24)">
-    <rect x="0" y="0" width="214" height="148" rx="6" class="ecom-a-box"/>
-    <text x="14" y="28" class="ecom-a-title">Store Service</text>
+    <rect x="0" y="0" width="214" height="148" rx="6" class="ecom-a-box ecom-a-n3-box"/>
+    <text x="14" y="28" class="ecom-a-title ecom-a-n3-title">Store Service</text>
     <text x="14" y="50" class="ecom-a-mono">store.go (storesrvc)</text>
     <text x="14" y="78" class="ecom-a-body">Users &amp; bcrypt Auth</text>
     <text x="14" y="98" class="ecom-a-body">Products &amp; Price Filters</text>
@@ -66,11 +132,14 @@
   </g>
 
   <line x1="678" y1="98" x2="712" y2="98" class="ecom-a-conn-warm"/>
+  <circle r="3.5" class="ecom-a-sig-warm">
+    <animateMotion dur="8s" repeatCount="indefinite" path="M 678 98 L 712 98" keyPoints="0;0;1;1" keyTimes="0;0.5;0.75;1" calcMode="linear"/>
+  </circle>
 
   <!-- Stage 4: Database -->
   <g transform="translate(714, 24)">
-    <rect x="0" y="0" width="166" height="148" rx="6" class="ecom-a-warm-box"/>
-    <text x="14" y="28" class="ecom-a-title">PostgreSQL</text>
+    <rect x="0" y="0" width="166" height="148" rx="6" class="ecom-a-box ecom-a-n4-box"/>
+    <text x="14" y="28" class="ecom-a-title ecom-a-n4-title">PostgreSQL</text>
     <text x="14" y="50" class="ecom-a-warm">db.go (lib/pq)</text>
     <text x="14" y="78" class="ecom-a-body">users &amp; products</text>
     <text x="14" y="98" class="ecom-a-body">carts &amp; orders</text>
@@ -79,8 +148,8 @@
 
   <!-- Bottom: Goa DSL Codegen Strip -->
   <g transform="translate(20, 200)">
-    <rect x="0" y="0" width="860" height="64" rx="6" class="ecom-a-box"/>
-    <text x="16" y="26" class="ecom-a-title">Goa v3 DSL Code Generation</text>
+    <rect x="0" y="0" width="860" height="64" rx="6" class="ecom-a-box ecom-a-ng-box"/>
+    <text x="16" y="26" class="ecom-a-title ecom-a-ng-title">Goa v3 DSL Code Generation</text>
     <text x="16" y="48" class="ecom-a-mono">design/design.go + design/type.go  --&gt;  gen/store/{service,endpoints,client}.go + gen/http/openapi3.{json,yaml}</text>
   </g>
 </svg>
