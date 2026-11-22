@@ -7,19 +7,68 @@
     </marker>
     <style>
       .ecom-h-display { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 46px; font-weight: 800; fill: #F8FAFC; letter-spacing: -0.02em; }
-      .ecom-h-sub { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 17px; font-weight: 500; fill: #CBD5E1; }
+      .ecom-h-sub { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 500; fill: #CBD5E1; }
       .ecom-h-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12.5px; font-weight: 600; fill: #38BDF8; }
       .ecom-h-warm { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12.5px; font-weight: 600; fill: #FB923C; }
       .ecom-h-chip-txt { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12.5px; font-weight: 500; fill: #E2E8F0; }
       .ecom-h-box { fill: none; stroke: #334155; stroke-width: 1.25; }
       .ecom-h-cyan-box { fill: none; stroke: #00ADD8; stroke-width: 1.5; }
-      .ecom-h-warm-box { fill: none; stroke: #EA580C; stroke-width: 1.5; }
-      .ecom-h-conn { fill: none; stroke: #00ADD8; stroke-width: 1.5; marker-end: url(#ecom-hero-arrow); }
-      .ecom-h-pulse { animation: ecomPulse 2.6s ease-in-out infinite; }
-      @keyframes ecomPulse {
-        0%, 100% { stroke-opacity: 1; }
-        50% { stroke-opacity: 0.4; }
+      .ecom-h-conn { fill: none; stroke: #00ADD8; stroke-width: 1.5; stroke-dasharray: 4 3; marker-end: url(#ecom-hero-arrow); animation: ecomDash 14s linear infinite; }
+      .ecom-h-dot { fill: #00ADD8; animation: ecomDotPulse 2.2s ease-in-out infinite; }
+      .ecom-h-ring { fill: none; stroke: #00ADD8; stroke-width: 1.2; animation: ecomRingExpand 2.2s ease-out infinite; }
+      .ecom-h-cursor { fill: #00ADD8; animation: ecomCursorBlink 1.1s steps(2, start) infinite; }
+      .ecom-h-signal { fill: #38BDF8; }
+
+      .ecom-h-tag-1, .ecom-h-tag-2, .ecom-h-tag-3 {
+        opacity: 0;
+        animation: ecomTagCycle 10.5s ease-in-out infinite;
       }
+      .ecom-h-tag-1 { animation-delay: 0s; }
+      .ecom-h-tag-2 { animation-delay: 3.5s; }
+      .ecom-h-tag-3 { animation-delay: 7s; }
+
+      .ecom-h-pill { fill: none; stroke: #334155; stroke-width: 1.25; animation: ecomPillWave 7.5s ease-in-out infinite; }
+      .ecom-h-pill-t { animation: ecomPillTextWave 7.5s ease-in-out infinite; }
+      .ecom-h-p1 { animation-delay: 0s; }
+      .ecom-h-p2 { animation-delay: 1.5s; }
+      .ecom-h-p3 { animation-delay: 3.0s; }
+      .ecom-h-p4 { animation-delay: 4.5s; }
+      .ecom-h-p5 { animation-delay: 6.0s; }
+
+      /* Right motif synchronized flow (6s) */
+      .ecom-h-m-top { animation: ecomMotifCyan 6s ease-in-out infinite 0s; }
+      .ecom-h-m-r1 { animation: ecomMotifCyan 6s ease-in-out infinite 1.5s; }
+      .ecom-h-m-r2 { animation: ecomMotifCyan 6s ease-in-out infinite 2.2s; }
+      .ecom-h-m-r3 { animation: ecomMotifCyan 6s ease-in-out infinite 2.9s; }
+      .ecom-h-m-r4 { animation: ecomMotifWarm 6s ease-in-out infinite 3.6s; }
+      .ecom-h-m-db { animation: ecomMotifWarm 6s ease-in-out infinite 4.5s; }
+
+      @keyframes ecomDash { to { stroke-dashoffset: -140; } }
+      @keyframes ecomDotPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+      @keyframes ecomRingExpand { 0% { r: 4; opacity: 0.8; } 100% { r: 10; opacity: 0; } }
+      @keyframes ecomCursorBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+      @keyframes ecomTagCycle {
+        0% { opacity: 0; transform: translateY(4px); }
+        5%, 28% { opacity: 1; transform: translateY(0); }
+        33%, 100% { opacity: 0; transform: translateY(-4px); }
+      }
+      @keyframes ecomPillWave {
+        0%, 100% { stroke: #334155; stroke-width: 1.25; }
+        10%, 22% { stroke: #00ADD8; stroke-width: 1.75; }
+      }
+      @keyframes ecomPillTextWave {
+        0%, 100% { fill: #E2E8F0; }
+        10%, 22% { fill: #38BDF8; }
+      }
+      @keyframes ecomMotifCyan {
+        0%, 35%, 100% { stroke: #334155; stroke-width: 1.25; }
+        8%, 22% { stroke: #00ADD8; stroke-width: 1.9; }
+      }
+      @keyframes ecomMotifWarm {
+        0%, 35%, 100% { stroke: #334155; stroke-width: 1.25; }
+        8%, 22% { stroke: #EA580C; stroke-width: 1.9; }
+      }
+
       @media (prefers-color-scheme: light) {
         .ecom-h-display { fill: #0F172A; }
         .ecom-h-sub { fill: #475569; }
@@ -27,60 +76,102 @@
         .ecom-h-warm { fill: #C2410C; }
         .ecom-h-chip-txt { fill: #1E293B; }
         .ecom-h-box { stroke: #CBD5E1; }
+        .ecom-h-dot, .ecom-h-cursor, .ecom-h-signal { fill: #0284C7; }
+        .ecom-h-ring { stroke: #0284C7; }
+        .ecom-h-pill { stroke: #CBD5E1; animation-name: ecomPillWaveLight; }
+        .ecom-h-pill-t { fill: #1E293B; animation-name: ecomPillTextWaveLight; }
+        .ecom-h-m-top, .ecom-h-m-r1, .ecom-h-m-r2, .ecom-h-m-r3 { animation-name: ecomMotifCyanLight; }
+        .ecom-h-m-r4, .ecom-h-m-db { animation-name: ecomMotifWarmLight; }
+      }
+      @keyframes ecomPillWaveLight {
+        0%, 100% { stroke: #CBD5E1; stroke-width: 1.25; }
+        10%, 22% { stroke: #0284C7; stroke-width: 1.75; }
+      }
+      @keyframes ecomPillTextWaveLight {
+        0%, 100% { fill: #1E293B; }
+        10%, 22% { fill: #0284C7; }
+      }
+      @keyframes ecomMotifCyanLight {
+        0%, 35%, 100% { stroke: #CBD5E1; stroke-width: 1.25; }
+        8%, 22% { stroke: #0284C7; stroke-width: 1.9; }
+      }
+      @keyframes ecomMotifWarmLight {
+        0%, 35%, 100% { stroke: #CBD5E1; stroke-width: 1.25; }
+        8%, 22% { stroke: #C2410C; stroke-width: 1.9; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .ecom-h-pulse { animation: none !important; }
+        .ecom-h-conn, .ecom-h-dot, .ecom-h-ring, .ecom-h-cursor,
+        .ecom-h-pill, .ecom-h-pill-t,
+        .ecom-h-tag-2, .ecom-h-tag-3,
+        .ecom-h-m-top, .ecom-h-m-r1, .ecom-h-m-r2, .ecom-h-m-r3, .ecom-h-m-r4, .ecom-h-m-db {
+          animation: none !important;
+        }
+        .ecom-h-conn { stroke-dasharray: none; }
+        .ecom-h-tag-1 { animation: none !important; opacity: 1; transform: none; }
+        .ecom-h-tag-2, .ecom-h-tag-3 { opacity: 0; }
+        .ecom-h-ring, .ecom-h-signal { display: none; }
       }
     </style>
   </defs>
 
   <!-- Left: Typography & Stack Chips -->
   <g transform="translate(24, 34)">
-    <rect x="0" y="0" width="166" height="26" rx="6" class="ecom-h-cyan-box"/>
-    <text x="12" y="17.5" class="ecom-h-mono">GO 1.22 / GOA v3 DSL</text>
+    <rect x="0" y="0" width="188" height="26" rx="6" class="ecom-h-cyan-box"/>
+    <circle cx="13" cy="13" r="4" class="ecom-h-ring"/>
+    <circle cx="13" cy="13" r="4" class="ecom-h-dot"/>
+    <text x="26" y="17.5" class="ecom-h-mono">GO 1.22 / GOA v3 DSL</text>
 
     <text x="0" y="88" class="ecom-h-display">Ecommerce</text>
-    <text x="0" y="118" class="ecom-h-sub">Scalable Marketplace API with Goa, PostgreSQL &amp; JWT Auth</text>
+    <rect x="260" y="52" width="4" height="40" rx="1" class="ecom-h-cursor"/>
+
+    <g>
+      <text x="0" y="118" class="ecom-h-sub ecom-h-tag-1">Scalable Marketplace API with Goa, PostgreSQL &amp; JWT Auth</text>
+      <text x="0" y="118" class="ecom-h-sub ecom-h-tag-2">Contract-First Goa v3 DSL Generating HTTP Transport, CLI &amp; OpenAPI v3</text>
+      <text x="0" y="118" class="ecom-h-sub ecom-h-tag-3">Users, Products, Price Filters, Cart &amp; Order Lifecycle via database/sql</text>
+    </g>
 
     <!-- Stack Chips -->
     <g transform="translate(0, 146)">
-      <rect x="0" y="0" width="84" height="30" rx="6" class="ecom-h-box"/>
-      <text x="42" y="19.5" text-anchor="middle" class="ecom-h-chip-txt">Go 1.22</text>
+      <rect x="0" y="0" width="84" height="30" rx="6" class="ecom-h-pill dsa-h-p1 ecom-h-p1"/>
+      <text x="42" y="19.5" text-anchor="middle" class="ecom-h-chip-txt ecom-h-pill-t ecom-h-p1">Go 1.22</text>
 
-      <rect x="94" y="0" width="88" height="30" rx="6" class="ecom-h-box"/>
-      <text x="138" y="19.5" text-anchor="middle" class="ecom-h-chip-txt">Goa v3</text>
+      <rect x="94" y="0" width="88" height="30" rx="6" class="ecom-h-pill ecom-h-p2"/>
+      <text x="138" y="19.5" text-anchor="middle" class="ecom-h-chip-txt ecom-h-pill-t ecom-h-p2">Goa v3</text>
 
-      <rect x="192" y="0" width="112" height="30" rx="6" class="ecom-h-box"/>
-      <text x="248" y="19.5" text-anchor="middle" class="ecom-h-chip-txt">PostgreSQL</text>
+      <rect x="192" y="0" width="112" height="30" rx="6" class="ecom-h-pill ecom-h-p3"/>
+      <text x="248" y="19.5" text-anchor="middle" class="ecom-h-chip-txt ecom-h-pill-t ecom-h-p3">PostgreSQL</text>
 
-      <rect x="314" y="0" width="96" height="30" rx="6" class="ecom-h-box"/>
-      <text x="362" y="19.5" text-anchor="middle" class="ecom-h-chip-txt">JWT Auth</text>
+      <rect x="314" y="0" width="96" height="30" rx="6" class="ecom-h-pill ecom-h-p4"/>
+      <text x="362" y="19.5" text-anchor="middle" class="ecom-h-chip-txt ecom-h-pill-t ecom-h-p4">JWT Auth</text>
 
-      <rect x="420" y="0" width="124" height="30" rx="6" class="ecom-h-box"/>
-      <text x="482" y="19.5" text-anchor="middle" class="ecom-h-chip-txt">OpenAPI / Redoc</text>
+      <rect x="420" y="0" width="124" height="30" rx="6" class="ecom-h-pill ecom-h-p5"/>
+      <text x="482" y="19.5" text-anchor="middle" class="ecom-h-chip-txt ecom-h-pill-t ecom-h-p5">OpenAPI / Redoc</text>
     </g>
   </g>
 
   <!-- Right: Service Flow Motif -->
   <g transform="translate(610, 32)">
-    <rect x="12" y="8" width="244" height="38" rx="6" class="ecom-h-cyan-box ecom-h-pulse"/>
+    <rect x="12" y="8" width="244" height="38" rx="6" class="ecom-h-box ecom-h-m-top"/>
     <text x="134" y="31.5" text-anchor="middle" class="ecom-h-mono">HTTP :8000  |  JWT Middleware</text>
 
     <line x1="134" y1="46" x2="134" y2="70" class="ecom-h-conn"/>
+    <circle r="3" class="ecom-h-signal">
+      <animateMotion dur="6s" repeatCount="indefinite" path="M 134 46 L 134 70" keyPoints="0;1;1" keyTimes="0;0.25;1" calcMode="linear"/>
+    </circle>
 
-    <rect x="12" y="72" width="114" height="44" rx="6" class="ecom-h-box"/>
+    <rect x="12" y="72" width="114" height="44" rx="6" class="ecom-h-box ecom-h-m-r1"/>
     <text x="69" y="98.5" text-anchor="middle" class="ecom-h-chip-txt">/users &amp; /login</text>
 
-    <rect x="142" y="72" width="114" height="44" rx="6" class="ecom-h-box"/>
+    <rect x="142" y="72" width="114" height="44" rx="6" class="ecom-h-box ecom-h-m-r2"/>
     <text x="199" y="98.5" text-anchor="middle" class="ecom-h-chip-txt">/products</text>
 
-    <rect x="12" y="128" width="114" height="44" rx="6" class="ecom-h-box"/>
+    <rect x="12" y="128" width="114" height="44" rx="6" class="ecom-h-box ecom-h-m-r3"/>
     <text x="69" y="154.5" text-anchor="middle" class="ecom-h-chip-txt">/cart/item</text>
 
-    <rect x="142" y="128" width="114" height="44" rx="6" class="ecom-h-warm-box"/>
+    <rect x="142" y="128" width="114" height="44" rx="6" class="ecom-h-box ecom-h-m-r4"/>
     <text x="199" y="154.5" text-anchor="middle" class="ecom-h-warm">/orders</text>
 
-    <rect x="12" y="186" width="244" height="32" rx="6" class="ecom-h-box"/>
+    <rect x="12" y="186" width="244" height="32" rx="6" class="ecom-h-box ecom-h-m-db"/>
     <text x="134" y="206.5" text-anchor="middle" class="ecom-h-chip-txt">PostgreSQL  (database/sql + pq)</text>
   </g>
 </svg>
