@@ -1,48 +1,73 @@
-# Ecommerce Marketplace Platform
+<div align="center">
+  <img src="docs/assets/hero.svg" alt="Ecommerce - Goa v3 Marketplace API" width="100%"/>
+</div>
 
-Welcome to the **Ecommerce Marketplace Platform** repository! This project is a fully functional online marketplace where users can buy, sell, and post products. Inspired by platforms like **HYPD** in India and global marketplaces such as **Etsy**, **Depop**, and **Poshmark**, this platform provides a seamless experience for both buyers and sellers. Built with **Go (Golang)** and the **Goa Framework**, it is scalable, efficient, and easy to deploy.
+A scalable online marketplace backend built with **Go (Golang)** and the **Goa v3** DSL framework. Inspired by platforms like HYPD, Etsy, Depop, and Poshmark, it provides user authentication, product listings with price filtering, shopping cart management, and order lifecycle endpoints backed by **PostgreSQL** and **JWT**.
+
+---
+
+## Service Architecture
+
+<div align="center">
+  <img src="docs/assets/architecture.svg" alt="Ecommerce Service Architecture" width="100%"/>
+</div>
 
 ---
 
 ## Features
 
-- **User Roles**:
-  - **Buyers**: Browse products, add to cart, and place orders.
-  - **Sellers**: Post products, manage listings, and track sales.
-- **Product Listings**: Sellers can create, update, and delete product listings with details like price, description, and images.
-- **Search and Filters**: Buyers can search for products and filter by category, price range, and more.
-- **Shopping Cart**: Add, remove, and update items in the cart.
-- **Order Management**: Track orders, view order history, and manage deliveries.
-- **User Profiles**: Personalized profiles for buyers and sellers.
-- **Authentication**: Secure login and registration using **JWT (JSON Web Tokens)**.
-- **Database**: Robust data storage with **PostgreSQL**.
-- **Responsive Design**: Optimized for desktop, tablet, and mobile devices.
-- **Admin Dashboard**: Manage users, products, and orders (admin-only).
+- **User Accounts &amp; Authentication**: Registration with `bcrypt` password hashing, login issuing HS256 JWT tokens (`jwthelper`), and protected profile update/delete operations via `JWTAuthMiddleware`.
+- **Product Listings &amp; Filtering**: Create and fetch products, list products by `minPrice`, `maxPrice`, or `priceRange`, and query products posted by the authenticated seller.
+- **Shopping Cart**: Add items, remove items by `productID`, and retrieve the active cart.
+- **Order Management**: Create orders from the current cart, fetch individual or all user orders, delete orders, and update individual order item statuses (`PATCH /orders/{orderID}/items/{productID}`).
+- **Contract-First Goa DSL**: API endpoints, payloads, responses, and OpenAPI v2/v3 specs (`gen/http/openapi3.{json,yaml}`) are generated from `design/design.go` and `design/type.go`.
+- **Interactive API Docs &amp; CLI**: Built-in Redoc UI (`/docs/`) and a generated CLI client (`cmd/store-cli`).
+
+---
+
+## API Endpoints
+
+Defined in [`design/design.go`](design/design.go) for the `store` service (default host `http://localhost:8000`):
+
+| Domain | Method &amp; Path | Operation |
+| :--- | :--- | :--- |
+| Users | `POST /users` | Create a new user account |
+| Users | `POST /login` | Authenticate user and return JWT token |
+| Users | `GET /users` / `GET /users/{id}` | List all users or fetch user by ID |
+| Users | `POST /users/update` / `POST /users/delete` | Update or delete authenticated user |
+| Users | `GET /users/products` | List products posted by authenticated user |
+| Products | `POST /products` | Create product or list products with price filters |
+| Products | `GET /products/{id}` | Fetch product details by ID |
+| Cart | `GET /cart` | Get current user's cart |
+| Cart | `POST /cart/item` / `DELETE /cart/item/{productID}` | Add or remove cart items |
+| Orders | `POST /orders` / `GET /orders` | Create order from cart or list user orders |
+| Orders | `GET /orders/{id}` / `DELETE /orders/{id}` | Get or delete order by ID |
+| Orders | `PATCH /orders/{orderID}/items/{productID}` | Update status of an order item |
 
 ---
 
 ## Technologies Used
 
-- **Backend**: Go (Golang)
-- **Framework**: Goa Framework (DSL-based API design)
-- **Database**: PostgreSQL
-- **Authentication**: JWT (JSON Web Tokens)
-- **API Design**: Goa DSL for clean and scalable API definitions
-- **Deployment**: Docker, or any cloud platform (e.g., AWS, GCP)
+- **Backend**: Go 1.22 (`database/sql`)
+- **Framework**: Goa v3 (`goa.design/goa/v3`)
+- **Database**: PostgreSQL (`github.com/lib/pq`)
+- **Authentication**: JWT (`github.com/golang-jwt/jwt/v5`) &amp; `golang.org/x/crypto/bcrypt`
+- **Testing**: `github.com/stretchr/testify` &amp; `github.com/DATA-DOG/go-sqlmock`
 
 ---
 
 ## Getting Started
 
-Follow these steps to set up the project locally on your machine.
-
 ### Prerequisites
 
-- Go (v1.20 or higher)
+- Go (v1.20 or higher; `go.mod` targets Go 1.22.5)
 - PostgreSQL (local or cloud instance)
-- Goa Framework (install via `go install goa.design/goa/v3/cmd/goa@v3`)
+- Goa CLI (optional, for regenerating from `design/`):
+  ```bash
+  go install goa.design/goa/v3/cmd/goa@v3
+  ```
 
-### Installation
+### Installation &amp; Running
 
 1. **Clone the repository**:
    ```bash
@@ -51,76 +76,77 @@ Follow these steps to set up the project locally on your machine.
    ```
 
 2. **Set up the database**:
-   - Create a PostgreSQL database and update the connection string in the configuration file (e.g., `config.yaml` or `.env`).
-   - Example connection string:
-     ```env
-     DB_HOST=localhost
-     DB_PORT=5432
-     DB_USER=your_db_user
-     DB_PASSWORD=your_db_password
-     DB_NAME=your_db_name
-     ```
+   Create a PostgreSQL database and configure your connection settings (for example in `.env` or `config.yaml`, or via the `-db-url` flag):
+   ```env
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_USER=your_db_user
+   DB_PASSWORD=your_db_password
+   DB_NAME=your_db_name
+   ```
 
 3. **Install dependencies**:
    ```bash
    go mod tidy
    ```
 
-4. **Build and run the application**:
-   - Navigate to the `cmd/store` directory:
-     ```bash
-     cd cmd/store
-     ```
-   - Build the application:
-     ```bash
-     go build
-     ```
-   - Run the application:
-     ```bash
-     ./store
-     ```
-Once the Go modules are downloaded, you can simply run it again after making changes during each iteration  
+4. **Build and run the server**:
+   ```bash
+   cd cmd/store
+   go build
+   ./store
+   ```
+   Optional flags supported by `cmd/store/main.go`:
+   - `-host` (default `localhost`)
+   - `-http-port` (default `8000`)
+   - `-db-url` (PostgreSQL connection URL)
+   - `-secure` / `-debug`
 
-inside cmd/store, run
+   Quick rebuild/restart loop on port `8000`:
+   ```bash
+   lsof -t -i :8000 | xargs -r kill -9 && go build && ./store
+   ```
+
+5. **Access the API**:
+   - Server runs at `http://localhost:8000` (use Postman, cURL, or `cmd/store-cli` to interact with endpoints).
+   - Redoc documentation is served at `/docs/` with `/openapi.json`.
+
+### Running Tests
+
 ```bash
-lsof -t -i :8000 | xargs -r kill -9 && go build && ./store 
-  ```
-5. **Access the application**:
-   - The API server will start running at `http://localhost:8080`.
-   - Use tools like **Postman** or **cURL** to interact with the API endpoints.
+go test ./...
+```
 
 ---
 
 ## Folder Structure
 
-```
+```text
 Ecommerce/
 ├── cmd/
-│   └── store/               # Main application entry point
-├── gen/                     # Generated code by Goa Framework
-├── design/                  # API design definitions (Goa DSL)
-├── internal/                # Application logic (services, models, etc.)
-├── migrations/              # Database migration scripts
-├── scripts/                 # Helper scripts for setup and deployment
-├── config.yaml              # Configuration file for the application
-├── go.mod                   # Go module dependencies
-├── go.sum                   # Go dependency checksums
-└── README.md                # Project documentation
+│   ├── store/               # Main HTTP server entry point
+│   └── store-cli/           # Generated CLI client
+├── design/                  # Goa DSL API & type definitions
+├── gen/                     # Goa-generated service, HTTP transport, and OpenAPI specs
+├── jwthelper/               # JWT token generation and verification
+├── middleware/              # HTTP JWTAuthMiddleware
+├── store.go                 # Store service implementation
+├── db.go                    # PostgreSQL connection initialization
+├── store_test.go            # Unit tests with testify & go-sqlmock
+├── go.mod
+├── go.sum
+└── README.md
 ```
 
 ---
 
 ## Contributing
 
-We welcome contributions! If you'd like to contribute to this project, please follow these steps:
-
 1. Fork the repository.
 2. Create a new branch (`git checkout -b feature/YourFeatureName`).
 3. Commit your changes (`git commit -m 'Add some feature'`).
 4. Push to the branch (`git push origin feature/YourFeatureName`).
-5. Open a pull request.
-
-Please ensure your code follows the project's coding standards and includes appropriate tests.
+5. Open a pull request with appropriate tests.
 
 ---
 
@@ -141,23 +167,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Contact
 
-For questions or feedback, feel free to reach out:
-
-- **Author**: Parth  
-- **Email**: dearparthsingh@gmail.com  
-- **GitHub**: [prth1234](https://github.com/prth1234)  
-
----
-
-Thank you for checking out this project! We hope you find it useful and welcome any suggestions for improvement. Happy coding! 🚀
-```
-
----
-
-### Key Highlights:
-1. **Tech Stack**: Clearly mentions **Go (Golang)**, **Goa Framework**, **PostgreSQL**, **JWT**, and **DSL**.
-2. **Running the Application**: Provides specific instructions for building and running the app using `go build` and `./store`.
-3. **Folder Structure**: Explains the purpose of each folder in the project.
-4. **Database Setup**: Includes steps for setting up PostgreSQL.
-
-Let me know if you need further adjustments! 🚀
+- **Author**: Parth
+- **Email**: dearparthsingh@gmail.com
+- **GitHub**: [prth1234](https://github.com/prth1234)
